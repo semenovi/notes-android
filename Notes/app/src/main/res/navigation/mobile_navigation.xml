@@ -1,0 +1,30 @@
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/noteListFragment">
+
+    <fragment
+        android:id="@+id/noteListFragment"
+        android:name="com.madbearing.notes.ui.NoteListFragment"
+        android:label="Notes"
+        tools:layout="@layout/fragment_note_list">
+
+        <action
+            android:id="@+id/action_noteListFragment_to_noteEditFragment"
+            app:destination="@id/noteEditFragment">
+            <argument
+                android:name="noteId"
+                app:argType="long"
+                android:defaultValue="0L" />
+        </action>
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/noteEditFragment"
+        android:name="com.madbearing.notes.ui.NoteEditFragment"
+        android:label="Edit Note"
+        tools:layout="@layout/fragment_note_edit" />
+
+</navigation>
