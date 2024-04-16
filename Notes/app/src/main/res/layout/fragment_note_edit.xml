@@ -12,14 +12,17 @@
         android:hint="Title"
         android:inputType="text" />
 
-    <TextView
-        android:id="@+id/text_content"
+    <EditText
+        android:id="@+id/edit_content"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
         android:layout_weight="1"
+        android:background="@null"
+        android:fontFamily="monospace"
         android:gravity="top"
         android:hint="Content"
-        android:background="@null"
+        android:inputType="textMultiLine"
+        android:scrollbars="vertical"
         android:textSize="16sp" />
 
     <Button

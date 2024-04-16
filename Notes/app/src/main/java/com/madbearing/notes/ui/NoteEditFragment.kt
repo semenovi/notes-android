@@ -10,20 +10,18 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.madbearing.notes.R
 import com.madbearing.notes.data.NoteStorage
 import com.madbearing.notes.models.Note
-import io.noties.markwon.Markwon
 
 class NoteEditFragment : Fragment() {
 
     private lateinit var noteStorage: NoteStorage
     private lateinit var editTitle: EditText
-    private lateinit var textContent: TextView
+    private lateinit var editContent: EditText
     private lateinit var buttonAddImage: Button
     private var noteId: Long = 0
 
@@ -38,7 +36,7 @@ class NoteEditFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_note_edit, container, false)
         noteStorage = NoteStorage(requireContext())
         editTitle = view.findViewById(R.id.edit_title)
-        textContent = view.findViewById(R.id.text_content)
+        editContent = view.findViewById(R.id.edit_content)
         buttonAddImage = view.findViewById(R.id.button_add_image)
         buttonAddImage.setOnClickListener {
             checkPermission()
@@ -101,24 +99,29 @@ class NoteEditFragment : Fragment() {
 
     private fun displayNote(note: Note) {
         editTitle.setText(note.title)
-        val markdown = Markwon.create(requireContext())
-        markdown.setMarkdown(textContent, note.content)
+        editContent.setText(note.markdownContent)
     }
 
     private fun saveNote() {
-        val title = editTitle.text.toString()
-        val content = textContent.text.toString()
-        val notes = noteStorage.loadNotes().toMutableList()
-        val note = notes.find { it.id == noteId }
-        if (note != null) {
-            val updatedNote = note.copy(title = title, content = content)
-            notes.remove(note)
-            notes.add(updatedNote)
-        } else {
-            val newNote = Note(id = System.currentTimeMillis(), title = title, content = content)
+        val noteTitle = editTitle.text.toString().trim()
+        val markdownContent = editContent.text.toString().trim()
+
+        if (noteTitle.isNotEmpty() && markdownContent.isNotEmpty()) {
+            val newNote = Note(
+                id = System.currentTimeMillis(),
+                title = noteTitle,
+                markdownContent = markdownContent
+            )
+            val notes = noteStorage.loadNotes().toMutableList()
             notes.add(newNote)
+            noteStorage.saveNotes(notes)
+            findNavController().navigateUp()
+        } else {
+            showEmptyFieldsError()
         }
-        noteStorage.saveNotes(notes)
-        findNavController().navigateUp()
+    }
+
+    private fun showEmptyFieldsError() {
+        TODO("Not yet implemented")
     }
 }

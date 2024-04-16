@@ -1,15 +1,17 @@
 package com.madbearing.notes.ui
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.madbearing.notes.R
 import com.madbearing.notes.data.NoteStorage
 import com.madbearing.notes.models.Note
@@ -29,39 +31,72 @@ class NoteListFragment : Fragment() {
         noteStorage = NoteStorage(requireContext())
         recyclerView = view.findViewById(R.id.recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = NoteAdapter(noteStorage.loadNotes())
+        adapter = com.madbearing.notes.ui.NoteAdapter(emptyList())
         recyclerView.adapter = adapter
-        view.findViewById<FloatingActionButton>(R.id.fab).setOnClickListener {
-            findNavController().navigate(R.id.action_noteListFragment_to_noteEditFragment)
-        }
+        setHasOptionsMenu(true)
         return view
     }
 
-    inner class NoteAdapter(private val notes: List<Note>) :
-        RecyclerView.Adapter<NoteAdapter.ViewHolder>() {
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.menu_note_list, menu)
+        super.onCreateOptionsMenu(menu, inflater)
+    }
 
-        inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_note, parent, false)
-            return ViewHolder(view)
-        }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val note = notes[position]
-            holder.itemView.findViewById<TextView>(R.id.text_title).text = note.title
-            holder.itemView.findViewById<TextView>(R.id.text_content).text = note.content
-            holder.itemView.setOnClickListener {
-                val bundle = Bundle().apply {
-                    putLong("noteId", note.id)
-                }
-                findNavController().navigate(R.id.action_noteListFragment_to_noteEditFragment, bundle)
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_create_note -> {
+                findNavController().navigate(R.id.action_noteListFragment_to_noteCreateFragment)
+                true
             }
+            R.id.action_delete_note -> {
+                showDeleteConfirmationDialog()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
+    }
 
-        override fun getItemCount(): Int {
-            return notes.size
+    private fun showDeleteConfirmationDialog() {
+        val alertDialog = AlertDialog.Builder(requireContext())
+            .setTitle("Удалить заметку")
+            .setMessage("Вы действительно хотите удалить выбранную заметку?")
+            .setPositiveButton("Удалить") { _, _ ->
+                deleteSelectedNote()
+            }
+            .setNegativeButton("Отмена", null)
+            .create()
+        alertDialog.show()
+    }
+
+    private fun deleteSelectedNote() {
+        val selectedNotePosition = adapter.selectedNotePosition
+        if (selectedNotePosition != -1) {
+            val notes = noteStorage.loadNotes().toMutableList()
+            notes.removeAt(selectedNotePosition)
+            noteStorage.saveNotes(notes)
+            adapter.updateNotes(notes)
+            adapter.selectedNotePosition = -1
         }
+    }
+
+    private fun createNewNote() {
+        val newNote = Note(
+            id = System.currentTimeMillis(),
+            title = "",
+            markdownContent = ""
+        )
+        val notes = noteStorage.loadNotes().toMutableList()
+        notes.add(newNote)
+        noteStorage.saveNotes(notes)
+        val bundle = Bundle().apply {
+            putLong("noteId", newNote.id)
+        }
+        findNavController().navigate(R.id.action_noteListFragment_to_noteEditFragment, bundle)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val notes = noteStorage.loadNotes()
+        adapter.updateNotes(notes)
     }
 }
