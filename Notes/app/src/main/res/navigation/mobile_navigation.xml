@@ -11,20 +11,32 @@
         tools:layout="@layout/fragment_note_list">
 
         <action
+            android:id="@+id/action_noteListFragment_to_noteCreateFragment"
+            app:destination="@id/noteCreateFragment" />
+
+        <action
             android:id="@+id/action_noteListFragment_to_noteEditFragment"
-            app:destination="@id/noteEditFragment">
-            <argument
-                android:name="noteId"
-                app:argType="long"
-                android:defaultValue="0L" />
-        </action>
+            app:destination="@id/noteEditFragment" />
 
     </fragment>
+
+    <fragment
+        android:id="@+id/noteCreateFragment"
+        android:name="com.madbearing.notes.ui.NoteCreateFragment"
+        android:label="Create Note"
+        tools:layout="@layout/fragment_note_create" />
 
     <fragment
         android:id="@+id/noteEditFragment"
         android:name="com.madbearing.notes.ui.NoteEditFragment"
         android:label="Edit Note"
-        tools:layout="@layout/fragment_note_edit" />
+        tools:layout="@layout/fragment_note_edit">
+
+        <argument
+            android:name="noteId"
+            app:argType="long"
+            android:defaultValue="0L" />
+
+    </fragment>
 
 </navigation>
