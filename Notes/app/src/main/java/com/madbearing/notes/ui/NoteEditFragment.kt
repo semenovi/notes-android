@@ -3,11 +3,13 @@ package com.madbearing.notes.ui
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.MimeTypeMap
 import android.widget.Button
 import android.widget.EditText
 import androidx.core.content.ContextCompat
@@ -16,6 +18,7 @@ import androidx.navigation.fragment.findNavController
 import com.madbearing.notes.R
 import com.madbearing.notes.data.NoteStorage
 import com.madbearing.notes.models.Note
+import java.io.File
 
 class NoteEditFragment : Fragment() {
 
@@ -27,6 +30,8 @@ class NoteEditFragment : Fragment() {
 
     private val CHOOSE_IMAGE_REQUEST = 1
     private val PERMISSION_REQUEST_CODE = 2
+
+    private val imageUris = mutableListOf<Uri>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -92,14 +97,39 @@ class NoteEditFragment : Fragment() {
         if (requestCode == CHOOSE_IMAGE_REQUEST && resultCode == Activity.RESULT_OK) {
             val imageUri = data?.data
             imageUri?.let {
-                // Сохраните URI изображения в заметке
+                saveImageToAppDirectory(it)
             }
         }
+    }
+
+    private var imageCounter = 0
+
+    private fun saveImageToAppDirectory(imageUri: Uri) {
+        val inputStream = context?.contentResolver?.openInputStream(imageUri)
+        val extension = getExtensionFromUri(imageUri)
+        val fileName = "${imageCounter++}.$extension"
+        val outputFile = File(context?.filesDir, fileName)
+        inputStream?.use { input ->
+            outputFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+        val appImageUri = Uri.fromFile(outputFile)
+        imageUris.add(appImageUri)
+    }
+
+    private fun getExtensionFromUri(uri: Uri): String {
+        val fileExtension = context?.contentResolver?.getType(uri)?.let {
+            MimeTypeMap.getSingleton().getExtensionFromMimeType(it)
+        }
+        return fileExtension ?: "jpg"
     }
 
     private fun displayNote(note: Note) {
         editTitle.setText(note.title)
         editContent.setText(note.markdownContent)
+        imageUris.clear()
+        imageUris.addAll(note.imageUris)
     }
 
     private fun saveNote() {
@@ -107,15 +137,19 @@ class NoteEditFragment : Fragment() {
         val markdownContent = editContent.text.toString().trim()
 
         if (noteTitle.isNotEmpty() && markdownContent.isNotEmpty()) {
-            val newNote = Note(
-                id = System.currentTimeMillis(),
+            val updatedNote = Note(
+                id = noteId,
                 title = noteTitle,
-                markdownContent = markdownContent
+                markdownContent = markdownContent,
+                imageUris = imageUris
             )
             val notes = noteStorage.loadNotes().toMutableList()
-            notes.add(newNote)
-            noteStorage.saveNotes(notes)
-            findNavController().navigateUp()
+            val index = notes.indexOfFirst { it.id == noteId }
+            if (index != -1) {
+                notes[index] = updatedNote
+                noteStorage.saveNotes(notes)
+                findNavController().navigateUp()
+            }
         } else {
             showEmptyFieldsError()
         }

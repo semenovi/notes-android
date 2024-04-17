@@ -8,5 +8,5 @@ data class Note(
     val title: String,
     val markdownContent: String,
     val createdAt: Date = Date(),
-    val imageUris: List<Uri> = emptyList()
+    var imageUris: List<Uri> = emptyList()
 )
