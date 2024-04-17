@@ -65,7 +65,7 @@ class NoteCreateFragment : Fragment() {
                 id = System.currentTimeMillis(),
                 title = noteTitle,
                 markdownContent = markdownContent,
-                imageUris = imageUris.map { it.toAbsolutePath() }
+                imageUris = imageUris
             )
             val notes = noteStorage.loadNotes().toMutableList()
             notes.add(newNote)
@@ -94,12 +94,10 @@ class NoteCreateFragment : Fragment() {
                 for (i in 0 until clipData.itemCount) {
                     val imageUri = clipData.getItemAt(i).uri
                     saveImageToAppDirectory(imageUri)
-                    imageUris.add(imageUri)
                 }
             } ?: run {
                 data?.data?.let { uri ->
                     saveImageToAppDirectory(uri)
-                    imageUris.add(uri)
                 }
             }
             updateImageList()
@@ -118,7 +116,8 @@ class NoteCreateFragment : Fragment() {
                 input.copyTo(output)
             }
         }
-        imageUris.add(Uri.fromFile(outputFile))
+        val appImageUri = Uri.fromFile(outputFile)
+        imageUris.add(appImageUri)
     }
 
     private fun getExtensionFromUri(uri: Uri): String {
@@ -140,10 +139,5 @@ class NoteCreateFragment : Fragment() {
     private fun getFileNameFromUri(uri: Uri): String {
         val filePath = uri.path ?: return ""
         return filePath.substring(filePath.lastIndexOf("/") + 1)
-    }
-
-    private fun Uri.toAbsolutePath(): String {
-        val filePath = this.path ?: return ""
-        return if (filePath.startsWith("/")) filePath else "/files/${context?.filesDir?.absolutePath}/${filePath}"
     }
 }

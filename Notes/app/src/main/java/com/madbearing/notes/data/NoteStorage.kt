@@ -13,6 +13,7 @@ import com.google.gson.reflect.TypeToken
 import com.madbearing.notes.models.Note
 import java.io.File
 import java.lang.reflect.Type
+import com.madbearing.notes.getFileNameFromUri
 
 class NoteStorage(private val context: Context) {
 
@@ -22,6 +23,7 @@ class NoteStorage(private val context: Context) {
     fun saveNotes(notes: List<Note>) {
         val json = gson.toJson(notes)
         notesFile.writeText(json)
+        saveImages(notes)
     }
 
     fun loadNotes(): List<Note> {
@@ -30,7 +32,38 @@ class NoteStorage(private val context: Context) {
         }
         val json = notesFile.readText()
         val type = object : TypeToken<List<Note>>() {}.type
-        return gson.fromJson(json, type)
+        val notes = gson.fromJson<List<Note>>(json, type)
+        loadImages(notes)
+        return notes
+    }
+
+    private fun saveImages(notes: List<Note>) {
+        val imagesDir = File(context.filesDir, "images")
+        if (!imagesDir.exists()) {
+            imagesDir.mkdir()
+        }
+        notes.forEach { note ->
+            note.imageUris.forEach { uri ->
+                val fileName = getFileNameFromUri(uri)
+                val sourceFile = File(uri.path)
+                if (sourceFile.exists()) {
+                    val destinationFile = File(imagesDir, fileName)
+                    sourceFile.copyTo(destinationFile, overwrite = true)
+                }
+            }
+        }
+    }
+
+    private fun loadImages(notes: List<Note>) {
+        val imagesDir = File(context.filesDir, "images")
+        notes.forEach { note ->
+            val updatedImageUris = note.imageUris.map { uri ->
+                val fileName = getFileNameFromUri(uri)
+                val imageFile = File(imagesDir, fileName)
+                Uri.fromFile(imageFile)
+            }
+            note.imageUris = updatedImageUris
+        }
     }
 }
 
