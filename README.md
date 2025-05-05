@@ -1,2 +1,2 @@
-# notes-android
-simple native notes app with markdown support
+# Notes
+simple MAUI notes app with markdown support
