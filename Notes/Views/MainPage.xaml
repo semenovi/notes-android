@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Notes.Views.MainPage"
+             xmlns:viewmodels="clr-namespace:Notes.ViewModels"
+             xmlns:models="clr-namespace:Notes.Models"
+             Title="Notes">
+
+    <ContentPage.BindingContext>
+        <viewmodels:MainPageViewModel />
+    </ContentPage.BindingContext>
+
+    <Grid RowDefinitions="Auto,*" ColumnDefinitions="300,*">
+        <!-- Header toolbar -->
+        <Grid Grid.Row="0" Grid.ColumnSpan="2" BackgroundColor="{StaticResource Primary}">
+            <HorizontalStackLayout Padding="10" Spacing="10">
+                <Button Text="New Note" Command="{Binding NewNoteCommand}" />
+                <Button Text="New Folder" Command="{Binding NewFolderCommand}" />
+                <Button Text="Sync" Command="{Binding SyncCommand}" />
+                <Button Text="Settings" Command="{Binding SettingsCommand}" />
+            </HorizontalStackLayout>
+        </Grid>
+
+        <!-- Folder tree and note list -->
+        <Grid Grid.Row="1" Grid.Column="0" RowDefinitions="Auto,*,Auto">
+            <!-- Folder header -->
+            <Label Grid.Row="0" Text="Folders" FontAttributes="Bold" Padding="10" />
+
+            <!-- Folder tree -->
+            <CollectionView Grid.Row="1" 
+                            ItemsSource="{Binding Folders}"
+                            SelectedItem="{Binding SelectedFolder}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:Folder">
+                        <Grid Padding="10,5">
+                            <Label Text="{Binding Name}" 
+                                   FontAttributes="{Binding IsSelected, Converter={StaticResource BoolToFontAttributesConverter}}" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- Folder actions -->
+            <HorizontalStackLayout Grid.Row="2" Padding="10" Spacing="10">
+                <Button Text="Delete Folder" Command="{Binding DeleteFolderCommand}" 
+                        IsEnabled="{Binding IsFolderSelected}" />
+                <Button Text="Rename Folder" Command="{Binding RenameFolderCommand}" 
+                        IsEnabled="{Binding IsFolderSelected}" />
+            </HorizontalStackLayout>
+        </Grid>
+
+        <!-- Note content area (split into list and editor) -->
+        <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="300,*">
+            <!-- Note list -->
+            <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto">
+                <!-- Notes header -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0" Text="Notes" FontAttributes="Bold" Padding="10" />
+                    <SearchBar Grid.Column="1" Placeholder="Search..." Text="{Binding SearchText}" />
+                </Grid>
+
+                <!-- Notes list -->
+                <CollectionView Grid.Row="1" 
+                                ItemsSource="{Binding Notes}"
+                                SelectedItem="{Binding SelectedNote}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:Note">
+                            <Grid Padding="10,5">
+                                <VerticalStackLayout>
+                                    <Label Text="{Binding Title}" FontAttributes="Bold" />
+                                    <Label Text="{Binding Modified, StringFormat='{0:g}'}" 
+                                           FontSize="Small" TextColor="Gray" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Note actions -->
+                <HorizontalStackLayout Grid.Row="2" Padding="10" Spacing="10">
+                    <Button Text="Delete Note" Command="{Binding DeleteNoteCommand}" 
+                            IsEnabled="{Binding IsNoteSelected}" />
+                </HorizontalStackLayout>
+            </Grid>
+
+            <!-- Note editor -->
+            <Grid Grid.Column="1" RowDefinitions="Auto,*" IsVisible="{Binding IsNoteSelected}">
+                <!-- Note title -->
+                <Entry Grid.Row="0" 
+                       Text="{Binding SelectedNote.Title}" 
+                       Placeholder="Title"
+                       FontSize="Large"
+                       Margin="10" />
+
+                <!-- Note content -->
+                <Grid Grid.Row="1" RowDefinitions="*,Auto">
+                    <Editor Grid.Row="0" 
+                            Text="{Binding SelectedNote.Content}" 
+                            Placeholder="Enter your note here..."
+                            AutoSize="TextChanges"
+                            BackgroundColor="Transparent"
+                            Margin="10" />
+
+                    <!-- Editor toolbar -->
+                    <HorizontalStackLayout Grid.Row="1" Padding="10" Spacing="10">
+                        <Button Text="Bold" Command="{Binding FormatTextCommand}" CommandParameter="bold" />
+                        <Button Text="Italic" Command="{Binding FormatTextCommand}" CommandParameter="italic" />
+                        <Button Text="Link" Command="{Binding FormatTextCommand}" CommandParameter="link" />
+                        <Button Text="Image" Command="{Binding AddMediaCommand}" />
+                    </HorizontalStackLayout>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</ContentPage>
