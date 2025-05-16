@@ -7,8 +7,20 @@
     Title="Notes">
 
     <ShellContent
-        Title="Notes"
-        ContentTemplate="{DataTemplate pages:NotesPage}"
-        Route="NotesPage" />
+        Title="Folders"
+        ContentTemplate="{DataTemplate pages:FoldersPage}"
+        Route="FoldersPage" />
 
+    <Shell.Resources>
+        <ResourceDictionary>
+            <Style x:Key="BaseStyle" TargetType="Element">
+                <Setter Property="Shell.BackgroundColor" Value="{StaticResource Primary}" />
+                <Setter Property="Shell.ForegroundColor" Value="White" />
+                <Setter Property="Shell.TitleColor" Value="White" />
+                <Setter Property="Shell.DisabledColor" Value="#B4FFFFFF" />
+                <Setter Property="Shell.UnselectedColor" Value="#95FFFFFF" />
+            </Style>
+            <Style TargetType="ShellContent" BasedOn="{StaticResource BaseStyle}" />
+        </ResourceDictionary>
+    </Shell.Resources>
 </Shell>

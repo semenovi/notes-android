@@ -1,44 +1,89 @@
 using Notes.Models;
+using Notes.Services.Notes;
+using System.Collections.ObjectModel;
 
 namespace Notes.Views.Pages;
 
+[QueryProperty(nameof(FolderId), "FolderId")]
+[QueryProperty(nameof(FolderName), "FolderName")]
 public partial class NotesPage : ContentPage
 {
-  public NotesPage()
+  private readonly NoteManager _noteManager;
+  public ObservableCollection<Note> Notes { get; } = new ObservableCollection<Note>();
+
+  private string _folderId;
+  public string FolderId
+  {
+    get => _folderId;
+    set
+    {
+      _folderId = value;
+      LoadNotesAsync().ConfigureAwait(false);
+    }
+  }
+
+  private string _folderName;
+  public string FolderName
+  {
+    get => _folderName;
+    set
+    {
+      _folderName = value;
+      OnPropertyChanged();
+    }
+  }
+
+  public NotesPage(NoteManager noteManager)
   {
     InitializeComponent();
-
-    FolderTree.FolderSelected += OnFolderSelected;
-    NoteList.NoteSelected += OnNoteSelected;
-    Editor.NoteSaved += OnNoteSaved;
+    _noteManager = noteManager;
+    NotesCollection.ItemsSource = Notes;
+    BindingContext = this;
   }
 
-  protected override async void OnAppearing()
+  private async Task LoadNotesAsync()
   {
-    base.OnAppearing();
-    await InitializeAppDataAsync();
-  }
+    if (string.IsNullOrEmpty(FolderId))
+      return;
 
-  private async Task InitializeAppDataAsync()
-  {
-    await FolderTree.LoadFoldersAsync();
-  }
-
-  private async void OnFolderSelected(object sender, Folder folder)
-  {
-    await NoteList.LoadNotesAsync(folder.Id);
-  }
-
-  private void OnNoteSelected(object sender, Note note)
-  {
-    Editor.LoadNote(note);
-  }
-
-  private void OnNoteSaved(object sender, EventArgs e)
-  {
-    if (Editor.BindingContext is Note note)
+    Notes.Clear();
+    var notes = await _noteManager.GetNotesAsync(FolderId);
+    foreach (var note in notes)
     {
-      NoteList.AddOrUpdateNote(note);
+      Notes.Add(note);
     }
+  }
+
+  private async void OnAddNoteClicked(object sender, EventArgs e)
+  {
+    string noteTitle = await DisplayPromptAsync("New Note", "Enter note title:", initialValue: "");
+
+    if (!string.IsNullOrWhiteSpace(noteTitle))
+    {
+      var newNote = await _noteManager.CreateNoteAsync(noteTitle, FolderId);
+      Notes.Add(newNote);
+
+      await NavigateToNoteEditor(newNote);
+    }
+  }
+
+  private async void OnNoteSelectionChanged(object sender, SelectionChangedEventArgs e)
+  {
+    if (e.CurrentSelection.FirstOrDefault() is Note selectedNote)
+    {
+      NotesCollection.SelectedItem = null;
+
+      await NavigateToNoteEditor(selectedNote);
+    }
+  }
+
+  private async Task NavigateToNoteEditor(Note note)
+  {
+    var navigationParameter = new Dictionary<string, object>
+          {
+              { "NoteId", note.Id }
+          };
+
+    await Shell.Current.GoToAsync(nameof(NoteEditorPage), navigationParameter);
   }
 }

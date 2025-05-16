@@ -1,18 +1,66 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:controls="clr-namespace:Notes.Views.Controls"
+             xmlns:helpers="clr-namespace:Notes.Helpers"
              x:Class="Notes.Views.Pages.NotesPage"
-             Title="Notes">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250" />
-            <ColumnDefinition Width="300" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+             Title="{Binding FolderName}">
 
-        <controls:FolderTreeView Grid.Column="0" x:Name="FolderTree" />
-        <controls:NoteListView Grid.Column="1" x:Name="NoteList" />
-        <controls:MarkdownEditor Grid.Column="2" x:Name="Editor" />
+    <Grid>
+        <CollectionView x:Name="NotesCollection"
+                      SelectionMode="Single"
+                      SelectionChanged="OnNoteSelectionChanged">
+            <CollectionView.EmptyView>
+                <StackLayout HorizontalOptions="Center" VerticalOptions="Center">
+                    <Label Text="No notes yet" FontSize="18" HorizontalOptions="Center" TextColor="Gray" />
+                    <Label Text="Create your first note" FontSize="14" HorizontalOptions="Center" TextColor="Gray" />
+                </StackLayout>
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="20,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Label Text="{x:Static helpers:MaterialIconCodes.Note}" 
+                               FontFamily="MaterialIcons" 
+                               FontSize="24" 
+                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                               Grid.RowSpan="2"
+                               VerticalOptions="Center" />
+
+                        <Label Grid.Column="1" Grid.Row="0" 
+                               Text="{Binding Title}" 
+                               FontSize="18" 
+                               FontAttributes="Bold"
+                               Margin="15,0,0,0" />
+
+                        <Label Grid.Column="1" Grid.Row="1" 
+                               Text="{Binding Modified, StringFormat='{0:g}'}" 
+                               FontSize="12" 
+                               TextColor="Gray"
+                               Margin="15,0,0,0" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Button x:Name="AddNoteButton"
+                Text="{x:Static helpers:MaterialIconCodes.Add}"
+                FontFamily="MaterialIcons"
+                FontSize="24"
+                CornerRadius="30"
+                WidthRequest="60"
+                HeightRequest="60"
+                Padding="0"
+                VerticalOptions="End"
+                HorizontalOptions="End"
+                Margin="0,0,20,20"
+                Clicked="OnAddNoteClicked" />
     </Grid>
 </ContentPage>
