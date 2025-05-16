@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:helpers="clr-namespace:Notes.Helpers"
+             x:Class="Notes.Views.Pages.NoteEditorPage"
+             Title="{Binding Title}">
+
+    <Grid RowDefinitions="Auto,*">
+        <HorizontalStackLayout Grid.Row="0" Padding="10" Spacing="10">
+            <Button Text="{x:Static helpers:MaterialIconCodes.Save}" 
+                    FontFamily="MaterialIcons"
+                    FontSize="22" 
+                    WidthRequest="50"
+                    HeightRequest="50"
+                    Clicked="OnSaveClicked" />
+
+            <Button Text="{x:Static helpers:MaterialIconCodes.Preview}" 
+                    FontFamily="MaterialIcons"
+                    FontSize="22" 
+                    WidthRequest="50"
+                    HeightRequest="50"
+                    Clicked="OnPreviewClicked" />
+
+            <Button Text="{x:Static helpers:MaterialIconCodes.Image}" 
+                    FontFamily="MaterialIcons"
+                    FontSize="22" 
+                    WidthRequest="50"
+                    HeightRequest="50"
+                    Clicked="OnAddMediaClicked" />
+
+            <Button Text="{x:Static helpers:MaterialIconCodes.FormatBold}" 
+                    FontFamily="MaterialIcons"
+                    FontSize="22" 
+                    WidthRequest="50"
+                    HeightRequest="50"
+                    Clicked="OnFormatBoldClicked" />
+
+            <Button Text="{x:Static helpers:MaterialIconCodes.FormatItalic}" 
+                    FontFamily="MaterialIcons"
+                    FontSize="22" 
+                    WidthRequest="50"
+                    HeightRequest="50"
+                    Clicked="OnFormatItalicClicked" />
+
+            <Button Text="{x:Static helpers:MaterialIconCodes.FormatListBulleted}" 
+                    FontFamily="MaterialIcons"
+                    FontSize="22" 
+                    WidthRequest="50"
+                    HeightRequest="50"
+                    Clicked="OnFormatListClicked" />
+        </HorizontalStackLayout>
+
+        <Editor Grid.Row="1" 
+                x:Name="ContentEditor" 
+                Text="{Binding Content}"
+                FontFamily="Monospace"
+                Margin="10" />
+    </Grid>
+</ContentPage>

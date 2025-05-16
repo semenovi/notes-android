@@ -5,6 +5,7 @@ using Notes.Services.Crypto;
 using Notes.Services.Markdown;
 using Notes.Services.Notes;
 using Notes.Services.Sync;
+using Notes.Views.Pages;
 
 namespace Notes;
 
@@ -19,6 +20,7 @@ public static class MauiProgram
         {
           fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
           fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+          fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
         });
 
     string appDataPath = Path.Combine(FileSystem.AppDataDirectory, "Notes");
@@ -41,6 +43,11 @@ public static class MauiProgram
     builder.Services.AddSingleton<SyncManager>();
     builder.Services.AddSingleton<ISyncAdapter, UsbSyncAdapter>();
     builder.Services.AddSingleton<ISyncAdapter, NetworkSyncAdapter>();
+
+    builder.Services.AddTransient<FoldersPage>();
+    builder.Services.AddTransient<NotesPage>();
+    builder.Services.AddTransient<NoteEditorPage>();
+    builder.Services.AddTransient<MarkdownPreviewPage>();
 
 #if DEBUG
     builder.Logging.AddDebug();

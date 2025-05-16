@@ -1,9 +1,12 @@
 ﻿namespace Notes;
 
-  public partial class AppShell : Shell
+public partial class AppShell : Shell
+{
+  public AppShell()
   {
-      public AppShell()
-      {
-          InitializeComponent();
-      }
+    InitializeComponent();
+
+    Routing.RegisterRoute(nameof(Views.Pages.NotesPage), typeof(Views.Pages.NotesPage));
+    Routing.RegisterRoute(nameof(Views.Pages.NoteEditorPage), typeof(Views.Pages.NoteEditorPage));
   }
+}

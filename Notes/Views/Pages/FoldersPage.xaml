@@ -2,55 +2,42 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:helpers="clr-namespace:Notes.Helpers"
-             x:Class="Notes.Views.Pages.NotesPage"
-             Title="{Binding FolderName}">
+             x:Class="Notes.Views.Pages.FoldersPage"
+             Title="Folders">
 
     <Grid>
-        <CollectionView x:Name="NotesCollection"
+        <CollectionView x:Name="FoldersCollection"
                       SelectionMode="Single"
-                      SelectionChanged="OnNoteSelectionChanged">
+                      SelectionChanged="OnFolderSelectionChanged">
             <CollectionView.EmptyView>
                 <StackLayout HorizontalOptions="Center" VerticalOptions="Center">
-                    <Label Text="No notes yet" FontSize="18" HorizontalOptions="Center" TextColor="Gray" />
-                    <Label Text="Create your first note" FontSize="14" HorizontalOptions="Center" TextColor="Gray" />
+                    <Label Text="No folders yet" FontSize="18" HorizontalOptions="Center" TextColor="Gray" />
+                    <Label Text="Create your first folder" FontSize="14" HorizontalOptions="Center" TextColor="Gray" />
                 </StackLayout>
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Grid Padding="20,15">
+                    <Grid Padding="20">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <Label Text="{x:Static helpers:MaterialIconCodes.Note}" 
+                        <Label Text="{x:Static helpers:MaterialIconCodes.Folder}" 
                                FontFamily="MaterialIcons" 
                                FontSize="24" 
                                TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                               Grid.RowSpan="2"
                                VerticalOptions="Center" />
-
-                        <Label Grid.Column="1" Grid.Row="0" 
-                               Text="{Binding Title}" 
+                        <Label Grid.Column="1" 
+                               Text="{Binding Name}" 
                                FontSize="18" 
-                               FontAttributes="Bold"
-                               Margin="15,0,0,0" />
-
-                        <Label Grid.Column="1" Grid.Row="1" 
-                               Text="{Binding Modified, StringFormat='{0:g}'}" 
-                               FontSize="12" 
-                               TextColor="Gray"
+                               VerticalOptions="Center" 
                                Margin="15,0,0,0" />
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <Button x:Name="AddNoteButton"
+        <Button x:Name="AddFolderButton"
                 Text="{x:Static helpers:MaterialIconCodes.Add}"
                 FontFamily="MaterialIcons"
                 FontSize="24"
@@ -61,6 +48,6 @@
                 VerticalOptions="End"
                 HorizontalOptions="End"
                 Margin="0,0,20,20"
-                Clicked="OnAddNoteClicked" />
+                Clicked="OnAddFolderClicked" />
     </Grid>
 </ContentPage>
