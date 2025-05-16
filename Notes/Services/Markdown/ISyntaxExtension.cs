@@ -1,11 +1,8 @@
-using System;
+﻿namespace Notes.Services.Markdown;
 
-namespace Notes.Services.Markdown
+public interface ISyntaxExtension
 {
-    public interface ISyntaxExtension
-    {
-        string Name { get; }
-        string Description { get; }
-        string Process(string markdown);
-    }
+  string Name { get; }
+  string Description { get; }
+  string Process(string markdown);
 }

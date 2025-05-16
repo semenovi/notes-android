@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Notes.Views.Controls.FolderTreeView">
+    <Grid RowDefinitions="Auto,*">
+        <HorizontalStackLayout Grid.Row="0" Spacing="10" Margin="10">
+            <Button Text="Add Folder" Clicked="OnAddFolderClicked" />
+            <Button Text="Delete" Clicked="OnDeleteFolderClicked" IsEnabled="{Binding IsDeleteEnabled}" />
+        </HorizontalStackLayout>
+
+        <CollectionView Grid.Row="1" 
+                        x:Name="FoldersCollectionView"
+                        SelectionMode="Single"
+                        SelectionChanged="OnFolderSelectionChanged">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="10" BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}}">
+                        <Label Text="{Binding Name}" FontSize="16" VerticalOptions="Center" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentView>
