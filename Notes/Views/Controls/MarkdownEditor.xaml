@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Notes.Views.Controls.MarkdownEditor">
+    <Grid RowDefinitions="Auto,*">
+        <HorizontalStackLayout Grid.Row="0" Margin="10" Spacing="10">
+            <Button Text="Save" Clicked="OnSaveClicked" />
+            <Button Text="Preview" Clicked="OnPreviewClicked" />
+            <Button Text="Add Media" Clicked="OnAddMediaClicked" />
+        </HorizontalStackLayout>
+
+        <Editor Grid.Row="1" 
+                x:Name="ContentEditor" 
+                Text="{Binding Content}"
+                FontFamily="Monospace"
+                Margin="10" />
+    </Grid>
+</ContentView>

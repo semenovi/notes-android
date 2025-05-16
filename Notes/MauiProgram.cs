@@ -1,46 +1,51 @@
 ﻿using Microsoft.Extensions.Logging;
+using Notes.Data.Repositories;
+using Notes.Data.Storage;
+using Notes.Services.Crypto;
 using Notes.Services.Markdown;
 using Notes.Services.Notes;
-using Notes.Services.Security;
-using Notes.Services.Storage;
 using Notes.Services.Sync;
 
 namespace Notes;
 
 public static class MauiProgram
 {
-    public static MauiApp CreateMauiApp()
-    {
-        var builder = MauiApp.CreateBuilder();
-        builder
-            .UseMauiApp<App>()
-            .ConfigureFonts(fonts =>
-            {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-            });
+  public static MauiApp CreateMauiApp()
+  {
+    var builder = MauiApp.CreateBuilder();
+    builder
+        .UseMauiApp<App>()
+        .ConfigureFonts(fonts =>
+        {
+          fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+          fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+        });
 
-        // Register services
-        builder.Services.AddSingleton<FileSystemStorage>(provider => 
-            new FileSystemStorage("Notes"));
-            
-        builder.Services.AddSingleton<MediaStorage>();
-        builder.Services.AddSingleton<NoteRepository>();
-        builder.Services.AddSingleton<FolderManager>();
-        
-        builder.Services.AddSingleton<CryptoService>();
-        builder.Services.AddSingleton<SecureStorageImpl>();
-        
-        builder.Services.AddSingleton<MarkdownProcessor>();
-        builder.Services.AddSingleton<SyntaxExtensionManager>();
-        
-        builder.Services.AddSingleton<SyncManager>();
-        builder.Services.AddSingleton<UsbSyncAdapter>();
+    string appDataPath = Path.Combine(FileSystem.AppDataDirectory, "Notes");
+
+    builder.Services.AddSingleton<FileSystemStorage>(new FileSystemStorage(appDataPath));
+    builder.Services.AddSingleton<MediaStorage>();
+    builder.Services.AddSingleton<NoteRepository>();
+    builder.Services.AddSingleton<FolderRepository>();
+
+    builder.Services.AddSingleton<NoteManager>();
+    builder.Services.AddSingleton<FolderManager>();
+    builder.Services.AddSingleton<MediaManager>();
+
+    builder.Services.AddSingleton<MarkdownProcessor>();
+    builder.Services.AddSingleton<SyntaxExtensionManager>();
+
+    builder.Services.AddSingleton<CryptoService>();
+    builder.Services.AddSingleton<Services.Crypto.SecureStorage>();
+
+    builder.Services.AddSingleton<SyncManager>();
+    builder.Services.AddSingleton<ISyncAdapter, UsbSyncAdapter>();
+    builder.Services.AddSingleton<ISyncAdapter, NetworkSyncAdapter>();
 
 #if DEBUG
-        builder.Logging.AddDebug();
+    builder.Logging.AddDebug();
 #endif
 
-        return builder.Build();
-    }
+    return builder.Build();
+  }
 }

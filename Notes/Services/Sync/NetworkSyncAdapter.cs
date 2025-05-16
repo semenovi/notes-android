@@ -2,13 +2,16 @@
 
 namespace Notes.Services.Sync;
 
-public class UsbSyncAdapter : ISyncAdapter
+public class NetworkSyncAdapter : ISyncAdapter
 {
-  public SyncProtocolType ProtocolType => SyncProtocolType.Usb;
+  public SyncProtocolType ProtocolType => SyncProtocolType.Network;
   public bool IsConnected { get; private set; }
 
   public async Task<bool> ConnectAsync(SyncProfile profile)
   {
+    if (!profile.Settings.TryGetValue("ServerUrl", out var serverUrl))
+      return false;
+
     IsConnected = true;
     return await Task.FromResult(true);
   }
@@ -29,8 +32,8 @@ public class UsbSyncAdapter : ISyncAdapter
     await Task.CompletedTask;
   }
 
-  public List<string> DetectDevices()
+  public bool TestConnection()
   {
-    return new List<string>();
+    return true;
   }
 }

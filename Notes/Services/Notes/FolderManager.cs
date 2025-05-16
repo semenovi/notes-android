@@ -1,156 +1,63 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using Notes.Data.Repositories;
 using Notes.Models;
-using Notes.Services.Storage;
 
-namespace Notes.Services.Notes
+namespace Notes.Services.Notes;
+
+public class FolderManager
 {
-    public class FolderManager
+  private readonly FolderRepository _repository;
+
+  public FolderManager(FolderRepository repository)
+  {
+    _repository = repository;
+  }
+
+  public async Task<Folder> CreateFolderAsync(string name, string? parentId = null)
+  {
+    var folder = new Folder
     {
-        private readonly FileSystemStorage _storage;
-        private readonly NoteRepository _noteRepository;
-        private readonly string _foldersFile = "folders.json";
-        private List<Folder> _folders;
+      Name = name,
+      ParentId = parentId
+    };
 
-        public FolderManager(FileSystemStorage storage, NoteRepository noteRepository)
-        {
-            _storage = storage;
-            _noteRepository = noteRepository;
-            _folders = new List<Folder>();
-            LoadFolders();
-        }
+    await _repository.SaveFolderAsync(folder);
+    return folder;
+  }
 
-        public async Task<Folder> CreateFolderAsync(string name, string parentId)
-        {
-            var folder = new Folder
-            {
-                Name = name,
-                ParentId = parentId
-            };
+  public async Task UpdateFolderAsync(Folder folder)
+  {
+    await _repository.SaveFolderAsync(folder);
+  }
 
-            _folders.Add(folder);
-            await SaveFoldersAsync();
-            return folder;
-        }
+  public async Task<bool> DeleteFolderAsync(string folderId)
+  {
+    return await _repository.DeleteFolderAsync(folderId);
+  }
 
-        public async Task DeleteFolderAsync(string folderId)
-        {
-            // Get the folder
-            var folder = GetFolder(folderId);
-            if (folder == null)
-                return;
+  public async Task<Folder?> GetFolderAsync(string id)
+  {
+    return await _repository.GetFolderAsync(id);
+  }
 
-            // Get child folders
-            var childFolders = GetChildFolders(folderId);
-            
-            // Delete all notes in this folder
-            var notesInFolder = await _noteRepository.GetNotesAsync(folderId);
-            foreach (var note in notesInFolder)
-            {
-                await _noteRepository.DeleteNoteAsync(note.Id);
-            }
+  public async Task<List<Folder>> GetFoldersAsync(string? parentId = null)
+  {
+    return await _repository.GetFoldersAsync(parentId);
+  }
 
-            // Recursively delete child folders
-            foreach (var childFolder in childFolders)
-            {
-                await DeleteFolderAsync(childFolder.Id);
-            }
+  public async Task<List<Folder>> GetAllFoldersAsync()
+  {
+    return await _repository.GetAllFoldersAsync();
+  }
 
-            // Remove the folder from the list
-            _folders.Remove(folder);
-            await SaveFoldersAsync();
-        }
+  public async Task<bool> MoveFolderAsync(string folderId, string? newParentId)
+  {
+    var folder = await _repository.GetFolderAsync(folderId);
 
-        public Folder GetFolder(string folderId)
-        {
-            return _folders.FirstOrDefault(f => f.Id == folderId);
-        }
+    if (folder == null)
+      return false;
 
-        public List<Folder> GetFolders(string parentId = null)
-        {
-            if (parentId == null)
-                return _folders.Where(f => string.IsNullOrEmpty(f.ParentId)).ToList();
-            
-            return _folders.Where(f => f.ParentId == parentId).ToList();
-        }
-
-        public List<Folder> GetAllFolders()
-        {
-            return _folders.ToList();
-        }
-
-        public List<Folder> GetChildFolders(string folderId)
-        {
-            return _folders.Where(f => f.ParentId == folderId).ToList();
-        }
-
-        public async Task MoveFolderAsync(string folderId, string newParentId)
-        {
-            var folder = GetFolder(folderId);
-            if (folder == null)
-                return;
-
-            // Prevent circular references
-            if (IsChildFolder(newParentId, folderId))
-                throw new InvalidOperationException("Cannot move a folder to its own subfolder");
-
-            folder.ParentId = newParentId;
-            await SaveFoldersAsync();
-        }
-
-        private bool IsChildFolder(string potentialChildId, string parentId)
-        {
-            if (string.IsNullOrEmpty(potentialChildId))
-                return false;
-                
-            if (potentialChildId == parentId)
-                return true;
-
-            var folder = GetFolder(potentialChildId);
-            if (folder == null || string.IsNullOrEmpty(folder.ParentId))
-                return false;
-
-            return IsChildFolder(folder.ParentId, parentId);
-        }
-
-        private void LoadFolders()
-        {
-            try
-            {
-                var foldersData = _storage.ReadFileAsync(_foldersFile).Result;
-                if (foldersData != null)
-                {
-                    _folders = JsonSerializer.Deserialize<List<Folder>>(foldersData);
-                }
-                else
-                {
-                    // Initialize with a default root folder if none exists
-                    _folders = new List<Folder>
-                    {
-                        new Folder { Id = "root", Name = "Root", ParentId = null }
-                    };
-                    SaveFoldersAsync().Wait();
-                }
-            }
-            catch
-            {
-                _folders = new List<Folder>
-                {
-                    new Folder { Id = "root", Name = "Root", ParentId = null }
-                };
-                SaveFoldersAsync().Wait();
-            }
-        }
-
-        public async Task SaveFoldersAsync()
-        {
-            var json = JsonSerializer.Serialize(_folders);
-            var bytes = System.Text.Encoding.UTF8.GetBytes(json);
-            await _storage.WriteFileAsync(_foldersFile, bytes);
-        }
-    }
+    folder.ParentId = newParentId;
+    await _repository.SaveFolderAsync(folder);
+    return true;
+  }
 }
