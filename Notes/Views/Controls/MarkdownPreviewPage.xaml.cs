@@ -2,9 +2,14 @@ namespace Notes.Views.Pages;
 
 public partial class MarkdownPreviewPage : ContentPage
 {
+  private readonly Services.Notes.MediaManager _mediaManager;
+  private readonly Services.Markdown.MarkdownProcessor _markdownProcessor;
+
   public MarkdownPreviewPage(string htmlContent)
   {
     InitializeComponent();
+    _mediaManager = App.Current.Handler.MauiContext.Services.GetService<Services.Notes.MediaManager>();
+    _markdownProcessor = App.Current.Handler.MauiContext.Services.GetService<Services.Markdown.MarkdownProcessor>();
 
     string fullHtml = $@"
                 <!DOCTYPE html>

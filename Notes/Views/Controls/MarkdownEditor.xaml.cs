@@ -61,7 +61,7 @@ public partial class MarkdownEditor : ContentView, INotifyPropertyChanged
     if (string.IsNullOrEmpty(Content))
       return;
 
-    string html = _markdownProcessor.ConvertToHtml(Content);
+    string html = await _markdownProcessor.ConvertToHtmlAsync(Content);
     var page = new Views.Pages.MarkdownPreviewPage(html);
     await Application.Current.MainPage.Navigation.PushModalAsync(page);
   }

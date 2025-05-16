@@ -18,7 +18,7 @@ public class MarkdownProcessor
     }
   }
 
-  public string ConvertToHtml(string markdown)
+  public async Task<string> ConvertToHtmlAsync(string markdown)
   {
     string processed = markdown;
 
@@ -27,25 +27,78 @@ public class MarkdownProcessor
       processed = extension.Process(processed);
     }
 
-    processed = ProcessMediaLinks(processed);
+    processed = await ProcessMediaLinksAsync(processed);
     processed = ProcessBasicMarkdown(processed);
 
     return processed;
   }
 
-  public string ProcessMediaLinks(string markdown)
+  public async Task<string> ProcessMediaLinksAsync(string markdown)
   {
-    return System.Text.RegularExpressions.Regex.Replace(
-        markdown,
-        @"!\[(.*?)\]\(media:(.*?)\)",
-        match =>
-        {
-          string altText = match.Groups[1].Value;
-          string mediaId = match.Groups[2].Value;
+    var regex = new System.Text.RegularExpressions.Regex(@"!\[(.*?)\]\(media:(.*?)\)");
+    var matches = regex.Matches(markdown);
 
-          return $"<img src=\"api/media/{mediaId}\" alt=\"{altText}\" />";
+    foreach (System.Text.RegularExpressions.Match match in matches)
+    {
+      string altText = match.Groups[1].Value;
+      string mediaId = match.Groups[2].Value;
+
+      var mediaItem = await _mediaManager.GetMediaAsync(mediaId);
+      if (mediaItem != null)
+      {
+        string dataUri = await GetMediaDataUriAsync(mediaId);
+        string imgTag = $"<img src=\"{dataUri}\" alt=\"{altText}\" />";
+        markdown = markdown.Replace(match.Value, imgTag);
+      }
+      else
+      {
+        string imgTag = $"<img alt=\"{altText} (не найдено)\" />";
+        markdown = markdown.Replace(match.Value, imgTag);
+      }
+    }
+
+    return markdown;
+  }
+
+  private async Task<string> GetMediaDataUriAsync(string mediaId)
+  {
+    try
+    {
+      using (Stream stream = await _mediaManager.GetMediaContentAsync(mediaId))
+      using (MemoryStream ms = new MemoryStream())
+      {
+        await stream.CopyToAsync(ms);
+        byte[] bytes = ms.ToArray();
+
+        var mediaItem = await _mediaManager.GetMediaAsync(mediaId);
+        string fileType = mediaItem?.FileType?.ToLowerInvariant() ?? "png";
+        string mimeType = "image/png";
+
+        switch (fileType)
+        {
+          case "jpg":
+          case "jpeg":
+            mimeType = "image/jpeg";
+            break;
+          case "png":
+            mimeType = "image/png";
+            break;
+          case "gif":
+            mimeType = "image/gif";
+            break;
+          case "webp":
+            mimeType = "image/webp";
+            break;
         }
-    );
+
+        string base64 = Convert.ToBase64String(bytes);
+        return $"data:{mimeType};base64,{base64}";
+      }
+    }
+    catch
+    {
+      return "";
+    }
   }
 
   private string ProcessBasicMarkdown(string markdown)

@@ -84,8 +84,8 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     if (string.IsNullOrEmpty(Content))
       return;
 
-    string html = _markdownProcessor.ConvertToHtml(Content);
-    var page = new Views.Pages.MarkdownPreviewPage(html);
+    string html = await _markdownProcessor.ConvertToHtmlAsync(Content);
+    var page = new MarkdownPreviewPage(html);
     await Navigation.PushModalAsync(page);
   }
 
