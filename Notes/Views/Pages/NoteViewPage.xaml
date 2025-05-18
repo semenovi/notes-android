@@ -10,6 +10,9 @@
         <ToolbarItem Text="Edit"
                      Order="Secondary"
                      Clicked="OnEditClicked" />
+        <ToolbarItem Text="Delete Note"
+                     Order="Secondary"
+                     Clicked="OnDeleteNoteClicked" />
     </ContentPage.ToolbarItems>
 
     <WebView x:Name="NoteContentWebView" />

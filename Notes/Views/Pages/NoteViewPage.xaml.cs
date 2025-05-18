@@ -82,6 +82,16 @@ public partial class NoteViewPage : ContentPage
     await NavigateToEditor();
   }
 
+  private async void OnDeleteNoteClicked(object sender, EventArgs e)
+  {
+    bool confirm = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete note '{Title}'?", "Yes", "No");
+    if (confirm)
+    {
+      await _noteManager.DeleteNoteAsync(_note.Id);
+      await Shell.Current.GoToAsync("..");
+    }
+  }
+
   private async Task NavigateToEditor()
   {
     if (_note == null)

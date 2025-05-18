@@ -5,6 +5,12 @@
              x:Class="Notes.Views.Pages.NotesPage"
              Title="{Binding FolderName}">
 
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Delete Folder"
+                     Order="Secondary"
+                     Clicked="OnDeleteFolderClicked" />
+    </ContentPage.ToolbarItems>
+
     <Grid>
         <CollectionView x:Name="NotesCollection"
                       SelectionMode="Single"

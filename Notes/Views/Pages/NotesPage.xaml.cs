@@ -9,6 +9,7 @@ namespace Notes.Views.Pages;
 public partial class NotesPage : ContentPage
 {
   private readonly NoteManager _noteManager;
+  private readonly FolderManager _folderManager;
   public ObservableCollection<Note> Notes { get; } = new ObservableCollection<Note>();
 
   private string _folderId;
@@ -33,10 +34,11 @@ public partial class NotesPage : ContentPage
     }
   }
 
-  public NotesPage(NoteManager noteManager)
+  public NotesPage(NoteManager noteManager, FolderManager folderManager)
   {
     InitializeComponent();
     _noteManager = noteManager;
+    _folderManager = folderManager;
     NotesCollection.ItemsSource = Notes;
     BindingContext = this;
   }
@@ -74,6 +76,16 @@ public partial class NotesPage : ContentPage
       NotesCollection.SelectedItem = null;
 
       await NavigateToNoteView(selectedNote);
+    }
+  }
+
+  private async void OnDeleteFolderClicked(object sender, EventArgs e)
+  {
+    bool confirm = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete folder '{FolderName}'?", "Yes", "No");
+    if (confirm)
+    {
+      await _folderManager.DeleteFolderAsync(FolderId);
+      await Shell.Current.GoToAsync("..");
     }
   }
 
