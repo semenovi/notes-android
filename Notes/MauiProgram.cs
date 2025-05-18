@@ -2,10 +2,13 @@
 using Notes.Data.Repositories;
 using Notes.Data.Storage;
 using Notes.Services.Crypto;
+using Notes.Services.Export;
 using Notes.Services.Markdown;
 using Notes.Services.Notes;
 using Notes.Services.Sync;
 using Notes.Views.Pages;
+using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Storage;
 
 namespace Notes;
 
@@ -16,6 +19,7 @@ public static class MauiProgram
     var builder = MauiApp.CreateBuilder();
     builder
         .UseMauiApp<App>()
+        .UseMauiCommunityToolkit()
         .ConfigureFonts(fonts =>
         {
           fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -43,6 +47,9 @@ public static class MauiProgram
     builder.Services.AddSingleton<SyncManager>();
     builder.Services.AddSingleton<ISyncAdapter, UsbSyncAdapter>();
     builder.Services.AddSingleton<ISyncAdapter, NetworkSyncAdapter>();
+
+    builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
+    builder.Services.AddSingleton<ExportService>();
 
     builder.Services.AddTransient<FoldersPage>();
     builder.Services.AddTransient<NotesPage>();

@@ -4,50 +4,31 @@
              xmlns:helpers="clr-namespace:Notes.Helpers"
              x:Class="Notes.Views.Pages.FoldersPage"
              Title="Folders">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Add" Clicked="OnAddFolderClicked" IconImageSource="{FontImage FontFamily=MaterialIcons, Glyph={x:Static helpers:MaterialIconCodes.Add}}" />
+        <ToolbarItem Text="..." Clicked="OnMenuClicked" IconImageSource="{FontImage FontFamily=MaterialIcons, Glyph=&#xe5d4;}" />
+    </ContentPage.ToolbarItems>
 
-    <Grid>
+    <Grid RowDefinitions="*">
         <CollectionView x:Name="FoldersCollection"
-                      SelectionMode="Single"
-                      SelectionChanged="OnFolderSelectionChanged">
-            <CollectionView.EmptyView>
-                <StackLayout HorizontalOptions="Center" VerticalOptions="Center">
-                    <Label Text="No folders yet" FontSize="18" HorizontalOptions="Center" TextColor="Gray" />
-                    <Label Text="Create your first folder" FontSize="14" HorizontalOptions="Center" TextColor="Gray" />
-                </StackLayout>
-            </CollectionView.EmptyView>
+                        SelectionMode="Single"
+                        SelectionChanged="OnFolderSelectionChanged">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Grid Padding="20">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Label Text="{x:Static helpers:MaterialIconCodes.Folder}" 
-                               FontFamily="MaterialIcons" 
-                               FontSize="24" 
-                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                    <Grid Padding="15" ColumnDefinitions="Auto,*">
+                        <Label Grid.Column="0"
+                               Text="{x:Static helpers:MaterialIconCodes.Folder}"
+                               FontFamily="MaterialIcons"
+                               FontSize="24"
                                VerticalOptions="Center" />
-                        <Label Grid.Column="1" 
-                               Text="{Binding Name}" 
-                               FontSize="18" 
-                               VerticalOptions="Center" 
-                               Margin="15,0,0,0" />
+                        <Label Grid.Column="1"
+                               Text="{Binding Name}"
+                               FontSize="16"
+                               VerticalOptions="Center"
+                               Margin="10,0,0,0" />
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-
-        <Button x:Name="AddFolderButton"
-                Text="{x:Static helpers:MaterialIconCodes.Add}"
-                FontFamily="MaterialIcons"
-                FontSize="24"
-                CornerRadius="30"
-                WidthRequest="60"
-                HeightRequest="60"
-                Padding="0"
-                VerticalOptions="End"
-                HorizontalOptions="End"
-                Margin="0,0,20,20"
-                Clicked="OnAddFolderClicked" />
     </Grid>
 </ContentPage>
