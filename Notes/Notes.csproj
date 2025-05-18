@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net9.0-android;net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
+		<TargetFrameworks>net9.0-ios;net9.0-maccatalyst;net9.0-android34.0</TargetFrameworks>
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.19041.0</TargetFrameworks>
 		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net9.0-tizen</TargetFrameworks> -->
@@ -24,7 +24,7 @@
 		<ApplicationTitle>Notes</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<ApplicationId>com.companyname.notes</ApplicationId>
+		<ApplicationId>com.madbearing.notes</ApplicationId>
 
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
@@ -43,14 +43,14 @@
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
 	  <AndroidPackageFormat>apk</AndroidPackageFormat>
-	  <AndroidUseAapt2>False</AndroidUseAapt2>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
 	  <DebugSymbols>True</DebugSymbols>
 	  <TrimMode>link</TrimMode>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
 	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
-	  <AndroidUseAapt2>False</AndroidUseAapt2>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
 	  <DebugSymbols>False</DebugSymbols>
 	  <TrimMode>link</TrimMode>
 	</PropertyGroup>
