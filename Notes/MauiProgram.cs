@@ -47,6 +47,7 @@ public static class MauiProgram
     builder.Services.AddTransient<FoldersPage>();
     builder.Services.AddTransient<NotesPage>();
     builder.Services.AddTransient<NoteEditorPage>();
+    builder.Services.AddTransient<NoteViewPage>();
     builder.Services.AddTransient<MarkdownPreviewPage>();
 
 #if DEBUG

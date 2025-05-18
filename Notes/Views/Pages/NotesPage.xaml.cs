@@ -73,16 +73,26 @@ public partial class NotesPage : ContentPage
     {
       NotesCollection.SelectedItem = null;
 
-      await NavigateToNoteEditor(selectedNote);
+      await NavigateToNoteView(selectedNote);
     }
+  }
+
+  private async Task NavigateToNoteView(Note note)
+  {
+    var navigationParameter = new Dictionary<string, object>
+    {
+      { "NoteId", note.Id }
+    };
+
+    await Shell.Current.GoToAsync(nameof(NoteViewPage), navigationParameter);
   }
 
   private async Task NavigateToNoteEditor(Note note)
   {
     var navigationParameter = new Dictionary<string, object>
-          {
-              { "NoteId", note.Id }
-          };
+    {
+      { "NoteId", note.Id }
+    };
 
     await Shell.Current.GoToAsync(nameof(NoteEditorPage), navigationParameter);
   }
