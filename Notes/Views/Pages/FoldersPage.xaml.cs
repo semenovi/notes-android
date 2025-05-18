@@ -57,6 +57,24 @@ public partial class FoldersPage : ContentPage
     }
   }
 
+  private async void OnExportBackupClicked(object sender, EventArgs e)
+  {
+    try
+    {
+      string result = await _exportService.ExportBackupAsync();
+      await DisplayAlert("Success", "Backup exported successfully.", "OK");
+    }
+    catch (Exception ex)
+    {
+      await DisplayAlert("Error", ex.Message, "OK");
+    }
+  }
+
+  private async void OnImportBackupClicked(object sender, EventArgs e)
+  {
+    await ImportBackupAsync();
+  }
+
   private async void OnFolderSelectionChanged(object sender, SelectionChangedEventArgs e)
   {
     if (e.CurrentSelection.FirstOrDefault() is Folder selectedFolder)
@@ -70,28 +88,6 @@ public partial class FoldersPage : ContentPage
               };
 
       await Shell.Current.GoToAsync(nameof(NotesPage), navigationParameter);
-    }
-  }
-
-  private async void OnMenuClicked(object sender, EventArgs e)
-  {
-    string action = await DisplayActionSheet("Options", "Cancel", null, "Export Backup", "Import Backup");
-
-    try
-    {
-      if (action == "Export Backup")
-      {
-        string result = await _exportService.ExportBackupAsync();
-        await DisplayAlert("Success", "Backup exported successfully.", "OK");
-      }
-      else if (action == "Import Backup")
-      {
-        await ImportBackupAsync();
-      }
-    }
-    catch (Exception ex)
-    {
-      await DisplayAlert("Error", ex.Message, "OK");
     }
   }
 

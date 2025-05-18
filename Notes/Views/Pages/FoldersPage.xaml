@@ -5,8 +5,12 @@
              x:Class="Notes.Views.Pages.FoldersPage"
              Title="Folders">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Add" Clicked="OnAddFolderClicked" IconImageSource="{FontImage FontFamily=MaterialIcons, Glyph={x:Static helpers:MaterialIconCodes.Add}}" />
-        <ToolbarItem Text="..." Clicked="OnMenuClicked" IconImageSource="{FontImage FontFamily=MaterialIcons, Glyph=&#xe5d4;}" />
+        <ToolbarItem Text="Export Backup"
+                     Order="Secondary"
+                     Clicked="OnExportBackupClicked" />
+        <ToolbarItem Text="Import Backup"
+                     Order="Secondary"
+                     Clicked="OnImportBackupClicked" />
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="*">
@@ -30,5 +34,18 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
+        <Button x:Name="AddFolderButton"
+                Text="{x:Static helpers:MaterialIconCodes.Add}"
+                FontFamily="MaterialIcons"
+                FontSize="24"
+                CornerRadius="30"
+                WidthRequest="60"
+                HeightRequest="60"
+                Padding="0"
+                VerticalOptions="End"
+                HorizontalOptions="End"
+                Margin="0,0,20,20"
+                Clicked="OnAddFolderClicked" />
     </Grid>
 </ContentPage>
