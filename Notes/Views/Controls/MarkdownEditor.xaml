@@ -9,10 +9,12 @@
             <Button Text="Add Media" Clicked="OnAddMediaClicked" />
         </HorizontalStackLayout>
 
-        <Editor Grid.Row="1" 
-                x:Name="ContentEditor" 
-                Text="{Binding Content}"
-                FontFamily="Monospace"
-                Margin="10" />
+        <ScrollView Grid.Row="1" Margin="10">
+            <Editor x:Name="ContentEditor" 
+                    Text="{Binding Content}"
+                    FontFamily="Monospace"
+                    VerticalOptions="Fill"
+                    AutoSize="TextChanges" />
+        </ScrollView>
     </Grid>
 </ContentView>
