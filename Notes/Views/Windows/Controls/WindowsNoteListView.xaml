@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView x:Class="Notes.Views.Windows.Controls.WindowsNoteListView"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <Grid BackgroundColor="#F2F2F7">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Padding="14,0,8,0">
+            <Label x:Name="FolderTitleLabel" Text="Заметки"
+                   FontSize="15" FontAttributes="Bold" TextColor="#1C1C1E"
+                   VerticalOptions="Center" />
+            <StackLayout Orientation="Horizontal" HorizontalOptions="End"
+                         VerticalOptions="Center" Spacing="0">
+                <Button x:Name="DeleteButton" Text="🗑" IsVisible="False"
+                        BackgroundColor="Transparent" TextColor="#FF3B30" FontSize="15"
+                        BorderWidth="0" Padding="6" WidthRequest="38" HeightRequest="38"
+                        Clicked="OnDeleteButtonClicked" />
+                <Button Text="+" BackgroundColor="Transparent" TextColor="#007AFF"
+                        FontSize="26" BorderWidth="0" Padding="4"
+                        WidthRequest="38" HeightRequest="38"
+                        Clicked="OnNewNoteButtonClicked" />
+            </StackLayout>
+        </Grid>
+
+        <!-- Search -->
+        <SearchBar x:Name="SearchEntry" Grid.Row="1"
+                   Placeholder="Поиск" PlaceholderColor="#8E8E93"
+                   TextChanged="OnSearchTextChanged"
+                   Margin="8,0,8,6" />
+
+        <!-- Notes -->
+        <CollectionView x:Name="NotesCollectionView" Grid.Row="2"
+                        SelectionMode="None"
+                        BackgroundColor="Transparent">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="8,3">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNoteTapped" />
+                        </Grid.GestureRecognizers>
+                        <Border BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 8">
+                            <Grid Padding="12,10,12,10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <Grid Grid.Row="0">
+                                    <Label Text="{Binding Title}" FontSize="13" FontAttributes="Bold"
+                                           TextColor="#1C1C1E" LineBreakMode="TailTruncation"
+                                           HorizontalOptions="Fill" />
+                                    <Label Text="{Binding ModifiedString}" FontSize="10"
+                                           TextColor="#8E8E93" HorizontalOptions="End"
+                                           VerticalOptions="Center" />
+                                </Grid>
+
+                                <Grid Grid.Row="1" Margin="0,2,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Label Grid.Column="0"
+                                           Text="{Binding Preview}"
+                                           FontSize="12" TextColor="#8E8E93"
+                                           LineBreakMode="TailTruncation" MaxLines="1" />
+                                    <HorizontalStackLayout Grid.Column="1" Spacing="3"
+                                                          Margin="4,0,0,0" VerticalOptions="Center"
+                                                          BindableLayout.ItemsSource="{Binding PreviewImages}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate>
+                                                <Image Source="{Binding .}"
+                                                       HeightRequest="16" WidthRequest="16"
+                                                       Aspect="AspectFill" />
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </HorizontalStackLayout>
+                                </Grid>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+
+</ContentView>

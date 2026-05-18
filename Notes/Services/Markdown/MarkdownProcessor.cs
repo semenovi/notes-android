@@ -138,6 +138,13 @@ public class MarkdownProcessor
         "<em>$1</em>"
     );
 
+    // Regular images (non-media: scheme, already resolved to src url)
+    processedText = System.Text.RegularExpressions.Regex.Replace(
+        processedText,
+        @"!\[(.*?)\]\(((?!media:)[^)]+)\)",
+        "<img src=\"$2\" alt=\"$1\" style=\"max-width:100%;border-radius:4px;\" />"
+    );
+
     processedText = System.Text.RegularExpressions.Regex.Replace(
         processedText,
         @"(?<!\!)\[(.*?)\]\((.*?)\)",

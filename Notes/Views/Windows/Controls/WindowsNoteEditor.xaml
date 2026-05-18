@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView x:Class="Notes.Views.Windows.Controls.WindowsNoteEditor"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <Grid BackgroundColor="White">
+
+        <!-- Empty state -->
+        <Label x:Name="EmptyStateLabel"
+               Text="Выберите заметку или создайте новую"
+               FontSize="16" TextColor="#8E8E93"
+               HorizontalOptions="Center" VerticalOptions="Center"
+               IsVisible="True" />
+
+        <!-- VIEW MODE -->
+        <Grid x:Name="ViewMode" IsVisible="False">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Padding="24,20,12,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label x:Name="TitleViewLabel" Grid.Column="0"
+                       FontSize="22" FontAttributes="Bold" TextColor="#1C1C1E"
+                       VerticalOptions="Center" LineBreakMode="TailTruncation" />
+                <Button Grid.Column="1" Text="✏"
+                        BackgroundColor="Transparent" TextColor="#007AFF" FontSize="15"
+                        BorderWidth="0" WidthRequest="44" HeightRequest="44"
+                        Clicked="OnEditClicked" />
+            </Grid>
+
+            <Label x:Name="ViewDateLabel" Grid.Row="1"
+                   FontSize="12" TextColor="#8E8E93" Margin="26,0,24,10" />
+
+            <BoxView Grid.Row="2" HeightRequest="1" BackgroundColor="#E5E5EA" Margin="20,0" />
+
+            <WebView x:Name="ContentPreview" Grid.Row="3" BackgroundColor="Transparent" />
+        </Grid>
+
+        <!-- EDIT MODE -->
+        <Grid x:Name="EditMode" IsVisible="False">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Padding="24,20,8,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Entry x:Name="TitleEntry" Grid.Column="0"
+                       Placeholder="Заголовок" PlaceholderColor="#C7C7CC"
+                       FontSize="22" FontAttributes="Bold" TextColor="#1C1C1E"
+                       BackgroundColor="Transparent"
+                       TextChanged="OnTitleChanged" />
+                <Button Grid.Column="1" Text="Сохранить"
+                        BackgroundColor="Transparent" TextColor="#007AFF"
+                        FontSize="13" FontAttributes="Bold"
+                        BorderWidth="0" Padding="8,4"
+                        Clicked="OnSaveClicked" />
+            </Grid>
+
+            <Label x:Name="EditDateLabel" Grid.Row="1"
+                   FontSize="12" TextColor="#8E8E93" Margin="26,0,24,8" />
+
+            <StackLayout Grid.Row="2" Orientation="Horizontal"
+                         Padding="18,0,18,8" Spacing="2">
+                <Button Text="B" FontAttributes="Bold" FontSize="13"
+                        BackgroundColor="Transparent" TextColor="#3C3C43"
+                        BorderWidth="0" Padding="6,2" WidthRequest="32" HeightRequest="30"
+                        Clicked="OnBoldClicked" />
+                <Button Text="I" FontAttributes="Italic" FontSize="13"
+                        BackgroundColor="Transparent" TextColor="#3C3C43"
+                        BorderWidth="0" Padding="6,2" WidthRequest="32" HeightRequest="30"
+                        Clicked="OnItalicClicked" />
+                <Button Text="•" FontSize="14"
+                        BackgroundColor="Transparent" TextColor="#3C3C43"
+                        BorderWidth="0" Padding="6,2" WidthRequest="32" HeightRequest="30"
+                        Clicked="OnListClicked" />
+                <Button Text="H" FontSize="13"
+                        BackgroundColor="Transparent" TextColor="#3C3C43"
+                        BorderWidth="0" Padding="6,2" WidthRequest="32" HeightRequest="30"
+                        Clicked="OnHeaderClicked" />
+                <BoxView BackgroundColor="#E5E5EA" WidthRequest="1" Margin="6,4" />
+                <Button Text="Img" FontSize="11"
+                        BackgroundColor="Transparent" TextColor="#007AFF"
+                        BorderWidth="0" Padding="6,2"
+                        Clicked="OnAddImageClicked" />
+            </StackLayout>
+
+            <BoxView Grid.Row="3" HeightRequest="1" BackgroundColor="#E5E5EA" Margin="20,0" />
+
+            <ScrollView Grid.Row="4">
+                <Editor x:Name="ContentEditor"
+                        FontSize="15" TextColor="#1C1C1E"
+                        BackgroundColor="Transparent"
+                        Margin="20,12" AutoSize="TextChanges"
+                        TextChanged="OnContentChanged" />
+            </ScrollView>
+        </Grid>
+
+    </Grid>
+
+</ContentView>

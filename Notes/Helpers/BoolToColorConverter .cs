@@ -7,7 +7,11 @@ public class BoolToColorConverter : IValueConverter
   public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
   {
     if (value is bool isSelected && isSelected)
-      return Colors.LightSkyBlue;
+    {
+      return parameter?.ToString() == "folder"
+          ? Color.FromArgb("#D4D4D4")
+          : Color.FromArgb("#FFE580");
+    }
     return Colors.Transparent;
   }
 

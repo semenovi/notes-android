@@ -99,9 +99,24 @@
 	  <Compile Update="Views\Pages\NotesPage.xaml.cs">
 	    <DependentUpon>NotesPage.xaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="Views\Windows\Controls\WindowsFolderTreeView.xaml.cs">
+	    <DependentUpon>WindowsFolderTreeView.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\Windows\Controls\WindowsNoteEditor.xaml.cs">
+	    <DependentUpon>WindowsNoteEditor.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\Windows\Controls\WindowsNoteListView.xaml.cs">
+	    <DependentUpon>WindowsNoteListView.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\Windows\MainWindow.xaml.cs">
+	    <DependentUpon>MainWindow.xaml</DependentUpon>
+	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>
+	  <MauiXaml Update="Resources\Styles\WindowsStyles.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\Controls\FolderTreeView.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
@@ -124,6 +139,18 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\Pages\NoteViewPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Windows\Controls\WindowsFolderTreeView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Windows\Controls\WindowsNoteEditor.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Windows\Controls\WindowsNoteListView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Windows\MainWindow.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	</ItemGroup>
