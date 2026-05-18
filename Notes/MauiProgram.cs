@@ -46,9 +46,10 @@ public static class MauiProgram
     builder.Services.AddSingleton<CryptoService>();
     builder.Services.AddSingleton<Services.Crypto.SecureStorage>();
 
-    builder.Services.AddSingleton<SyncManager>();
+    builder.Services.AddSingleton<SyncSettingsService>();
     builder.Services.AddSingleton<ISyncAdapter, UsbSyncAdapter>();
     builder.Services.AddSingleton<ISyncAdapter, NetworkSyncAdapter>();
+    builder.Services.AddSingleton<SyncManager>();
 
     builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
     builder.Services.AddSingleton<ExportService>();

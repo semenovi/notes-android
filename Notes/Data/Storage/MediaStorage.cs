@@ -87,6 +87,19 @@ public class MediaStorage
     return new MemoryStream(data);
   }
 
+  public async Task<byte[]> GetRawContentAsync(string mediaId)
+  {
+    MediaItem? item = await GetMediaAsync(mediaId);
+    if (item == null) throw new FileNotFoundException($"Media {mediaId} not found");
+    return await _storage.ReadFileAsync(item.StoragePath);
+  }
+
+  public async Task SaveMediaFromSyncAsync(MediaItem metadata, byte[] content)
+  {
+    await _storage.WriteFileAsync(metadata.StoragePath, content);
+    await SaveMediaMetadataAsync(metadata);
+  }
+
   private async Task SaveMediaMetadataAsync(MediaItem mediaItem)
   {
     string path = GetMediaMetadataPath(mediaItem.Id);

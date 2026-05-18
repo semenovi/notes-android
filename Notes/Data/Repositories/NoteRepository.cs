@@ -1,4 +1,5 @@
-﻿using Notes.Models;
+﻿using System.Text;
+using Notes.Models;
 
 namespace Notes.Data.Repositories;
 
@@ -49,10 +50,40 @@ public class NoteRepository
     await _storage.WriteJsonAsync(path, note);
   }
 
-  public async Task<bool> DeleteNoteAsync(string id)
+  public async Task<bool> DeleteNoteAsync(string id, bool createTombstone = true)
   {
     string path = GetNotePath(id);
-    return await _storage.DeleteFileAsync(path);
+    bool deleted = await _storage.DeleteFileAsync(path);
+    if (deleted && createTombstone)
+    {
+      string ts = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+      await _storage.WriteFileAsync(
+          Path.Combine(NOTES_FOLDER, $"{id}.deleted"),
+          Encoding.UTF8.GetBytes(ts));
+    }
+    return deleted;
+  }
+
+  public async Task<Dictionary<string, string>> GetDeletionTombstonesAsync()
+  {
+    var result = new Dictionary<string, string>();
+    foreach (var file in _storage.GetFiles(NOTES_FOLDER).Where(f => f.EndsWith(".deleted")))
+    {
+      string noteId = Path.GetFileNameWithoutExtension(file);
+      byte[] data = await _storage.ReadFileAsync(file);
+      result[noteId] = Encoding.UTF8.GetString(data);
+    }
+    return result;
+  }
+
+  public async Task ClearTombstoneAsync(string id)
+  {
+    await _storage.DeleteFileAsync(Path.Combine(NOTES_FOLDER, $"{id}.deleted"));
+  }
+
+  public async Task SaveNoteSyncAsync(Note note)
+  {
+    await _storage.WriteJsonAsync(GetNotePath(note.Id), note);
   }
 
   public async Task<List<Note>> SearchNotesAsync(string query)
