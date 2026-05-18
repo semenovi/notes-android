@@ -1,4 +1,6 @@
-﻿using Notes.Models;
+﻿using Microsoft.Maui.Graphics;
+using Microsoft.Maui.Graphics.Platform;
+using Notes.Models;
 
 namespace Notes.Data.Storage;
 
@@ -16,29 +18,53 @@ public class MediaStorage
 
   public async Task<MediaItem> AddMediaAsync(Stream mediaStream, string fileName)
   {
-    string fileExtension = Path.GetExtension(fileName);
+    string fileExtension = Path.GetExtension(fileName).ToLowerInvariant();
     string fileType = fileExtension.TrimStart('.');
     string mediaId = Guid.NewGuid().ToString();
     string storagePath = Path.Combine(MEDIA_FOLDER, $"{mediaId}{fileExtension}");
 
-    using (MemoryStream ms = new MemoryStream())
+    using var ms = new MemoryStream();
+    await mediaStream.CopyToAsync(ms);
+    byte[] data = ms.ToArray();
+
+    bool isRaster = fileType is "jpg" or "jpeg" or "png" or "webp";
+    if (isRaster)
+      data = ResizeImage(data);
+
+    await _storage.WriteFileAsync(storagePath, data);
+
+    var mediaItem = new MediaItem
     {
-      await mediaStream.CopyToAsync(ms);
-      byte[] data = ms.ToArray();
-      await _storage.WriteFileAsync(storagePath, data);
+      Id = mediaId,
+      FileName = fileName,
+      FileType = fileType,
+      StoragePath = storagePath,
+      Size = data.Length,
+      Created = DateTime.Now
+    };
 
-      MediaItem mediaItem = new MediaItem
-      {
-        Id = mediaId,
-        FileName = fileName,
-        FileType = fileType,
-        StoragePath = storagePath,
-        Size = data.Length,
-        Created = DateTime.Now
-      };
+    await SaveMediaMetadataAsync(mediaItem);
+    return mediaItem;
+  }
 
-      await SaveMediaMetadataAsync(mediaItem);
-      return mediaItem;
+  private static byte[] ResizeImage(byte[] data)
+  {
+    const int MaxDim = 2048;
+    try
+    {
+      using var inMs = new MemoryStream(data);
+      var img = PlatformImage.FromStream(inMs);
+      if (img.Width <= MaxDim && img.Height <= MaxDim)
+        return data;
+      float scale = Math.Min((float)MaxDim / img.Width, (float)MaxDim / img.Height);
+      var resized = img.Resize((int)(img.Width * scale), (int)(img.Height * scale), ResizeMode.Fit);
+      using var outMs = new MemoryStream();
+      resized.Save(outMs);
+      return outMs.ToArray();
+    }
+    catch
+    {
+      return data;
     }
   }
 
@@ -96,8 +122,37 @@ public class MediaStorage
 
   public async Task SaveMediaFromSyncAsync(MediaItem metadata, byte[] content)
   {
+    string fileType = metadata.FileType?.ToLowerInvariant() ?? "";
+    bool isRaster = fileType is "jpg" or "jpeg" or "png" or "webp";
+    if (isRaster)
+      content = ResizeImage(content);
+    metadata.Size = content.Length;
     await _storage.WriteFileAsync(metadata.StoragePath, content);
     await SaveMediaMetadataAsync(metadata);
+  }
+
+  public async Task MigrateExistingMediaAsync()
+  {
+    var items = await GetAllMediaAsync();
+    foreach (var item in items)
+    {
+      string fileType = item.FileType?.ToLowerInvariant() ?? "";
+      bool isRaster = fileType is "jpg" or "jpeg" or "png" or "webp";
+      if (!isRaster) continue;
+
+      try
+      {
+        byte[] data = await _storage.ReadFileAsync(item.StoragePath);
+        byte[] resized = ResizeImage(data);
+        if (resized.Length < data.Length)
+        {
+          await _storage.WriteFileAsync(item.StoragePath, resized);
+          item.Size = resized.Length;
+          await SaveMediaMetadataAsync(item);
+        }
+      }
+      catch { }
+    }
   }
 
   private async Task SaveMediaMetadataAsync(MediaItem mediaItem)

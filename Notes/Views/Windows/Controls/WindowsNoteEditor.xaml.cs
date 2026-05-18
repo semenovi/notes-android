@@ -117,28 +117,26 @@ public partial class WindowsNoteEditor : ContentView
     TitleViewLabel.Text = _currentNote.Title;
     ViewDateLabel.Text = FormatDate(_currentNote.Modified);
 
+    string content = _currentNote.Content ?? "";
     try
     {
-      string content = string.IsNullOrWhiteSpace(_currentNote.Content)
-          ? ""
-          : await ResolveMediaToFileUrlsAsync(_currentNote.Content);
-
       string body = string.IsNullOrWhiteSpace(content)
           ? "<p style='color:#8E8E93'>Нет содержимого</p>"
           : await _markdownProcessor.ConvertToHtmlAsync(content);
 
-      // Write to a temp file so WebView2 loads from file:// context,
-      // which allows <img src="file:///..."> to load without CORS block.
       string tempPath = Path.Combine(FileSystem.CacheDirectory, "note_preview.html");
       await File.WriteAllTextAsync(tempPath, WrapHtml(body), System.Text.Encoding.UTF8);
-      ContentPreview.Source = new UrlWebViewSource
-      {
-        Url = "file:///" + tempPath.Replace('\\', '/')
-      };
+
+      var navTask = WaitForNavigationAsync(ContentPreview);
+      ContentPreview.Source = new UrlWebViewSource { Url = "file:///" + tempPath.Replace('\\', '/') };
+      await navTask;
+
+      if (!string.IsNullOrWhiteSpace(content))
+        await _markdownProcessor.InjectImagesIntoWebViewAsync(content, ContentPreview);
     }
     catch
     {
-      var fallback = System.Net.WebUtility.HtmlEncode(_currentNote.Content ?? "");
+      var fallback = System.Net.WebUtility.HtmlEncode(content);
       ContentPreview.Source = new HtmlWebViewSource
       {
         Html = WrapHtml($"<pre style='white-space:pre-wrap'>{fallback}</pre>")
@@ -146,33 +144,13 @@ public partial class WindowsNoteEditor : ContentView
     }
   }
 
-  // Replaces media:id refs with file:// absolute paths so the WebView
-  // can load images directly without embedding large base64 strings.
-  private async Task<string> ResolveMediaToFileUrlsAsync(string content)
+  private static Task WaitForNavigationAsync(WebView webView)
   {
-    var regex = new System.Text.RegularExpressions.Regex(@"!\[(.*?)\]\(media:(.*?)\)");
-    var matches = regex.Matches(content);
-
-    foreach (System.Text.RegularExpressions.Match m in matches)
-    {
-      string altText = m.Groups[1].Value;
-      string mediaId = m.Groups[2].Value;
-
-      try
-      {
-        var item = await _mediaManager.GetMediaAsync(mediaId);
-        if (item != null)
-        {
-          string absPath = Path.Combine(
-              FileSystem.AppDataDirectory, "Notes", item.StoragePath);
-          string fileUrl = "file:///" + absPath.Replace('\\', '/');
-          content = content.Replace(m.Value, $"![{altText}]({fileUrl})");
-        }
-      }
-      catch { /* leave original ref if resolution fails */ }
-    }
-
-    return content;
+    var tcs = new TaskCompletionSource<bool>();
+    EventHandler<WebNavigatedEventArgs>? handler = null;
+    handler = (s, e) => { webView.Navigated -= handler; tcs.TrySetResult(true); };
+    webView.Navigated += handler;
+    return tcs.Task;
   }
 
   private static string WrapHtml(string body) => $@"<!DOCTYPE html>
@@ -192,6 +170,8 @@ public partial class WindowsNoteEditor : ContentView
   ul, ol {{ padding-left: 22px; margin: 0 0 8px; }}
   a {{ color: #007AFF; text-decoration: none; }}
   img {{ max-width: 100%; border-radius: 4px; }}
+  .media-lazy {{ display: block; min-height: 80px; background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }}
+  @keyframes shimmer {{ 0%{{background-position:200% 0}} 100%{{background-position:-200% 0}} }}
   hr {{ border: none; border-top: 1px solid #E5E5EA; margin: 16px 0; }}
 </style>
 </head>

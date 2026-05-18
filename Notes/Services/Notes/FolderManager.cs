@@ -7,6 +7,8 @@ public class FolderManager
 {
   private readonly FolderRepository _repository;
 
+  public event Action<string, EntityChangeKind>? FolderChanged;
+
   public FolderManager(FolderRepository repository)
   {
     _repository = repository;
@@ -21,17 +23,21 @@ public class FolderManager
     };
 
     await _repository.SaveFolderAsync(folder);
+    FolderChanged?.Invoke(folder.Id, EntityChangeKind.Created);
     return folder;
   }
 
   public async Task UpdateFolderAsync(Folder folder)
   {
     await _repository.SaveFolderAsync(folder);
+    FolderChanged?.Invoke(folder.Id, EntityChangeKind.Updated);
   }
 
   public async Task<bool> DeleteFolderAsync(string folderId)
   {
-    return await _repository.DeleteFolderAsync(folderId);
+    var result = await _repository.DeleteFolderAsync(folderId);
+    if (result) FolderChanged?.Invoke(folderId, EntityChangeKind.Deleted);
+    return result;
   }
 
   public async Task<Folder?> GetFolderAsync(string id)
@@ -58,6 +64,7 @@ public class FolderManager
 
     folder.ParentId = newParentId;
     await _repository.SaveFolderAsync(folder);
+    FolderChanged?.Invoke(folderId, EntityChangeKind.Updated);
     return true;
   }
 }

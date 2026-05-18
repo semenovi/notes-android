@@ -1,5 +1,6 @@
 using Notes.Models;
 using Notes.Services.Notes;
+using Notes.Services.Sync;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -16,7 +17,7 @@ public partial class WindowsNoteListView : ContentView
   public ObservableCollection<NoteViewModel> Notes { get; } = new();
 
   public event EventHandler<Note>? NoteSelected;
-  public event EventHandler<Note>? DeleteNoteRequested;
+  public event EventHandler<Note>? NoteDeleted;
 
   public WindowsNoteListView()
   {
@@ -25,6 +26,13 @@ public partial class WindowsNoteListView : ContentView
     _noteManager = services.GetService<NoteManager>()!;
     _mediaManager = services.GetService<MediaManager>()!;
     NotesCollectionView.ItemsSource = Notes;
+    services.GetService<ReactiveSyncService>()!.RemoteChangesApplied += OnRemoteChangesApplied;
+  }
+
+  private async void OnRemoteChangesApplied()
+  {
+    if (!string.IsNullOrEmpty(_currentFolderId))
+      await LoadNotesAsync(_currentFolderId);
   }
 
   public void SetFolderName(string name)
@@ -35,7 +43,6 @@ public partial class WindowsNoteListView : ContentView
   public async Task LoadNotesAsync(string folderId)
   {
     _currentFolderId = folderId;
-    DeleteButton.IsVisible = false;
 
     var notes = await _noteManager.GetNotesAsync(folderId);
     var sorted = notes.OrderByDescending(n => n.Modified).ToList();
@@ -103,7 +110,6 @@ public partial class WindowsNoteListView : ContentView
   {
     foreach (var n in Notes) n.IsSelected = false;
     vm.IsSelected = true;
-    DeleteButton.IsVisible = true;
     NoteSelected?.Invoke(this, vm.Note);
   }
 
@@ -128,11 +134,45 @@ public partial class WindowsNoteListView : ContentView
     }
   }
 
-  private void OnDeleteButtonClicked(object sender, EventArgs e)
+  private async void OnRenameNoteContextMenuClicked(object sender, EventArgs e)
   {
-    var selected = Notes.FirstOrDefault(n => n.IsSelected);
-    if (selected != null)
-      DeleteNoteRequested?.Invoke(this, selected.Note);
+    if (sender is not MenuFlyoutItem item || item.BindingContext is not NoteViewModel vm)
+      return;
+    var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+    if (page == null) return;
+
+    var newTitle = await page.DisplayPromptAsync("Переименовать заметку", "Новое название:", initialValue: vm.Title);
+    if (string.IsNullOrWhiteSpace(newTitle) || newTitle == vm.Title) return;
+
+    vm.Note.Title = newTitle;
+    await _noteManager.UpdateNoteAsync(vm.Note);
+
+    var idx = Notes.IndexOf(vm);
+    var allIdx = _allNotes.IndexOf(vm);
+    var isSelected = vm.IsSelected;
+    var updated = new NoteViewModel(vm.Note, vm.PreviewImages) { IsSelected = isSelected };
+
+    if (idx >= 0) Notes[idx] = updated;
+    if (allIdx >= 0) _allNotes[allIdx] = updated;
+
+    if (isSelected)
+      NoteSelected?.Invoke(this, vm.Note);
+  }
+
+  private async void OnDeleteNoteContextMenuClicked(object sender, EventArgs e)
+  {
+    if (sender is not MenuFlyoutItem item || item.BindingContext is not NoteViewModel vm)
+      return;
+    var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+    if (page == null) return;
+
+    bool confirm = await page.DisplayAlert("Удалить заметку",
+        $"Удалить «{vm.Title}»?", "Удалить", "Отмена");
+    if (!confirm) return;
+
+    await _noteManager.DeleteNoteAsync(vm.Note.Id);
+    RemoveNote(vm.Note.Id);
+    NoteDeleted?.Invoke(this, vm.Note);
   }
 
   public void RemoveNote(string noteId)
@@ -143,7 +183,6 @@ public partial class WindowsNoteListView : ContentView
       Notes.Remove(vm);
       _allNotes.RemoveAll(n => n.Note.Id == noteId);
     }
-    DeleteButton.IsVisible = false;
   }
 
   public void RefreshNote(Note updatedNote)

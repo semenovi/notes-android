@@ -55,10 +55,13 @@ public partial class FolderTreeView : ContentView
     }
   }
 
+  private readonly NoteManager _noteManager;
+
   public FolderTreeView()
   {
     InitializeComponent();
     _folderManager = App.Current.Handler.MauiContext.Services.GetService<FolderManager>();
+    _noteManager = App.Current.Handler.MauiContext.Services.GetService<NoteManager>();
     BindingContext = this;
     FoldersCollectionView.ItemsSource = Folders;
   }
@@ -92,22 +95,20 @@ public partial class FolderTreeView : ContentView
 
   private async void OnDeleteFolderClicked(object sender, EventArgs e)
   {
-    if (SelectedFolder == null)
-      return;
+    if (SelectedFolder == null) return;
 
-    bool confirm = await Application.Current.MainPage.DisplayAlert("Confirm Delete",
-        $"Are you sure you want to delete folder '{SelectedFolder.Name}'?", "Yes", "No");
+    bool confirm = await Application.Current.MainPage.DisplayAlert("Удалить папку",
+        $"Удалить «{SelectedFolder.Name}» и все заметки в ней?", "Удалить", "Отмена");
+    if (!confirm) return;
 
-    if (confirm)
-    {
-      await _folderManager.DeleteFolderAsync(SelectedFolder.Folder.Id);
-      Folders.Remove(SelectedFolder);
+    var folderId = SelectedFolder.Folder.Id;
+    var notes = await _noteManager.GetNotesAsync(folderId);
+    foreach (var note in notes)
+      await _noteManager.DeleteNoteAsync(note.Id);
 
-      if (Folders.Count > 0)
-        SelectedFolder = Folders[0];
-      else
-        SelectedFolder = null;
-    }
+    await _folderManager.DeleteFolderAsync(folderId);
+    Folders.Remove(SelectedFolder);
+    SelectedFolder = Folders.Count > 0 ? Folders[0] : null;
   }
 
   private void OnFolderSelectionChanged(object sender, SelectionChangedEventArgs e)

@@ -50,32 +50,41 @@ public partial class NoteViewPage : ContentPage
     if (_note == null)
       return;
 
-    string html = await _markdownProcessor.ConvertToHtmlAsync(_note.Content);
-    string fullHtml = $@"
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset='utf-8'>
-                <meta name='viewport' content='width=device-width, initial-scale=1'>
-                <style>
-                    body {{ 
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                        padding: 15px;
-                        line-height: 1.5;
-                        margin-top: 15px;
-                    }}
-                    img {{ max-width: 100%; }}
-                    pre {{ background-color: #f5f5f5; padding: 10px; overflow-x: auto; }}
-                    code {{ background-color: #f5f5f5; padding: 2px 4px; }}
-                </style>
-            </head>
-            <body>
-                {html}
-            </body>
-            </html>";
+    string content = _note.Content ?? "";
+    string html = await _markdownProcessor.ConvertToHtmlAsync(content);
 
-    NoteContentWebView.Source = new HtmlWebViewSource { Html = fullHtml };
+    var navTask = WaitForNavigationAsync(NoteContentWebView);
+    NoteContentWebView.Source = new HtmlWebViewSource { Html = BuildFullHtml(html) };
+    await navTask;
+
+    await _markdownProcessor.InjectImagesIntoWebViewAsync(content, NoteContentWebView);
   }
+
+  private static Task WaitForNavigationAsync(WebView webView)
+  {
+    var tcs = new TaskCompletionSource<bool>();
+    EventHandler<WebNavigatedEventArgs>? handler = null;
+    handler = (s, e) => { webView.Navigated -= handler; tcs.TrySetResult(true); };
+    webView.Navigated += handler;
+    return tcs.Task;
+  }
+
+  private static string BuildFullHtml(string body) => $@"<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 15px; line-height: 1.5; margin-top: 15px; }}
+        img {{ max-width: 100%; border-radius: 4px; }}
+        pre {{ background-color: #f5f5f5; padding: 10px; overflow-x: auto; }}
+        code {{ background-color: #f5f5f5; padding: 2px 4px; }}
+        .media-lazy {{ display: block; min-height: 80px; background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }}
+        @keyframes shimmer {{ 0%{{background-position:200% 0}} 100%{{background-position:-200% 0}} }}
+    </style>
+</head>
+<body>{body}</body>
+</html>";
 
   private async void OnEditClicked(object sender, EventArgs e)
   {

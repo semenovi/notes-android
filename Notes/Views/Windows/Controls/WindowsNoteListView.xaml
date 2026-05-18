@@ -15,17 +15,11 @@
             <Label x:Name="FolderTitleLabel" Text="Заметки"
                    FontSize="15" FontAttributes="Bold" TextColor="#1C1C1E"
                    VerticalOptions="Center" />
-            <StackLayout Orientation="Horizontal" HorizontalOptions="End"
-                         VerticalOptions="Center" Spacing="0">
-                <Button x:Name="DeleteButton" Text="🗑" IsVisible="False"
-                        BackgroundColor="Transparent" TextColor="#FF3B30" FontSize="15"
-                        BorderWidth="0" Padding="6" WidthRequest="38" HeightRequest="38"
-                        Clicked="OnDeleteButtonClicked" />
-                <Button Text="+" BackgroundColor="Transparent" TextColor="#007AFF"
-                        FontSize="26" BorderWidth="0" Padding="4"
-                        WidthRequest="38" HeightRequest="38"
-                        Clicked="OnNewNoteButtonClicked" />
-            </StackLayout>
+            <Button Text="+" BackgroundColor="Transparent" TextColor="#007AFF"
+                    FontSize="26" BorderWidth="0" Padding="4"
+                    WidthRequest="38" HeightRequest="38"
+                    HorizontalOptions="End" VerticalOptions="Center"
+                    Clicked="OnNewNoteButtonClicked" />
         </Grid>
 
         <!-- Search -->
@@ -47,6 +41,13 @@
                         <Border BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}}"
                                 StrokeThickness="0"
                                 StrokeShape="RoundRectangle 8">
+                            <FlyoutBase.ContextFlyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem Text="Переименовать" Clicked="OnRenameNoteContextMenuClicked" />
+                                    <MenuFlyoutSeparator />
+                                    <MenuFlyoutItem Text="Удалить" Clicked="OnDeleteNoteContextMenuClicked" />
+                                </MenuFlyout>
+                            </FlyoutBase.ContextFlyout>
                             <Grid Padding="12,10,12,10">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />

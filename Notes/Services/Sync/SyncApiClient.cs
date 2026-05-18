@@ -5,6 +5,15 @@ using System.Text.Json.Serialization;
 
 namespace Notes.Services.Sync;
 
+public class SseEvent
+{
+  public string Type { get; set; } = string.Empty;
+  public List<string> Notes { get; set; } = new();
+  public List<string> Folders { get; set; } = new();
+  public List<string> DeletedNotes { get; set; } = new();
+  public List<string> DeletedFolders { get; set; } = new();
+}
+
 public class SyncManifestRequest
 {
   public Dictionary<string, string> Notes { get; set; } = new();
@@ -45,6 +54,7 @@ public class PullResponse
 public class SyncApiClient : IDisposable
 {
   private readonly HttpClient _http;
+  private readonly HttpClient _sseHttp;
   private readonly string _baseUrl;
 
   private static readonly JsonSerializerOptions JsonOpts = new()
@@ -57,9 +67,11 @@ public class SyncApiClient : IDisposable
   public SyncApiClient(string baseUrl, string apiToken)
   {
     _baseUrl = baseUrl.TrimEnd('/');
+    var auth = new AuthenticationHeaderValue("Bearer", apiToken);
     _http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-    _http.DefaultRequestHeaders.Authorization =
-        new AuthenticationHeaderValue("Bearer", apiToken);
+    _http.DefaultRequestHeaders.Authorization = auth;
+    _sseHttp = new HttpClient { Timeout = System.Threading.Timeout.InfiniteTimeSpan };
+    _sseHttp.DefaultRequestHeaders.Authorization = auth;
   }
 
   private StringContent Json(object body) =>
@@ -67,10 +79,20 @@ public class SyncApiClient : IDisposable
 
   private async Task<T?> PostAsync<T>(string path, object body)
   {
-    using var resp = await _http.PostAsync(_baseUrl + path, Json(body));
-    if (!resp.IsSuccessStatusCode) return default;
-    string json = await resp.Content.ReadAsStringAsync();
-    return JsonSerializer.Deserialize<T>(json, JsonOpts);
+    for (int attempt = 0; attempt < 2; attempt++)
+    {
+      try
+      {
+        using var resp = await _http.PostAsync(_baseUrl + path, Json(body));
+        if (!resp.IsSuccessStatusCode) return default;
+        return JsonSerializer.Deserialize<T>(await resp.Content.ReadAsStringAsync(), JsonOpts);
+      }
+      catch (HttpRequestException) when (attempt == 0)
+      {
+        await Task.Delay(700);
+      }
+    }
+    return default;
   }
 
   public async Task RegisterDeviceAsync(string deviceId)
@@ -86,11 +108,47 @@ public class SyncApiClient : IDisposable
   }
 
   public async Task<bool> PushChangesAsync(List<SyncItem> notes, List<SyncItem> folders,
-      List<SyncItem> media, List<string> deletedNotes, List<string> deletedFolders)
+      List<SyncItem> media, List<string> deletedNotes, List<string> deletedFolders, string? deviceId = null)
   {
-    using var resp = await _http.PostAsync(_baseUrl + "/api/sync/push",
-        Json(new { notes, folders, media, deleted_notes = deletedNotes, deleted_folders = deletedFolders }));
-    return resp.IsSuccessStatusCode;
+    // Serialize once; recreate StringContent per attempt (HttpContent cannot be re-sent).
+    string json = JsonSerializer.Serialize(
+        new { notes, folders, media, deleted_notes = deletedNotes, deleted_folders = deletedFolders, device_id = deviceId },
+        JsonOpts);
+    for (int attempt = 0; attempt < 2; attempt++)
+    {
+      try
+      {
+        using var body = new StringContent(json, Encoding.UTF8, "application/json");
+        using var resp = await _http.PostAsync(_baseUrl + "/api/sync/push", body);
+        if (resp.IsSuccessStatusCode) return true;
+      }
+      catch (HttpRequestException) when (attempt == 0)
+      {
+        await Task.Delay(700);
+      }
+    }
+    return false;
+  }
+
+  public async Task SubscribeToEventsAsync(string deviceId, Action<SseEvent> onEvent, CancellationToken ct)
+  {
+    var url = _baseUrl + "/api/sync/events?device_id=" + Uri.EscapeDataString(deviceId);
+    using var resp = await _sseHttp.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+    if (!resp.IsSuccessStatusCode) return;
+    using var stream = await resp.Content.ReadAsStreamAsync(ct);
+    using var reader = new StreamReader(stream);
+    while (!ct.IsCancellationRequested)
+    {
+      string? line = await reader.ReadLineAsync(ct);
+      if (line == null) break;
+      if (!line.StartsWith("data: ")) continue;
+      try
+      {
+        var evt = JsonSerializer.Deserialize<SseEvent>(line["data: ".Length..], JsonOpts);
+        if (evt != null && evt.Type != "connected") onEvent(evt);
+      }
+      catch { }
+    }
   }
 
   public async Task<PullResponse?> PullChangesAsync(List<string> noteIds, List<string> folderIds, List<string> mediaIds)
@@ -100,5 +158,9 @@ public class SyncApiClient : IDisposable
         new { note_ids = noteIds, folder_ids = folderIds, media_ids = mediaIds });
   }
 
-  public void Dispose() => _http.Dispose();
+  public void Dispose()
+  {
+    _http.Dispose();
+    _sseHttp.Dispose();
+  }
 }

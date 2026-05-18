@@ -1,17 +1,43 @@
-﻿using Notes.Services.Notes;
+﻿using Notes.Data.Storage;
+using Notes.Services.Notes;
+using Notes.Services.Sync;
 using Notes.Views.Windows;
 
 namespace Notes;
 
 public partial class App : Application
 {
-  public App()
+  private readonly ReactiveSyncService _reactiveSync;
+  private readonly MediaStorage _mediaStorage;
+
+  public App(ReactiveSyncService reactiveSync, MediaStorage mediaStorage)
   {
+    _reactiveSync = reactiveSync;
+    _mediaStorage = mediaStorage;
     InitializeComponent();
 
 #if !WINDOWS
     MainPage = new AppShell();
 #endif
+  }
+
+  protected override void OnStart()
+  {
+    base.OnStart();
+    _ = _reactiveSync.StartAsync();
+    _ = _mediaStorage.MigrateExistingMediaAsync();
+  }
+
+  protected override void OnSleep()
+  {
+    base.OnSleep();
+    _ = _reactiveSync.StopAsync();
+  }
+
+  protected override void OnResume()
+  {
+    base.OnResume();
+    _ = _reactiveSync.StartAsync();
   }
 
 #if WINDOWS
@@ -20,10 +46,7 @@ public partial class App : Application
     base.OnHandlerChanged();
     if (Handler?.MauiContext != null && MainPage == null)
     {
-      var services = Handler.MauiContext.Services;
-      MainPage = new MainWindow(
-          services.GetRequiredService<FolderManager>(),
-          services.GetRequiredService<NoteManager>());
+      MainPage = new MainWindow();
     }
   }
 #endif

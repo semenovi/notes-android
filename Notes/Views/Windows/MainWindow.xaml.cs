@@ -1,16 +1,12 @@
 using Notes.Models;
-using Notes.Services.Notes;
 
 namespace Notes.Views.Windows;
 
 public partial class MainWindow : ContentPage
 {
-  private readonly NoteManager _noteManager;
-
-  public MainWindow(FolderManager folderManager, NoteManager noteManager)
+  public MainWindow()
   {
     InitializeComponent();
-    _noteManager = noteManager;
   }
 
   protected override async void OnAppearing()
@@ -31,15 +27,8 @@ public partial class MainWindow : ContentPage
     await NoteEditor.LoadNoteAsync(note);
   }
 
-  private async void OnDeleteNoteRequested(object sender, Note note)
+  private void OnNoteDeleted(object sender, Note note)
   {
-    bool confirm = await DisplayAlert("Удалить заметку",
-        $"Удалить «{note.Title}»?", "Удалить", "Отмена");
-    if (confirm)
-    {
-      await _noteManager.DeleteNoteAsync(note.Id);
-      NotesList.RemoveNote(note.Id);
-      NoteEditor.ClearEditor();
-    }
+    NoteEditor.ClearEditor();
   }
 }

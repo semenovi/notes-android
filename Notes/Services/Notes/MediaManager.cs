@@ -7,6 +7,9 @@ public class MediaManager
 {
   private readonly MediaStorage _storage;
 
+  public event Action<string>? MediaAdded;
+  public event Action<string>? MediaDeleted;
+
   public MediaManager(MediaStorage storage)
   {
     _storage = storage;
@@ -14,7 +17,9 @@ public class MediaManager
 
   public async Task<MediaItem> AddMediaAsync(Stream mediaStream, string fileName)
   {
-    return await _storage.AddMediaAsync(mediaStream, fileName);
+    var item = await _storage.AddMediaAsync(mediaStream, fileName);
+    MediaAdded?.Invoke(item.Id);
+    return item;
   }
 
   public async Task<MediaItem?> GetMediaAsync(string mediaId)
@@ -29,7 +34,10 @@ public class MediaManager
 
   public async Task<bool> DeleteMediaAsync(string mediaId)
   {
-    return await _storage.DeleteMediaAsync(mediaId);
+    var result = await _storage.DeleteMediaAsync(mediaId);
+    if (result)
+      MediaDeleted?.Invoke(mediaId);
+    return result;
   }
 
   public async Task<List<MediaItem>> GetAllMediaAsync()

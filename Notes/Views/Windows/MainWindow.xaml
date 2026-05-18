@@ -22,7 +22,7 @@
 
         <controls:WindowsNoteListView x:Name="NotesList" Grid.Column="2"
                                        NoteSelected="OnNoteSelected"
-                                       DeleteNoteRequested="OnDeleteNoteRequested" />
+                                       NoteDeleted="OnNoteDeleted" />
 
         <BoxView Grid.Column="3" BackgroundColor="#C6C6C8" />
 

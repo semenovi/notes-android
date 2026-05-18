@@ -33,6 +33,13 @@
                         <Border BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=folder}"
                                 StrokeThickness="0"
                                 StrokeShape="RoundRectangle 6">
+                            <FlyoutBase.ContextFlyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem Text="Переименовать" Clicked="OnRenameFolderContextMenuClicked" />
+                                    <MenuFlyoutSeparator />
+                                    <MenuFlyoutItem Text="Удалить" Clicked="OnDeleteFolderContextMenuClicked" />
+                                </MenuFlyout>
+                            </FlyoutBase.ContextFlyout>
                             <StackLayout Orientation="Horizontal" Padding="10,8" Spacing="8">
                                 <Label Text="📁" FontSize="14" VerticalOptions="Center" />
                                 <Label Text="{Binding Name}" FontSize="13" TextColor="#1C1C1E"

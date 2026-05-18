@@ -3,9 +3,13 @@ using Notes.Models;
 
 namespace Notes.Services.Notes;
 
+public enum EntityChangeKind { Created, Updated, Deleted }
+
 public class NoteManager
 {
   private readonly NoteRepository _repository;
+
+  public event Action<string, EntityChangeKind>? NoteChanged;
 
   public NoteManager(NoteRepository repository)
   {
@@ -23,6 +27,7 @@ public class NoteManager
     };
 
     await _repository.SaveNoteAsync(note);
+    NoteChanged?.Invoke(note.Id, EntityChangeKind.Created);
     return note;
   }
 
@@ -30,11 +35,14 @@ public class NoteManager
   {
     note.Modified = DateTime.Now;
     await _repository.SaveNoteAsync(note);
+    NoteChanged?.Invoke(note.Id, EntityChangeKind.Updated);
   }
 
   public async Task<bool> DeleteNoteAsync(string noteId)
   {
-    return await _repository.DeleteNoteAsync(noteId);
+    var result = await _repository.DeleteNoteAsync(noteId);
+    if (result) NoteChanged?.Invoke(noteId, EntityChangeKind.Deleted);
+    return result;
   }
 
   public async Task<Note?> GetNoteAsync(string id)
