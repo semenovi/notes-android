@@ -1,6 +1,5 @@
-﻿using Notes.Views.Windows;
-using Notes.Services.Notes;
-using Notes.Services.Export;
+﻿using Notes.Services.Notes;
+using Notes.Views.Windows;
 
 namespace Notes;
 
@@ -23,9 +22,8 @@ public partial class App : Application
     {
       var services = Handler.MauiContext.Services;
       MainPage = new MainWindow(
-          services.GetService<FolderManager>(),
-          services.GetService<NoteManager>(),
-          services.GetService<ExportService>());
+          services.GetRequiredService<FolderManager>(),
+          services.GetRequiredService<NoteManager>());
     }
   }
 #endif

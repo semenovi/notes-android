@@ -1,57 +1,48 @@
-﻿using Notes.Models;
+using System.Text.Json;
+using Notes.Data.Repositories;
+using Notes.Data.Storage;
+using Notes.Models;
 
 namespace Notes.Services.Sync;
 
 public class SyncManager
 {
-  private readonly List<ISyncAdapter> _adapters = new List<ISyncAdapter>();
-  private readonly Dictionary<string, DateTime> _lastSyncTimes = new Dictionary<string, DateTime>();
+  private readonly List<ISyncAdapter> _adapters;
+  private readonly NoteRepository _noteRepo;
+  private readonly FolderRepository _folderRepo;
+  private readonly MediaStorage _mediaStorage;
 
-  public void RegisterAdapter(ISyncAdapter adapter)
+  private static readonly JsonSerializerOptions JsonOpts = new()
   {
-    if (!_adapters.Any(a => a.ProtocolType == adapter.ProtocolType))
-    {
-      _adapters.Add(adapter);
-    }
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    PropertyNameCaseInsensitive = true,
+  };
+
+  public SyncManager(IEnumerable<ISyncAdapter> adapters, NoteRepository noteRepo,
+      FolderRepository folderRepo, MediaStorage mediaStorage)
+  {
+    _adapters = adapters.ToList();
+    _noteRepo = noteRepo;
+    _folderRepo = folderRepo;
+    _mediaStorage = mediaStorage;
   }
 
   public async Task SynchronizeAsync(SyncProfile profile)
   {
     ISyncAdapter? adapter = _adapters.FirstOrDefault(a => a.ProtocolType == profile.Protocol);
-
     if (adapter == null)
       throw new InvalidOperationException($"No adapter registered for protocol {profile.Protocol}");
 
-    bool connected = await adapter.ConnectAsync(profile);
-
-    if (!connected)
+    if (!await adapter.ConnectAsync(profile))
       throw new InvalidOperationException("Failed to connect with the sync adapter");
 
     try
     {
       List<SyncChange> remoteChanges = await adapter.GetChangesAsync();
-      List<SyncChange> localChanges = GetLocalChanges(profile.Id);
+      await ApplyRemoteChangesAsync(remoteChanges);
 
-      List<SyncConflict> conflicts = DetectConflicts(remoteChanges, localChanges);
-
-      if (conflicts.Any())
-      {
-        foreach (var conflict in conflicts)
-        {
-          await ResolveConflictAsync(conflict);
-        }
-      }
-
-      List<SyncChange> changesToApply = remoteChanges.Where(rc =>
-          !conflicts.Any(c => c.RemoteChange.Id == rc.Id)
-      ).ToList();
-
-      await ApplyRemoteChangesAsync(changesToApply);
-      await adapter.ApplyChangesAsync(localChanges.Where(lc =>
-          !conflicts.Any(c => c.LocalChange.Id == lc.Id)
-      ).ToList());
-
-      _lastSyncTimes[profile.Id] = DateTime.Now;
+      List<SyncChange> localChanges = await GetLocalChangesAsync();
+      await adapter.ApplyChangesAsync(localChanges);
     }
     finally
     {
@@ -59,48 +50,59 @@ public class SyncManager
     }
   }
 
-  public List<SyncConflict> DetectConflicts(List<SyncChange> remoteChanges, List<SyncChange> localChanges)
+  private async Task<List<SyncChange>> GetLocalChangesAsync()
   {
-    List<SyncConflict> conflicts = new List<SyncConflict>();
-
-    foreach (var remoteChange in remoteChanges)
-    {
-      foreach (var localChange in localChanges)
-      {
-        if (remoteChange.Id == localChange.Id && remoteChange.EntityType == localChange.EntityType)
-        {
-          conflicts.Add(new SyncConflict
-          {
-            RemoteChange = remoteChange,
-            LocalChange = localChange
-          });
-        }
-      }
-    }
-
-    return conflicts;
-  }
-
-  public async Task ResolveConflictAsync(SyncConflict conflict)
-  {
-    if (conflict.LocalChange.Timestamp > conflict.RemoteChange.Timestamp)
-    {
-      conflict.Resolution = SyncConflictResolution.KeepLocal;
-    }
-    else
-    {
-      conflict.Resolution = SyncConflictResolution.KeepRemote;
-    }
-
-    await Task.CompletedTask;
-  }
-
-  private List<SyncChange> GetLocalChanges(string profileId)
-  {
-    DateTime lastSync = DateTime.MinValue;
-    _lastSyncTimes.TryGetValue(profileId, out lastSync);
-
     var changes = new List<SyncChange>();
+    const string FMT = "yyyy-MM-ddTHH:mm:ssZ";
+
+    var notes = await _noteRepo.GetAllNotesAsync();
+    foreach (var note in notes)
+    {
+      changes.Add(new SyncChange
+      {
+        Id = note.Id,
+        EntityType = SyncEntityType.Note,
+        ChangeType = SyncChangeType.Update,
+        Data = JsonSerializer.Serialize(note, JsonOpts),
+        Timestamp = note.Modified,
+      });
+    }
+
+    var folders = await _folderRepo.GetAllFoldersAsync();
+    foreach (var folder in folders)
+    {
+      changes.Add(new SyncChange
+      {
+        Id = folder.Id,
+        EntityType = SyncEntityType.Folder,
+        ChangeType = SyncChangeType.Update,
+        Data = JsonSerializer.Serialize(folder, JsonOpts),
+        Timestamp = folder.Modified,
+      });
+    }
+
+    var mediaItems = await _mediaStorage.GetAllMediaAsync();
+    foreach (var item in mediaItems)
+    {
+      try
+      {
+        byte[] content = await _mediaStorage.GetRawContentAsync(item.Id);
+        var payload = new MediaSyncPayload
+        {
+          Metadata = item,
+          ContentBase64 = Convert.ToBase64String(content),
+        };
+        changes.Add(new SyncChange
+        {
+          Id = item.Id,
+          EntityType = SyncEntityType.Media,
+          ChangeType = SyncChangeType.Update,
+          Data = JsonSerializer.Serialize(payload, JsonOpts),
+          Timestamp = item.Created,
+        });
+      }
+      catch { }
+    }
 
     return changes;
   }
@@ -109,35 +111,67 @@ public class SyncManager
   {
     foreach (var change in changes)
     {
-      switch (change.EntityType)
+      try
       {
-        case SyncEntityType.Note:
-          await ApplyNoteChangeAsync(change);
-          break;
-        case SyncEntityType.Folder:
-          await ApplyFolderChangeAsync(change);
-          break;
-        case SyncEntityType.Media:
-          await ApplyMediaChangeAsync(change);
-          break;
+        switch (change.EntityType)
+        {
+          case SyncEntityType.Note:
+            await ApplyNoteChangeAsync(change);
+            break;
+          case SyncEntityType.Folder:
+            await ApplyFolderChangeAsync(change);
+            break;
+          case SyncEntityType.Media:
+            await ApplyMediaChangeAsync(change);
+            break;
+        }
       }
+      catch { }
     }
   }
 
   private async Task ApplyNoteChangeAsync(SyncChange change)
   {
-    await Task.CompletedTask;
+    if (change.ChangeType == SyncChangeType.Delete)
+    {
+      await _noteRepo.DeleteNoteAsync(change.Id, createTombstone: false);
+      return;
+    }
+    var note = JsonSerializer.Deserialize<Note>(change.Data, JsonOpts);
+    if (note != null)
+      await _noteRepo.SaveNoteSyncAsync(note);
   }
 
   private async Task ApplyFolderChangeAsync(SyncChange change)
   {
-    await Task.CompletedTask;
+    if (change.ChangeType == SyncChangeType.Delete)
+    {
+      await _folderRepo.DeleteFolderAsync(change.Id, createTombstone: false);
+      return;
+    }
+    var folder = JsonSerializer.Deserialize<Folder>(change.Data, JsonOpts);
+    if (folder != null)
+      await _folderRepo.SaveFolderSyncAsync(folder);
   }
 
   private async Task ApplyMediaChangeAsync(SyncChange change)
   {
-    await Task.CompletedTask;
+    var payload = JsonSerializer.Deserialize<MediaSyncPayload>(change.Data, JsonOpts);
+    if (payload?.Metadata == null || string.IsNullOrEmpty(payload.ContentBase64)) return;
+
+    // Skip if we already have this media item locally
+    var existing = await _mediaStorage.GetMediaAsync(payload.Metadata.Id);
+    if (existing != null) return;
+
+    byte[] content = Convert.FromBase64String(payload.ContentBase64);
+    await _mediaStorage.SaveMediaFromSyncAsync(payload.Metadata, content);
   }
+}
+
+public class MediaSyncPayload
+{
+  public MediaItem Metadata { get; set; } = new();
+  public string ContentBase64 { get; set; } = string.Empty;
 }
 
 public class SyncConflict
@@ -152,5 +186,5 @@ public enum SyncConflictResolution
   None,
   KeepRemote,
   KeepLocal,
-  Merge
+  Merge,
 }

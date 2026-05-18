@@ -1,6 +1,7 @@
 using Notes.Models;
-using Notes.Services.Notes;
 using Notes.Services.Export;
+using Notes.Services.Notes;
+using Notes.Services.Sync;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -11,6 +12,8 @@ public partial class WindowsFolderTreeView : ContentView
 {
   private readonly FolderManager _folderManager;
   private readonly ExportService _exportService;
+  private readonly SyncManager _syncManager;
+  private readonly SyncSettingsService _syncSettingsService;
   public ObservableCollection<FolderViewModel> Folders { get; } = new();
 
   public event EventHandler<Folder>? FolderSelected;
@@ -21,6 +24,8 @@ public partial class WindowsFolderTreeView : ContentView
     var services = App.Current!.Handler!.MauiContext!.Services;
     _folderManager = services.GetService<FolderManager>()!;
     _exportService = services.GetService<ExportService>()!;
+    _syncManager = services.GetService<SyncManager>()!;
+    _syncSettingsService = services.GetService<SyncSettingsService>()!;
     FoldersCollectionView.ItemsSource = Folders;
   }
 
@@ -40,6 +45,14 @@ public partial class WindowsFolderTreeView : ContentView
       Folders[0].IsSelected = true;
       FolderSelected?.Invoke(this, Folders[0].Folder);
     }
+  }
+
+  public async Task SyncIfEnabledAsync()
+  {
+    var settings = await _syncSettingsService.LoadAsync();
+    if (!settings.Enabled) return;
+    await RunSyncAsync();
+    await LoadFoldersAsync();
   }
 
   private void OnFolderTapped(object sender, EventArgs e)
@@ -69,17 +82,85 @@ public partial class WindowsFolderTreeView : ContentView
   private async void OnMoreButtonClicked(object sender, EventArgs e)
   {
     var page = Application.Current!.Windows[0].Page!;
+    var settings = await _syncSettingsService.LoadAsync();
+    string syncToggleLabel = settings.Enabled ? "Синхронизация: ВКЛ" : "Синхронизация: ВЫКЛ";
+
     var action = await page.DisplayActionSheet(
-        "Действия", "Отмена", null, "Экспорт архива", "Импорт архива");
+        "Действия", "Отмена", null,
+        syncToggleLabel,
+        "Синхронизировать сейчас",
+        "Настройки синхронизации...",
+        "Экспорт архива",
+        "Импорт архива");
 
     switch (action)
     {
+      case "Синхронизация: ВКЛ":
+      case "Синхронизация: ВЫКЛ":
+        settings.Enabled = !settings.Enabled;
+        await _syncSettingsService.SaveAsync(settings);
+        if (settings.Enabled && string.IsNullOrEmpty(settings.ServerUrl))
+          await ShowSyncSettingsDialogAsync(page);
+        break;
+
+      case "Синхронизировать сейчас":
+        if (!settings.Enabled)
+          await page.DisplayAlert("Синхронизация", "Сначала включите синхронизацию.", "OK");
+        else
+        {
+          await RunSyncAsync();
+          await LoadFoldersAsync();
+        }
+        break;
+
+      case "Настройки синхронизации...":
+        await ShowSyncSettingsDialogAsync(page);
+        break;
+
       case "Экспорт архива":
         await ExportAsync(page);
         break;
+
       case "Импорт архива":
         await ImportAsync(page);
         break;
+    }
+  }
+
+  private async Task ShowSyncSettingsDialogAsync(Page page)
+  {
+    var settings = await _syncSettingsService.LoadAsync();
+
+    string? url = await page.DisplayPromptAsync("Настройки синхронизации", "URL сервера:",
+        initialValue: settings.ServerUrl, placeholder: "http://46.148.142.210:8080");
+    if (url == null) return;
+
+    string? token = await page.DisplayPromptAsync("Настройки синхронизации",
+        "API токен (из /api/sync/setup на сервере):",
+        initialValue: settings.ApiToken, placeholder: "вставьте токен");
+    if (token == null) return;
+
+    settings.ServerUrl = url.TrimEnd('/');
+    settings.ApiToken = token.Trim();
+
+    await _syncSettingsService.SaveAsync(settings);
+    await page.DisplayAlert("Настройки синхронизации", "Настройки сохранены.", "OK");
+  }
+
+  private async Task RunSyncAsync()
+  {
+    var page = Application.Current!.Windows[0].Page!;
+    try
+    {
+      await _syncManager.SynchronizeAsync(new SyncProfile
+      {
+        Name = "Network",
+        Protocol = SyncProtocolType.Network,
+      });
+    }
+    catch (Exception ex)
+    {
+      await page.DisplayAlert("Ошибка синхронизации", ex.Message, "OK");
     }
   }
 

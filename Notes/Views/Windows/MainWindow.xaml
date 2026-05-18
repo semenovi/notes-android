@@ -5,7 +5,8 @@
              xmlns:controls="clr-namespace:Notes.Views.Windows.Controls"
              Title="Notes">
 
-    <Grid>
+
+<Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200" />
             <ColumnDefinition Width="1" />

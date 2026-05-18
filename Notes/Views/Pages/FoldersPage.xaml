@@ -5,6 +5,16 @@
              x:Class="Notes.Views.Pages.FoldersPage"
              Title="Folders">
     <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Sync: OFF"
+                     x:Name="SyncToggleItem"
+                     Order="Secondary"
+                     Clicked="OnSyncToggleClicked" />
+        <ToolbarItem Text="Sync Now"
+                     Order="Secondary"
+                     Clicked="OnSyncNowClicked" />
+        <ToolbarItem Text="Sync Settings..."
+                     Order="Secondary"
+                     Clicked="OnSyncSettingsClicked" />
         <ToolbarItem Text="Export Backup"
                      Order="Secondary"
                      Clicked="OnExportBackupClicked" />

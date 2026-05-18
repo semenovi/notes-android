@@ -1,4 +1,5 @@
-﻿using Notes.Models;
+﻿using System.Text;
+using Notes.Models;
 
 namespace Notes.Data.Repositories;
 
@@ -48,14 +49,45 @@ public class FolderRepository
 
   public async Task SaveFolderAsync(Folder folder)
   {
+    folder.Modified = DateTime.Now;
     string path = GetFolderPath(folder.Id);
     await _storage.WriteJsonAsync(path, folder);
   }
 
-  public async Task<bool> DeleteFolderAsync(string id)
+  public async Task SaveFolderSyncAsync(Folder folder)
+  {
+    await _storage.WriteJsonAsync(GetFolderPath(folder.Id), folder);
+  }
+
+  public async Task<bool> DeleteFolderAsync(string id, bool createTombstone = true)
   {
     string path = GetFolderPath(id);
-    return await _storage.DeleteFileAsync(path);
+    bool deleted = await _storage.DeleteFileAsync(path);
+    if (deleted && createTombstone)
+    {
+      string ts = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+      await _storage.WriteFileAsync(
+          Path.Combine(FOLDERS_FOLDER, $"{id}.deleted"),
+          Encoding.UTF8.GetBytes(ts));
+    }
+    return deleted;
+  }
+
+  public async Task<Dictionary<string, string>> GetDeletionTombstonesAsync()
+  {
+    var result = new Dictionary<string, string>();
+    foreach (var file in _storage.GetFiles(FOLDERS_FOLDER).Where(f => f.EndsWith(".deleted")))
+    {
+      string folderId = Path.GetFileNameWithoutExtension(file);
+      byte[] data = await _storage.ReadFileAsync(file);
+      result[folderId] = Encoding.UTF8.GetString(data);
+    }
+    return result;
+  }
+
+  public async Task ClearTombstoneAsync(string id)
+  {
+    await _storage.DeleteFileAsync(Path.Combine(FOLDERS_FOLDER, $"{id}.deleted"));
   }
 
   private string GetFolderPath(string id)
