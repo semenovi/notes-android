@@ -7,6 +7,8 @@ using Notes.Services.Markdown;
 using Notes.Services.Notes;
 using Notes.Services.Sync;
 using Notes.Views.Pages;
+using Notes.Views.Windows;
+using Notes.Views.Windows.Controls;
 using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Storage;
 
@@ -51,14 +53,22 @@ public static class MauiProgram
     builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
     builder.Services.AddSingleton<ExportService>();
 
+#if WINDOWS
+        builder.Services.AddTransient<MainWindow>();
+        builder.Services.AddTransient<WindowsFolderTreeView>();
+        builder.Services.AddTransient<WindowsNoteListView>();
+        builder.Services.AddTransient<WindowsNoteEditor>();
+#else
     builder.Services.AddTransient<FoldersPage>();
     builder.Services.AddTransient<NotesPage>();
     builder.Services.AddTransient<NoteEditorPage>();
     builder.Services.AddTransient<NoteViewPage>();
+#endif
+
     builder.Services.AddTransient<MarkdownPreviewPage>();
 
 #if DEBUG
-    builder.Logging.AddDebug();
+        builder.Logging.AddDebug();
 #endif
 
     return builder.Build();

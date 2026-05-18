@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView x:Class="Notes.Views.Windows.Controls.WindowsFolderTreeView"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <Grid BackgroundColor="#EBEBEB">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="44" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Padding="16,0,8,0">
+            <Label Text="Заметки" FontSize="18" FontAttributes="Bold"
+                   TextColor="#1C1C1E" VerticalOptions="Center" />
+            <Button Text="⋯" HorizontalOptions="End" VerticalOptions="Center"
+                    BackgroundColor="Transparent" TextColor="#007AFF" FontSize="18"
+                    BorderWidth="0" Padding="4" WidthRequest="36" HeightRequest="36"
+                    Clicked="OnMoreButtonClicked" />
+        </Grid>
+
+        <!-- Folders -->
+        <CollectionView x:Name="FoldersCollectionView" Grid.Row="1"
+                        SelectionMode="None"
+                        BackgroundColor="Transparent">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="8,2">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnFolderTapped" />
+                        </Grid.GestureRecognizers>
+                        <Border BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=folder}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 6">
+                            <StackLayout Orientation="Horizontal" Padding="10,8" Spacing="8">
+                                <Label Text="📁" FontSize="14" VerticalOptions="Center" />
+                                <Label Text="{Binding Name}" FontSize="13" TextColor="#1C1C1E"
+                                       VerticalOptions="Center" />
+                            </StackLayout>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- New Folder -->
+        <Button Grid.Row="2" Text="+ Новая папка"
+                BackgroundColor="Transparent" TextColor="#007AFF" FontSize="13"
+                BorderWidth="0" HorizontalOptions="Start" Margin="12,0"
+                Clicked="OnNewFolderButtonClicked" />
+    </Grid>
+
+</ContentView>
