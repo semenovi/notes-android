@@ -24,12 +24,13 @@
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="*">
-        <CollectionView x:Name="FoldersCollection"
-                        SelectionMode="Single"
-                        SelectionChanged="OnFolderSelectionChanged">
+        <CollectionView x:Name="FoldersCollection" SelectionMode="None">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Grid Padding="15" ColumnDefinitions="Auto,*">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnFolderTapped" />
+                        </Grid.GestureRecognizers>
                         <Label Grid.Column="0"
                                Text="{x:Static helpers:MaterialIconCodes.Folder}"
                                FontFamily="MaterialIcons"

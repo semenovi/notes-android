@@ -1,5 +1,4 @@
 using Notes.Models;
-using Notes.Services.Markdown;
 using Notes.Services.Notes;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -11,7 +10,6 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
 {
   private readonly NoteManager _noteManager;
   private readonly MediaManager _mediaManager;
-  private readonly MarkdownProcessor _markdownProcessor;
 
   private Note _note;
   private string _noteId;
@@ -45,12 +43,11 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     }
   }
 
-  public NoteEditorPage(NoteManager noteManager, MediaManager mediaManager, MarkdownProcessor markdownProcessor)
+  public NoteEditorPage(NoteManager noteManager, MediaManager mediaManager)
   {
     InitializeComponent();
     _noteManager = noteManager;
     _mediaManager = mediaManager;
-    _markdownProcessor = markdownProcessor;
     BindingContext = this;
   }
 
@@ -84,8 +81,7 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     if (string.IsNullOrEmpty(Content))
       return;
 
-    string html = await _markdownProcessor.ConvertToHtmlAsync(Content);
-    var page = new MarkdownPreviewPage(html);
+    var page = new MarkdownPreviewPage(Content);
     await Navigation.PushModalAsync(page);
   }
 

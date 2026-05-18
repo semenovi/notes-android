@@ -10,7 +10,6 @@ public partial class MarkdownEditor : ContentView, INotifyPropertyChanged
 {
   private readonly NoteManager _noteManager;
   private readonly MediaManager _mediaManager;
-  private readonly MarkdownProcessor _markdownProcessor;
 
   private string _content = string.Empty;
   private Note _currentNote;
@@ -35,7 +34,6 @@ public partial class MarkdownEditor : ContentView, INotifyPropertyChanged
     InitializeComponent();
     _noteManager = App.Current.Handler.MauiContext.Services.GetService<NoteManager>();
     _mediaManager = App.Current.Handler.MauiContext.Services.GetService<MediaManager>();
-    _markdownProcessor = App.Current.Handler.MauiContext.Services.GetService<MarkdownProcessor>();
     BindingContext = this;
   }
 
@@ -61,8 +59,7 @@ public partial class MarkdownEditor : ContentView, INotifyPropertyChanged
     if (string.IsNullOrEmpty(Content))
       return;
 
-    string html = await _markdownProcessor.ConvertToHtmlAsync(Content);
-    var page = new Views.Pages.MarkdownPreviewPage(html);
+    var page = new Views.Pages.MarkdownPreviewPage(Content);
     await Application.Current.MainPage.Navigation.PushModalAsync(page);
   }
 

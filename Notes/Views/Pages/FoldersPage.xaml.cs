@@ -9,29 +9,44 @@ namespace Notes.Views.Pages;
 public partial class FoldersPage : ContentPage
 {
   private readonly FolderManager _folderManager;
+  private readonly NoteManager _noteManager;
   private readonly ExportService _exportService;
   private readonly SyncManager _syncManager;
   private readonly SyncSettingsService _syncSettingsService;
+  private readonly ReactiveSyncService _reactiveSync;
   public ObservableCollection<Folder> Folders { get; } = new ObservableCollection<Folder>();
+  private CancellationTokenSource? _loadCts;
 
-  public FoldersPage(FolderManager folderManager, ExportService exportService,
-      SyncManager syncManager, SyncSettingsService syncSettingsService)
+  public FoldersPage(FolderManager folderManager, NoteManager noteManager,
+      ExportService exportService, SyncManager syncManager,
+      SyncSettingsService syncSettingsService, ReactiveSyncService reactiveSync)
   {
     InitializeComponent();
     _folderManager = folderManager;
+    _noteManager = noteManager;
     _exportService = exportService;
     _syncManager = syncManager;
     _syncSettingsService = syncSettingsService;
+    _reactiveSync = reactiveSync;
     FoldersCollection.ItemsSource = Folders;
   }
 
   protected override async void OnAppearing()
   {
     base.OnAppearing();
+    _reactiveSync.RemoteChangesApplied += OnRemoteChangesApplied;
     await UpdateSyncToggleTextAsync();
     await LoadFoldersAsync();
     await AutoSyncAsync();
   }
+
+  protected override void OnDisappearing()
+  {
+    base.OnDisappearing();
+    _reactiveSync.RemoteChangesApplied -= OnRemoteChangesApplied;
+  }
+
+  private async void OnRemoteChangesApplied() => await LoadFoldersAsync();
 
   private async Task UpdateSyncToggleTextAsync()
   {
@@ -42,24 +57,25 @@ public partial class FoldersPage : ContentPage
   private async Task AutoSyncAsync()
   {
     var settings = await _syncSettingsService.LoadAsync();
-    if (!settings.Enabled) return;
-    await RunSyncAsync();
-    await LoadFoldersAsync();
+    if (settings.Enabled)
+    {
+      await RunSyncAsync();
+      await LoadFoldersAsync();
+    }
+    if (Folders.Count == 0)
+      await CreateDefaultFolderAsync();
   }
 
   private async Task LoadFoldersAsync()
   {
-    Folders.Clear();
+    _loadCts?.Cancel();
+    var cts = new CancellationTokenSource();
+    _loadCts = cts;
     var folders = await _folderManager.GetFoldersAsync(null);
+    if (cts.IsCancellationRequested) return;
+    Folders.Clear();
     foreach (var folder in folders)
-    {
       Folders.Add(folder);
-    }
-
-    if (Folders.Count == 0)
-    {
-      await CreateDefaultFolderAsync();
-    }
   }
 
   private async Task CreateDefaultFolderAsync()
@@ -121,26 +137,31 @@ public partial class FoldersPage : ContentPage
 
     settings.ServerUrl = url.TrimEnd('/');
     settings.ApiToken = token.Trim();
+    settings.Enabled = true;
 
     await _syncSettingsService.SaveAsync(settings);
     await DisplayAlert("Sync Settings", "Settings saved.", "OK");
+
+    await _reactiveSync.RestartAsync();
+    await RunSyncAsync();
+    await LoadFoldersAsync();
   }
 
   private async Task RunSyncAsync()
   {
     try
     {
-      var profile = new Notes.Models.SyncProfile
+      await _syncManager.SynchronizeAsync(new Notes.Models.SyncProfile
       {
         Name = "Network",
         Protocol = Notes.Models.SyncProtocolType.Network,
-      };
-      await _syncManager.SynchronizeAsync(profile);
+      });
     }
-    catch (Exception ex)
+    catch (InvalidOperationException ex)
     {
       await DisplayAlert("Sync Error", ex.Message, "OK");
     }
+    catch { /* transient network error — periodic sync will retry */ }
   }
 
   private async void OnExportBackupClicked(object sender, EventArgs e)
@@ -161,20 +182,30 @@ public partial class FoldersPage : ContentPage
     await ImportBackupAsync();
   }
 
-  private async void OnFolderSelectionChanged(object sender, SelectionChangedEventArgs e)
+  private async void OnFolderTapped(object sender, TappedEventArgs e)
   {
-    if (e.CurrentSelection.FirstOrDefault() is Folder selectedFolder)
+    if (sender is View view && view.BindingContext is Folder folder)
     {
-      FoldersCollection.SelectedItem = null;
-
-      var navigationParameter = new Dictionary<string, object>
-              {
-                  { "FolderId", selectedFolder.Id },
-                  { "FolderName", selectedFolder.Name }
-              };
-
-      await Shell.Current.GoToAsync(nameof(NotesPage), navigationParameter);
+      await Shell.Current.GoToAsync(nameof(NotesPage), new Dictionary<string, object>
+      {
+        { "FolderId", folder.Id },
+        { "FolderName", folder.Name }
+      });
     }
+  }
+
+  private async Task DeleteFolderWithContentsAsync(Folder folder)
+  {
+    bool confirm = await DisplayAlert("Удалить папку",
+        $"Удалить «{folder.Name}» и все заметки в ней?", "Удалить", "Отмена");
+    if (!confirm) return;
+
+    var notes = await _noteManager.GetNotesAsync(folder.Id);
+    foreach (var note in notes)
+      await _noteManager.DeleteNoteAsync(note.Id);
+
+    await _folderManager.DeleteFolderAsync(folder.Id);
+    Folders.Remove(folder);
   }
 
   private async Task ImportBackupAsync()

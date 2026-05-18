@@ -1,14 +1,22 @@
-﻿namespace Notes.Services.Markdown;
+﻿using Microsoft.Maui.Graphics;
+using Microsoft.Maui.Graphics.Platform;
+
+namespace Notes.Services.Markdown;
 
 public class MarkdownProcessor
 {
   private readonly List<ISyntaxExtension> _extensions = new List<ISyntaxExtension>();
   private readonly Services.Notes.MediaManager _mediaManager;
+  private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _dataUriCache = new();
 
   public MarkdownProcessor(Services.Notes.MediaManager mediaManager)
   {
     _mediaManager = mediaManager;
+    _mediaManager.MediaAdded += id => _dataUriCache.TryRemove(id, out _);
+    _mediaManager.MediaDeleted += id => _dataUriCache.TryRemove(id, out _);
   }
+
+  public void InvalidateMediaCache(string mediaId) => _dataUriCache.TryRemove(mediaId, out _);
 
   public void RegisterExtension(ISyntaxExtension extension)
   {
@@ -33,71 +41,93 @@ public class MarkdownProcessor
     return processed;
   }
 
-  public async Task<string> ProcessMediaLinksAsync(string markdown)
+  public Task<string> ProcessMediaLinksAsync(string markdown)
   {
-    var regex = new System.Text.RegularExpressions.Regex(@"!\[(.*?)\]\(media:(.*?)\)");
-    var matches = regex.Matches(markdown);
-
-    foreach (System.Text.RegularExpressions.Match match in matches)
-    {
-      string altText = match.Groups[1].Value;
-      string mediaId = match.Groups[2].Value;
-
-      var mediaItem = await _mediaManager.GetMediaAsync(mediaId);
-      if (mediaItem != null)
-      {
-        string dataUri = await GetMediaDataUriAsync(mediaId);
-        string imgTag = $"<img src=\"{dataUri}\" alt=\"{altText}\" />";
-        markdown = markdown.Replace(match.Value, imgTag);
-      }
-      else
-      {
-        string imgTag = $"<img alt=\"{altText} (не найдено)\" />";
-        markdown = markdown.Replace(match.Value, imgTag);
-      }
-    }
-
-    return markdown;
+    var result = System.Text.RegularExpressions.Regex.Replace(
+      markdown,
+      @"!\[(.*?)\]\(media:(.*?)\)",
+      m => $"<img id=\"media-{m.Groups[2].Value}\" alt=\"{m.Groups[1].Value}\" class=\"media-lazy\">");
+    return Task.FromResult(result);
   }
 
-  private async Task<string> GetMediaDataUriAsync(string mediaId)
+  public async Task InjectImagesIntoWebViewAsync(string markdown, WebView webView)
   {
+    var mediaIds = new System.Text.RegularExpressions.Regex(@"!\[.*?\]\(media:(.*?)\)")
+      .Matches(markdown)
+      .Cast<System.Text.RegularExpressions.Match>()
+      .Select(m => m.Groups[1].Value)
+      .Distinct()
+      .ToList();
+
+    if (mediaIds.Count == 0)
+      return;
+
+    await Task.WhenAll(mediaIds.Select(async id =>
+    {
+      var item = await _mediaManager.GetMediaAsync(id);
+      if (item == null) return;
+      string dataUri = await GetMediaDataUriAsync(id, item);
+      if (string.IsNullOrEmpty(dataUri)) return;
+      string js = $"(function(){{var e=document.getElementById('media-{id}');if(e)e.src='{dataUri}';}})();";
+      await MainThread.InvokeOnMainThreadAsync(() => _ = webView.EvaluateJavaScriptAsync(js));
+    }));
+  }
+
+  private async Task<string> GetMediaDataUriAsync(string mediaId, Models.MediaItem? mediaItem = null)
+  {
+    if (_dataUriCache.TryGetValue(mediaId, out var cached))
+      return cached;
+
     try
     {
-      using (Stream stream = await _mediaManager.GetMediaContentAsync(mediaId))
-      using (MemoryStream ms = new MemoryStream())
+      mediaItem ??= await _mediaManager.GetMediaAsync(mediaId);
+      string fileType = mediaItem?.FileType?.ToLowerInvariant() ?? "png";
+
+      using var stream = await _mediaManager.GetMediaContentAsync(mediaId);
+      using var ms = new MemoryStream();
+      await stream.CopyToAsync(ms);
+      byte[] bytes = ms.ToArray();
+
+      bool isRasterImage = fileType is "jpg" or "jpeg" or "png" or "webp";
+      if (isRasterImage)
+        bytes = await Task.Run(() => ResizeImageForDisplay(bytes));
+
+      string mimeType = fileType switch
       {
-        await stream.CopyToAsync(ms);
-        byte[] bytes = ms.ToArray();
+        "jpg" or "jpeg" => "image/jpeg",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        _ => "image/png",
+      };
 
-        var mediaItem = await _mediaManager.GetMediaAsync(mediaId);
-        string fileType = mediaItem?.FileType?.ToLowerInvariant() ?? "png";
-        string mimeType = "image/png";
-
-        switch (fileType)
-        {
-          case "jpg":
-          case "jpeg":
-            mimeType = "image/jpeg";
-            break;
-          case "png":
-            mimeType = "image/png";
-            break;
-          case "gif":
-            mimeType = "image/gif";
-            break;
-          case "webp":
-            mimeType = "image/webp";
-            break;
-        }
-
-        string base64 = Convert.ToBase64String(bytes);
-        return $"data:{mimeType};base64,{base64}";
-      }
+      string dataUri = $"data:{mimeType};base64,{Convert.ToBase64String(bytes)}";
+      _dataUriCache[mediaId] = dataUri;
+      return dataUri;
     }
     catch
     {
       return "";
+    }
+  }
+
+  private static byte[] ResizeImageForDisplay(byte[] data)
+  {
+    const int MaxDim = 1200;
+    try
+    {
+      using var inMs = new MemoryStream(data);
+      var img = PlatformImage.FromStream(inMs);
+      if (img.Width <= MaxDim && img.Height <= MaxDim)
+        return data;
+      float scale = Math.Min((float)MaxDim / img.Width, (float)MaxDim / img.Height);
+      var resized = img.Resize((int)(img.Width * scale), (int)(img.Height * scale), ResizeMode.Fit);
+      using var outMs = new MemoryStream();
+      resized.Save(outMs);
+      return outMs.ToArray();
+    }
+    catch
+    {
+      return data;
     }
   }
 

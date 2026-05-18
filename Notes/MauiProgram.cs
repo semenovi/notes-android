@@ -50,6 +50,7 @@ public static class MauiProgram
     builder.Services.AddSingleton<ISyncAdapter, UsbSyncAdapter>();
     builder.Services.AddSingleton<ISyncAdapter, NetworkSyncAdapter>();
     builder.Services.AddSingleton<SyncManager>();
+    builder.Services.AddSingleton<ReactiveSyncService>();
 
     builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
     builder.Services.AddSingleton<ExportService>();
