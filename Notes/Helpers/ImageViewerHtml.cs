@@ -2,6 +2,52 @@ namespace Notes.Helpers;
 
 public static class ImageViewerHtml
 {
+  public const string CopyCodeCss =
+      "pre{cursor:pointer;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-all;overflow-x:hidden;}" +
+      "code{cursor:pointer;}" +
+      "pre.copy-ok{outline:2px solid #34C759;}" +
+      "code.copy-ok{outline:2px solid #34C759;border-radius:3px;}";
+
+  public const string CopyCodeScript = """
+      <script>
+      (function(){
+        function doCopy(text, el) {
+          var p = (navigator.clipboard && navigator.clipboard.writeText)
+            ? navigator.clipboard.writeText(text) : Promise.reject();
+          p.catch(function(){
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
+            document.body.appendChild(ta); ta.focus(); ta.select();
+            try { document.execCommand('copy'); } catch(e){}
+            document.body.removeChild(ta);
+          });
+          el.classList.add('copy-ok');
+          setTimeout(function(){ el.classList.remove('copy-ok'); }, 700);
+        }
+        function attach() {
+          document.querySelectorAll('pre').forEach(function(pre) {
+            pre.addEventListener('click', function(e) {
+              doCopy((pre.querySelector('code') || pre).innerText, pre);
+              e.stopPropagation();
+            });
+          });
+          document.querySelectorAll('code').forEach(function(code) {
+            if (code.closest('pre')) return;
+            code.addEventListener('click', function(e) {
+              doCopy(code.innerText, code);
+              e.stopPropagation();
+            });
+          });
+        }
+        if (document.readyState === 'loading')
+          document.addEventListener('DOMContentLoaded', attach);
+        else
+          attach();
+      })();
+      </script>
+      """;
+
 #if WINDOWS
     public const string ViewerCss = "img { cursor: zoom-in; }";
     public const string ViewerDiv = "";
