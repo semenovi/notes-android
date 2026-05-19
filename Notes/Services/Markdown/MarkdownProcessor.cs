@@ -247,9 +247,15 @@ public class MarkdownProcessor
 
     processedText = System.Text.RegularExpressions.Regex.Replace(
         processedText,
-        @"^```(.+?)$\n(.*?)^```$",
-        m => $"<pre><code class=\"language-{m.Groups[1].Value.Trim()}\">{m.Groups[2].Value}</code></pre>",
-        System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.Singleline
+        @"^```([^\n`]*)\n([\s\S]*?)^```$",
+        m =>
+        {
+            var lang = m.Groups[1].Value.Trim();
+            var code = m.Groups[2].Value.TrimEnd('\n');
+            var langClass = string.IsNullOrEmpty(lang) ? "" : $" class=\"language-{lang}\"";
+            return $"<pre><code{langClass}>{code}</code></pre>";
+        },
+        System.Text.RegularExpressions.RegexOptions.Multiline
     );
 
     processedText = System.Text.RegularExpressions.Regex.Replace(

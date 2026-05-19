@@ -207,13 +207,13 @@ public partial class WindowsNoteEditor : ContentView
 <head>
 <meta charset=""utf-8"">
 <style>
-  body {{ font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; font-size: 15px; color: #1C1C1E; padding: 16px 24px; line-height: 1.65; margin: 0; background: white; }}
+  body {{ font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; font-size: 15px; color: #1C1C1E; padding: 16px 24px; line-height: 1.65; margin: 0; background: white; overflow-wrap: break-word; word-break: break-word; }}
   h1 {{ font-size: 20px; font-weight: 700; margin: 0 0 8px; }}
   h2 {{ font-size: 17px; font-weight: 600; margin: 16px 0 6px; }}
   h3 {{ font-size: 15px; font-weight: 600; margin: 12px 0 4px; }}
   p {{ margin: 0 0 8px; }}
   code {{ background: #F2F2F7; padding: 2px 5px; border-radius: 4px; font-family: 'Consolas', monospace; font-size: 13px; }}
-  pre {{ background: #F2F2F7; padding: 12px; border-radius: 8px; overflow-x: auto; }}
+  pre {{ background: #F2F2F7; padding: 12px; border-radius: 8px; }}
   pre code {{ background: none; padding: 0; }}
   blockquote {{ border-left: 3px solid #C6C6C8; margin: 0 0 8px; padding: 0 0 0 14px; color: #636366; }}
   ul, ol {{ padding-left: 22px; margin: 0 0 8px; }}
@@ -223,9 +223,10 @@ public partial class WindowsNoteEditor : ContentView
   @keyframes shimmer {{ 0%{{background-position:200% 0}} 100%{{background-position:-200% 0}} }}
   hr {{ border: none; border-top: 1px solid #E5E5EA; margin: 16px 0; }}
   {ImageViewerHtml.ViewerCss}
+  {ImageViewerHtml.CopyCodeCss}
 </style>
 </head>
-<body>{ImageViewerHtml.ViewerDiv}{body}{ImageViewerHtml.ViewerScript}</body>
+<body>{ImageViewerHtml.ViewerDiv}{body}{ImageViewerHtml.ViewerScript}{ImageViewerHtml.CopyCodeScript}</body>
 </html>";
 
   private static string FormatDate(DateTime dt) =>
