@@ -1,0 +1,565 @@
+Debug Address: 127.0.0.1
+Debug Port: 52187
+Debug Assets Directory: C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\\;C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\
+New vsdbg debugger process created for project 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software
+otes-android\Notes\Notes.csproj'...
+New vsdbg debugger process created for project 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software
+otes-android\Notes\Notes.csproj'...
+New vsdbg debugger process created for project 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software
+otes-android\Notes\Notes.csproj'...
+New vsdbg debugger process created for project 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software
+otes-android\Notes\Notes.csproj'...
+Starting vsdbg debug session for project 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software
+otes-android\Notes\Notes.csproj'...
+> am start -a "android.intent.action.MAIN" -c "android.intent.category.LAUNCHER" -n "com.madbearing.notes/crc64a40343abac877f5d.MainActivity"
+> Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=com.madbearing.notes/crc64a40343abac877f5d.MainActivity }
+
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Private.CoreLib.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Notes.dll'. Symbols loaded.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Mono.Android.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Runtime.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Java.Interop.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Runtime.InteropServices.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Collections.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Mono.Android.Runtime.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Threading.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Threading.Thread.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Diagnostics.StackTrace.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Maui.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Memory.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Reflection.Emit.Lightweight.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Reflection.Emit.ILGeneration.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Reflection.Primitives.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Maui.Essentials.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.Core.dll'. Module was built without symbols.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.ComponentModel.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.VisualStudio.DesignTools.MobileTapContracts.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\netstandard.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Extensions.DependencyInjection.Abstractions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.VisualStudio.DesignTools.TapContract.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Console.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Maui.Controls.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.ObjectModel.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Maui.Controls.Xaml.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\CommunityToolkit.Maui.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\CommunityToolkit.Maui.Core.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Extensions.Configuration.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Extensions.Configuration.Abstractions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Extensions.Logging.Abstractions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Extensions.Logging.Debug.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Private.Uri.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Xml.ReaderWriter.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Private.Xml.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Runtime.Loader.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Maui.Graphics.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Linq.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.AppCompat.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.ComponentModel.TypeConverter.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.Google.Android.Material.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.Fragment.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.Activity.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+05-18 05:40:27.762 I/adbearing.notes(20947): Late-enabling -Xcheck:jni
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.Lifecycle.ViewModel.Android.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.Lifecycle.Common.Jvm.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.SavedState.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.DrawerLayout.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.CustomView.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.Navigation.Runtime.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Net.Primitives.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Diagnostics.TraceSource.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Runtime.Intrinsics.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Net.Sockets.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Security.Cryptography.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Net.Security.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Diagnostics.Tracing.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Win32.Primitives.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Threading.ThreadPool.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Collections.Concurrent.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+05-18 05:40:27.780 I/adbearing.notes(20947): Using CollectorTypeCC GC.
+05-18 05:40:27.785 D/nativeloader(20947): Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+05-18 05:40:27.787 D/ActivityThread(20947): setConscryptValidator
+05-18 05:40:27.788 D/ActivityThread(20947): setConscryptValidator - put
+05-18 05:40:27.807 D/ApplicationLoaders(20947): Returning zygote-cached class loader: /system_ext/framework/androidx.window.extensions.jar
+05-18 05:40:27.807 D/ApplicationLoaders(20947): Returning zygote-cached class loader: /system_ext/framework/androidx.window.sidecar.jar
+05-18 05:40:27.914 D/nativeloader(20947): Configuring clns-7 for other apk /data/app/~~XeQIyxGVwIuibDortBXqaA==/com.madbearing.notes--reyqw-Hlhb-M1S-FjAvAQ==/base.apk. target_sdk_version=35, uses_libraries=, library_path=/data/app/~~XeQIyxGVwIuibDortBXqaA==/com.madbearing.notes--reyqw-Hlhb-M1S-FjAvAQ==/lib/arm64:/data/app/~~XeQIyxGVwIuibDortBXqaA==/com.madbearing.notes--reyqw-Hlhb-M1S-FjAvAQ==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/com.madbearing.notes
+05-18 05:40:27.916 D/CompatChangeReporter(20947): Compat change id reported: 202956589; UID 10401; state: ENABLED
+05-18 05:40:27.921 V/GraphicsEnvironment(20947): Currently set values for:
+05-18 05:40:27.921 V/GraphicsEnvironment(20947):   angle_gl_driver_selection_pkgs=[]
+05-18 05:40:27.921 V/GraphicsEnvironment(20947):   angle_gl_driver_selection_values=[]
+05-18 05:40:27.921 V/GraphicsEnvironment(20947): Global.Settings values are invalid: number of packages: 0, number of values: 0
+05-18 05:40:27.921 V/GraphicsEnvironment(20947): App is not on the allowlist for updatable production driver.
+05-18 05:40:27.953 D/nativeloader(20947): Load /data/app/~~XeQIyxGVwIuibDortBXqaA==/com.madbearing.notes--reyqw-Hlhb-M1S-FjAvAQ==/lib/arm64/libmonosgen-2.0.so using class loader ns clns-7 (caller=/data/app/~~XeQIyxGVwIuibDortBXqaA==/com.madbearing.notes--reyqw-Hlhb-M1S-FjAvAQ==/base.apk!classes2.dex): ok
+05-18 05:40:27.954 D/nativeloader(20947): Load /data/app/~~XeQIyxGVwIuibDortBXqaA==/com.madbearing.notes--reyqw-Hlhb-M1S-FjAvAQ==/lib/arm64/libxamarin-app.so using class loader ns clns-7 (caller=/data/app/~~XeQIyxGVwIuibDortBXqaA==/com.madbearing.notes--reyqw-Hlhb-M1S-FjAvAQ==/base.apk!classes2.dex): ok
+05-18 05:40:27.954 D/nativeloader(20947): Load /data/app/~~XeQIyxGVwIuibDortBXqaA==/com.madbearing.notes--reyqw-Hlhb-M1S-FjAvAQ==/lib/arm64/libSystem.Security.Cryptography.Native.Android.so using class loader ns clns-7 (caller=/data/app/~~XeQIyxGVwIuibDortBXqaA==/com.madbearing.notes--reyqw-Hlhb-M1S-FjAvAQ==/base.apk!classes2.dex): ok
+05-18 05:40:27.954 D/DOTNET  (20947): AndroidCryptoNative_InitLibraryOnLoad: jint AndroidCryptoNative_InitLibraryOnLoad(JavaVM *, void *) in /__w/1/s/src/native/libs/System.Security.Cryptography.Native.Android/pal_jni.c
+05-18 05:40:27.955 D/DOTNET  (20947): GetOptionalClassGRef: optional class com/android/org/conscrypt/OpenSSLEngineImpl was not found
+05-18 05:40:27.956 D/nativeloader(20947): Load /data/app/~~XeQIyxGVwIuibDortBXqaA==/com.madbearing.notes--reyqw-Hlhb-M1S-FjAvAQ==/lib/arm64/libmonodroid.so using class loader ns clns-7 (caller=/data/app/~~XeQIyxGVwIuibDortBXqaA==/com.madbearing.notes--reyqw-Hlhb-M1S-FjAvAQ==/base.apk!classes2.dex): ok
+05-18 05:40:27.956 W/monodroid(20947): Failed to create directory '/data/user/0/com.madbearing.notes/files/.__override__/arm64-v8a'. File exists
+05-18 05:40:27.956 W/monodroid(20947): Creating public update directory: `/data/user/0/com.madbearing.notes/files/.__override__/arm64-v8a`
+05-18 05:40:27.956 W/adbearing.notes(20947): Attempt to remove non-JNI local reference
+05-18 05:40:27.956 W/monodroid-debug(20947): Trying to initialize the debugger with options: --debugger-agent=transport=dt_socket,loglevel=0,address=127.0.0.1:52187,server=y,embedding=1,timeout=30000
+05-18 05:40:28.873 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Notes.dll
+05-18 05:40:28.874 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:28.874 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Mono.Android.dll
+05-18 05:40:28.874 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:28.876 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Runtime.dll
+05-18 05:40:28.876 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:28.876 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Java.Interop.dll
+05-18 05:40:28.876 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:28.876 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Runtime.InteropServices.dll
+05-18 05:40:28.876 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:28.943 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Collections.dll
+05-18 05:40:28.943 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:28.979 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Mono.Android.Runtime.dll
+05-18 05:40:28.979 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.015 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Threading.dll
+05-18 05:40:29.015 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.040 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Threading.Thread.dll
+05-18 05:40:29.040 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.040 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Diagnostics.StackTrace.dll
+05-18 05:40:29.040 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.081 W/adbearing.notes(20947): Attempt to remove non-JNI local reference
+05-18 05:40:29.081 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Maui.dll
+05-18 05:40:29.081 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.120 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Memory.dll
+05-18 05:40:29.120 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.141 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Reflection.Emit.Lightweight.dll
+05-18 05:40:29.141 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.142 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Reflection.Emit.ILGeneration.dll
+05-18 05:40:29.142 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.142 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Reflection.Primitives.dll
+05-18 05:40:29.142 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.230 D/CompatChangeReporter(20947): Compat change id reported: 279646685; UID 10401; state: ENABLED
+05-18 05:40:29.234 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Maui.Essentials.dll
+05-18 05:40:29.234 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.235 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.Core.dll
+05-18 05:40:29.235 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.271 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.ComponentModel.dll
+05-18 05:40:29.271 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.290 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.VisualStudio.DesignTools.MobileTapContracts.dll
+05-18 05:40:29.290 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.317 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly netstandard.dll
+05-18 05:40:29.317 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.342 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Extensions.DependencyInjection.Abstractions.dll
+05-18 05:40:29.342 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.386 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.VisualStudio.DesignTools.TapContract.dll
+05-18 05:40:29.386 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.412 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Console.dll
+05-18 05:40:29.412 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.442 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Maui.Controls.dll
+05-18 05:40:29.442 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.443 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.ObjectModel.dll
+05-18 05:40:29.443 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.443 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Maui.Controls.Xaml.dll
+05-18 05:40:29.443 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.467 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly CommunityToolkit.Maui.dll
+05-18 05:40:29.467 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.488 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly CommunityToolkit.Maui.Core.dll
+05-18 05:40:29.488 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.488 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Extensions.Configuration.dll
+05-18 05:40:29.488 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.514 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Extensions.Configuration.Abstractions.dll
+05-18 05:40:29.514 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.515 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Extensions.Logging.Abstractions.dll
+05-18 05:40:29.515 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.528 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Extensions.Logging.Debug.dll
+05-18 05:40:29.528 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.621 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Private.Uri.dll
+05-18 05:40:29.621 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.622 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Xml.ReaderWriter.dll
+05-18 05:40:29.622 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.635 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Private.Xml.dll
+05-18 05:40:29.635 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.664 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Runtime.Loader.dll
+05-18 05:40:29.664 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.682 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Maui.Graphics.dll
+05-18 05:40:29.682 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.702 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Linq.dll
+05-18 05:40:29.702 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.725 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.AppCompat.dll
+05-18 05:40:29.725 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.735 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.ComponentModel.TypeConverter.dll
+05-18 05:40:29.735 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.788 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.Google.Android.Material.dll
+05-18 05:40:29.788 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.821 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.Fragment.dll
+05-18 05:40:29.821 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.821 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.Activity.dll
+05-18 05:40:29.821 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.821 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.Lifecycle.ViewModel.Android.dll
+05-18 05:40:29.822 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.822 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.Lifecycle.Common.Jvm.dll
+05-18 05:40:29.822 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.822 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.SavedState.dll
+05-18 05:40:29.822 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.924 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.DrawerLayout.dll
+05-18 05:40:29.925 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.925 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.CustomView.dll
+05-18 05:40:29.925 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.925 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.Navigation.Runtime.dll
+05-18 05:40:29.925 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.972 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Net.Primitives.dll
+05-18 05:40:29.972 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:29.988 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Diagnostics.TraceSource.dll
+05-18 05:40:29.988 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.010 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Runtime.Intrinsics.dll
+05-18 05:40:30.011 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.026 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Net.Sockets.dll
+05-18 05:40:30.026 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.027 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Security.Cryptography.dll
+05-18 05:40:30.027 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.038 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Net.Security.dll
+05-18 05:40:30.038 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.071 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Diagnostics.Tracing.dll
+05-18 05:40:30.071 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.079 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Win32.Primitives.dll
+05-18 05:40:30.079 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.084 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Threading.ThreadPool.dll
+05-18 05:40:30.084 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.085 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Collections.Concurrent.dll
+05-18 05:40:30.085 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.100 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Text.RegularExpressions.dll
+05-18 05:40:30.100 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.126 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Extensions.Logging.dll
+05-18 05:40:30.126 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.132 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Extensions.Options.dll
+05-18 05:40:30.132 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.138 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Extensions.DependencyInjection.dll
+05-18 05:40:30.138 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.158 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Collections.NonGeneric.dll
+05-18 05:40:30.159 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.172 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Diagnostics.DiagnosticSource.dll
+05-18 05:40:30.172 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.215 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Text.Encoding.Extensions.dll
+05-18 05:40:30.215 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.303 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Numerics.Vectors.dll
+05-18 05:40:30.303 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Text.RegularExpressions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Extensions.Logging.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Extensions.Options.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Extensions.DependencyInjection.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Collections.NonGeneric.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Diagnostics.DiagnosticSource.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Text.Encoding.Extensions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Numerics.Vectors.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+05-18 05:40:30.424 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Runtime.Serialization.Json.dll
+05-18 05:40:30.424 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.424 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Private.DataContractSerialization.dll
+05-18 05:40:30.424 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.429 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Runtime.Serialization.Xml.dll
+05-18 05:40:30.429 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.434 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Runtime.Serialization.Primitives.dll
+05-18 05:40:30.434 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.449 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Xml.XmlSerializer.dll
+05-18 05:40:30.449 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.504 I/adbearing.notes(20947): Explicit concurrent copying GC freed 13MB AllocSpace bytes, 0(0B) LOS objects, 91% free, 2190KB/26MB, paused 23us,7us total 7.072ms
+05-18 05:40:30.512 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Maui.Controls.HotReload.Forms.dll
+05-18 05:40:30.512 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Runtime.Serialization.Json.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Private.DataContractSerialization.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Runtime.Serialization.Xml.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Runtime.Serialization.Primitives.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Xml.XmlSerializer.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Maui.Controls.HotReload.Forms.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.VisualStudio.DesignTools.XamlTapContract.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+05-18 05:40:30.548 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.VisualStudio.DesignTools.XamlTapContract.dll
+05-18 05:40:30.548 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:30.641 I/adbearing.notes(20947): Explicit concurrent copying GC freed 262KB AllocSpace bytes, 0(0B) LOS objects, 92% free, 2008KB/25MB, paused 20us,9us total 4.926ms
+05-18 05:40:31.029 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.RecyclerView.dll
+05-18 05:40:31.029 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.030 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.SwipeRefreshLayout.dll
+05-18 05:40:31.030 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.033 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.CardView.dll
+05-18 05:40:31.033 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.RecyclerView.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.SwipeRefreshLayout.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.CardView.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+05-18 05:40:31.095 I/Choreographer(20947): Skipped 111 frames!  The application may be doing too much work on its main thread.
+05-18 05:40:31.116 D/ActivityThread(20947): com.madbearing.notes will use render engine as VK
+05-18 05:40:31.117 D/HWUI    (20947): HWUI - treat SMPTE_170M as sRGB
+05-18 05:40:31.119 D/HWUI    (20947): CacheManager constructor. deviceInfo=(1080, 1920)
+05-18 05:40:31.119 I/AdrenoGLES-0(20947): QUALCOMM build                   : 9ad1b67875, Ib48d2dada6
+05-18 05:40:31.119 I/AdrenoGLES-0(20947): Build Date                       : 05/11/25
+05-18 05:40:31.119 I/AdrenoGLES-0(20947): OpenGL ES Shader Compiler Version: EV031.35.01.12
+05-18 05:40:31.119 I/AdrenoGLES-0(20947): Local Branch                     : 
+05-18 05:40:31.119 I/AdrenoGLES-0(20947): Remote Branch                    : refs/tags/AU_LINUX_ANDROID_LA.UM.9.14.11.00.00.571.148
+05-18 05:40:31.119 I/AdrenoGLES-0(20947): Remote Branch                    : NONE
+05-18 05:40:31.119 I/AdrenoGLES-0(20947): Reconstruct Branch               : NOTHING
+05-18 05:40:31.119 I/AdrenoGLES-0(20947): Build Config                     : S P 10.0.7 AArch64
+05-18 05:40:31.119 I/AdrenoGLES-0(20947): Driver Path                      : /vendor/lib64/egl/libGLESv2_adreno.so
+05-18 05:40:31.123 I/AdrenoGLES-0(20947): PFP: 0x016dc094, ME: 0x00000000
+05-18 05:40:31.123 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.Loader.dll
+05-18 05:40:31.123 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.145 D/AppCompatDelegate(20947): Checking for metadata for AppLocalesMetadataHolderService : Service not found
+05-18 05:40:31.152 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly _Microsoft.Android.Resource.Designer.dll
+05-18 05:40:31.152 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.206 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.Lifecycle.LiveData.Core.dll
+05-18 05:40:31.206 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.227 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.CoordinatorLayout.dll
+05-18 05:40:31.227 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.268 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Microsoft.Extensions.Primitives.dll
+05-18 05:40:31.268 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.292 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.Lifecycle.Runtime.Android.dll
+05-18 05:40:31.292 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.292 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.Kotlin.StdLib.dll
+05-18 05:40:31.292 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.293 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.KotlinX.Coroutines.Core.Jvm.dll
+05-18 05:40:31.293 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.335 I/DecorView(20947): setWindowBackground: isPopOver=false color=ffffffff d=android.graphics.drawable.ColorDrawable@e126b78
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.Loader.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded '_Microsoft.Android.Resource.Designer'. Module was built without symbols.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.Lifecycle.LiveData.Core.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.CoordinatorLayout.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Microsoft.Extensions.Primitives.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.Lifecycle.Runtime.Android.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.Kotlin.StdLib.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.KotlinX.Coroutines.Core.Jvm.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+05-18 05:40:31.349 I/adbearing.notes(20947): hiddenapi: Accessing hidden method Landroid/view/ViewGroup;->makeOptionalFitsSystemWindows()V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/appcompat/widget/ViewUtils; (domain=app, TargetSdkVersion=35) using reflection: allowed
+05-18 05:40:31.371 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.ViewPager2.dll
+05-18 05:40:31.371 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.414 W/TabLayout(20947): MODE_SCROLLABLE + GRAVITY_FILL is not supported, GRAVITY_START will be used instead
+05-18 05:40:31.429 D/CompatChangeReporter(20947): Compat change id reported: 63938206; UID 10401; state: ENABLED
+05-18 05:40:31.432 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly Xamarin.AndroidX.ViewPager.dll
+05-18 05:40:31.432 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.446 I/adbearing.notes(20947): Compiler allocated 4198KB to compile void android.widget.TextView.<init>(android.content.Context, android.util.AttributeSet, int, int)
+05-18 05:40:31.494 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Text.Json.dll
+05-18 05:40:31.494 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.547 D/CompatChangeReporter(20947): Compat change id reported: 352594277; UID 10401; state: ENABLED
+05-18 05:40:31.551 I/ViewRootImpl(20947): dVRR is disabled
+05-18 05:40:31.551 D/HardwareRenderer(20947): onDisplayChanged. displayId=0 current wxh=1080x2640 mLargest wxh=0x0
+05-18 05:40:31.551 D/HardwareRenderer(20947): Set largestWidth and largestHeight as logical resolution. (1080x2640)
+05-18 05:40:31.551 D/HWUI    (20947): setMaxSurfaceArea requested wxh=(1080,2640) requestedSurfaceArea(2851200) mMaxSurfaceArea(2073600)
+05-18 05:40:31.552 D/NativeCustomFrequencyManager(20947): [NativeCFMS] BpCustomFrequencyManager::BpCustomFrequencyManager()
+05-18 05:40:31.563 D/InputTransport(20947): Input channel constructed: 'be131c4', fd=135
+05-18 05:40:31.563 I/InsetsController(20947): onStateChanged: host=com.madbearing.notes/crc64a40343abac877f5d.MainActivity, from=android.view.ViewRootImpl.setView:1999, state=InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2640), mDisplayCutout=DisplayCutout{insets=Rect(0, 94 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(505, 0 - 576, 94), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2640 physicalDisplayWidth=1080 physicalDisplayHeight=2640 density={3.0} cutoutSpec={M 0,0 H -11.83333333333333 V 31.33333333333333 H 11.83333333333333 V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}} sideOverrides={}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=95, center=Point(95, 95)}, RoundedCorner{position=TopRight, radius=95, center=Point(985, 95)}, RoundedCorner{position=BottomRight, radius=95, center=Point(985, 2545)}, RoundedCorner{position=BottomLeft, radius=95, center=Point(95, 2545)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2640), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(964, 0 - 1080, 94) rotation=0}, mDisplayShape=DisplayShape{ spec=-311912193 displayWidth=1080 displayHeight=2640 physicalPixelDisplaySizeRatio=1.0 rotation=0 offsetX=0 offsetY=0 scale=1.0}, mSources= { InsetsSource: {e94f0001 mType=navigationBars mFrame=[0,2601][1080,2640] mVisible=true mFlags=SUPPRESS_SCRIM mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {e94f0004 mType=systemGestures mFrame=[0,0][78,2640] mVisible=true mFlags= mSideHint=LEFT mBoundingRects=null}, InsetsSource: {e94f0005 mType=mandatorySystemGestures mFrame=[0,2556][1080,2640] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {e94f0006 mType=tappableElement mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {e94f0024 mType=systemGestures mFrame=[1002,0][1080,2640] mVisible=true mFlags= mSideHint=RIGHT mBoundingRects=null}, InsetsSource: {27 mType=displayCutout mFrame=[0,0][1080,94] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {7cc90000 mType=statusBars mFrame=[0,0][1080,94] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {7cc90005 mType=mandatorySystemGestures mFrame=[0,0][1080,126] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {7cc90006 mType=tappableElement mFrame=[0,0][1080,94] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null} }
+05-18 05:40:31.564 I/VRI[MainActivity]@5f7a027(20947): synced displayState. AttachInfo displayState=2
+05-18 05:40:31.566 I/VRI[MainActivity]@5f7a027(20947): setView = com.android.internal.policy.DecorView@a8e43b7 IsHRR=false TM=true
+05-18 05:40:31.566 I/IDS_TAG (20947): Starting IDS observe window
+05-18 05:40:31.567 I/IDS_TAG (20947): Getting Shared Preference for crc64a40343abac877f5d.MainApplication@9ca123d uid = 10401
+05-18 05:40:31.569 I/IDS_TAG (20947): App crc64a40343abac877f5d.MainApplication@9ca123d has not finished training
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.ViewPager2.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\Xamarin.AndroidX.ViewPager.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Text.Json.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+05-18 05:40:31.604 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Text.Encodings.Web.dll
+05-18 05:40:31.604 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.626 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.IO.Pipelines.dll
+05-18 05:40:31.626 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.685 D/HWUI    (20947): HWUI - treat SMPTE_170M as sRGB
+05-18 05:40:31.685 I/IDS_TAG (20947): Closing IDS observe window
+05-18 05:40:31.685 I/IDS_TAG (20947): Getting Shared Preference for crc64a40343abac877f5d.MainApplication@9ca123d uid = 10401
+05-18 05:40:31.685 I/IDS_TAG (20947): IDS count updated to 3 for crc64a40343abac877f5d.MainApplication@9ca123d
+05-18 05:40:31.708 E/adbearing.notes(20947): Unable to open libpenguin.so: dlopen failed: library "libpenguin.so" not found.
+05-18 05:40:31.708 I/BufferQueueProducer(20947): [](id:51d300000000,api:0,p:0,c:20947) setDequeueTimeout:2077252342
+05-18 05:40:31.708 I/BLASTBufferQueue_Java(20947): new BLASTBufferQueue, mName= VRI[MainActivity]@5f7a027 mNativeObject= 0xb400007bb4dc7170 sc.mNativeObject= 0xb400007a14d55590 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3397 android.view.ViewRootImpl.relayoutWindow:11361 android.view.ViewRootImpl.performTraversals:4544 android.view.ViewRootImpl.doTraversal:3708 android.view.ViewRootImpl$TraversalRunnable.run:12542 android.view.Choreographer$CallbackRecord.run:1751 android.view.Choreographer$CallbackRecord.run:1760 android.view.Choreographer.doCallbacks:1216 android.view.Choreographer.doFrame:1142 android.view.Choreographer$FrameDisplayEventReceiver.run:1707 
+05-18 05:40:31.708 I/BLASTBufferQueue_Java(20947): update, w= 1080 h= 2640 mName = VRI[MainActivity]@5f7a027 mNativeObject= 0xb400007bb4dc7170 sc.mNativeObject= 0xb400007a14d55590 format= -1 caller= android.graphics.BLASTBufferQueue.<init>:88 android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3397 android.view.ViewRootImpl.relayoutWindow:11361 android.view.ViewRootImpl.performTraversals:4544 android.view.ViewRootImpl.doTraversal:3708 android.view.ViewRootImpl$TraversalRunnable.run:12542 
+05-18 05:40:31.709 W/libc    (20947): Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+05-18 05:40:31.709 W/libc    (20947): Access denied finding property "vendor.gpp.create_frc_extension"
+05-18 05:40:31.709 I/VRI[MainActivity]@5f7a027(20947): Relayout returned: old=(0,0,1080,2640) new=(0,0,1080,2640) relayoutAsync=false req=(1080,2640)0 dur=14 res=0x3 s={true 0xb400007aa6c82d20} ch=true seqId=0
+05-18 05:40:31.710 I/VRI[MainActivity]@5f7a027(20947): performConfigurationChange setNightDimText nightDimLevel=0
+05-18 05:40:31.710 D/VRI[MainActivity]@5f7a027(20947): mThreadedRenderer.initialize() mSurface={isValid=true 0xb400007aa6c82d20} hwInitialized=true
+05-18 05:40:31.722 I/adbearing.notes(20947): Compiler allocated 7408KB to compile void android.view.ViewRootImpl.performTraversals()
+05-18 05:40:31.795 W/MaterialButton(20947): MaterialButton manages its own background to control elevation, shape, color and states. Consider using backgroundTint, shapeAppearance and other attributes where available. A custom background will ignore these attributes and you should consider handling interaction states such as pressed, focused and disabled
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Text.Encodings.Web.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.IO.Pipelines.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+05-18 05:40:31.833 D/VRI[MainActivity]@5f7a027(20947): reportNextDraw android.view.ViewRootImpl.performTraversals:5193 android.view.ViewRootImpl.doTraversal:3708 android.view.ViewRootImpl$TraversalRunnable.run:12542 android.view.Choreographer$CallbackRecord.run:1751 android.view.Choreographer$CallbackRecord.run:1760 
+05-18 05:40:31.833 D/VRI[MainActivity]@5f7a027(20947): Setup new sync=wmsSync-VRI[MainActivity]@5f7a027#0
+05-18 05:40:31.833 I/VRI[MainActivity]@5f7a027(20947): Creating new active sync group VRI[MainActivity]@5f7a027#1
+05-18 05:40:31.834 D/VRI[MainActivity]@5f7a027(20947): registerCallbacksForSync syncBuffer=false
+05-18 05:40:31.842 D/VRI[MainActivity]@5f7a027(20947): Received frameDrawingCallback syncResult=0 frameNum=1.
+05-18 05:40:31.842 I/VRI[MainActivity]@5f7a027(20947): mWNT: t=0xb400007ac4dafc90 mBlastBufferQueue=0xb400007bb4dc7170 fn= 1 HdrRenderState mRenderHdrSdrRatio=1.0 caller= android.view.ViewRootImpl$11.onFrameDraw:15016 android.view.ThreadedRenderer$1.onFrameDraw:761 <bottom of call stack> 
+05-18 05:40:31.842 I/VRI[MainActivity]@5f7a027(20947): Setting up sync and frameCommitCallback
+05-18 05:40:31.848 I/BLASTBufferQueue(20947): [VRI[MainActivity]@5f7a027#0](f:0,a:0,s:0) onFrameAvailable the first frame is available
+05-18 05:40:31.848 I/SurfaceComposerClient(20947): apply transaction with the first frame. layerId: 7295, bufferData(ID: 89966679949315, frameNumber: 1)
+05-18 05:40:31.848 I/VRI[MainActivity]@5f7a027(20947): Received frameCommittedCallback lastAttemptedDrawFrameNum=1 didProduceBuffer=true
+05-18 05:40:31.849 D/HWUI    (20947): CFMS:: SetUp Pid : 20947    Tid : 20995
+05-18 05:40:31.849 D/VRI[MainActivity]@5f7a027(20947): reportDrawFinished seqId=0
+05-18 05:40:31.870 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Net.Http.dll
+05-18 05:40:31.870 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.878 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Net.Requests.dll
+05-18 05:40:31.878 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:31.902 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.Formats.Asn1.dll
+05-18 05:40:31.902 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:32.007 I/InsetsSourceConsumer(20947): applyRequestedVisibilityToControl: visible=true, type=statusBars, host=com.madbearing.notes/crc64a40343abac877f5d.MainActivity
+05-18 05:40:32.008 I/InsetsSourceConsumer(20947): applyRequestedVisibilityToControl: visible=true, type=navigationBars, host=com.madbearing.notes/crc64a40343abac877f5d.MainActivity
+05-18 05:40:32.030 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.IO.Compression.dll
+05-18 05:40:32.030 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:32.031 W/monodroid-assembly(20947): open_from_bundles: failed to load bundled assembly System.IO.Compression.Brotli.dll
+05-18 05:40:32.031 W/monodroid-assembly(20947): open_from_bundles: the assembly might have been uploaded to the device with FastDev instead
+05-18 05:40:32.067 I/adbearing.notes(20947): Explicit concurrent copying GC freed 1622KB AllocSpace bytes, 7(192KB) LOS objects, 85% free, 4037KB/27MB, paused 23us,14us total 8.548ms
+05-18 05:40:32.075 D/VRI[MainActivity]@5f7a027(20947): mThreadedRenderer.initializeIfNeeded()#2 mSurface={isValid=true 0xb400007aa6c82d20}
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Net.Http.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Net.Requests.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.Formats.Asn1.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.IO.Compression.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'Notes.dll' (Mono: Default Domain): Loaded 'C:\Users\user.DESKTOP-NJ64LO2\Documents\proj\software\notes-android\Notes\obj\Debug\net9.0-android35.0\android\assets\arm64-v8a\System.IO.Compression.Brotli.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+05-18 05:40:32.075 D/InputMethodManagerUtils(20947): startInputInner - Id : 0
+05-18 05:40:32.075 I/InputMethodManager(20947): startInputInner - IInputMethodManagerGlobalInvoker.startInputOrWindowGainedFocus
+05-18 05:40:32.087 D/InputTransport(20947): Input channel constructed: 'ClientS', fd=160
+05-18 05:40:32.102 I/InsetsController(20947): onStateChanged: host=com.madbearing.notes/crc64a40343abac877f5d.MainActivity, from=android.view.ViewRootImpl.handleInsetsControlChanged:2888, state=InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2640), mDisplayCutout=DisplayCutout{insets=Rect(0, 94 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(505, 0 - 576, 94), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2640 physicalDisplayWidth=1080 physicalDisplayHeight=2640 density={3.0} cutoutSpec={M 0,0 H -11.83333333333333 V 31.33333333333333 H 11.83333333333333 V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}} sideOverrides={}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=95, center=Point(95, 95)}, RoundedCorner{position=TopRight, radius=95, center=Point(985, 95)}, RoundedCorner{position=BottomRight, radius=95, center=Point(985, 2545)}, RoundedCorner{position=BottomLeft, radius=95, center=Point(95, 2545)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2640), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(964, 0 - 1080, 94) rotation=0}, mDisplayShape=DisplayShape{ spec=-311912193 displayWidth=1080 displayHeight=2640 physicalPixelDisplaySizeRatio=1.0 rotation=0 offsetX=0 offsetY=0 scale=1.0}, mSources= { InsetsSource: {e94f0001 mType=navigationBars mFrame=[0,2601][1080,2640] mVisible=true mFlags=SUPPRESS_SCRIM mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {e94f0004 mType=systemGestures mFrame=[0,0][78,2640] mVisible=true mFlags= mSideHint=LEFT mBoundingRects=null}, InsetsSource: {e94f0005 mType=mandatorySystemGestures mFrame=[0,2556][1080,2640] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {e94f0006 mType=tappableElement mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {e94f0024 mType=systemGestures mFrame=[1002,0][1080,2640] mVisible=true mFlags= mSideHint=RIGHT mBoundingRects=null}, InsetsSource: {3 mType=ime mFrame=[0,0][0,0] mVisible=false mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {27 mType=displayCutout mFrame=[0,0][1080,94] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {7cc90000 mType=statusBars mFrame=[0,0][1080,94] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {7cc90005 mType=mandatorySystemGestures mFrame=[0,0][1080,126] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {7cc90006 mType=tappableElement mFrame=[0,0][1080,94] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null} }
+05-18 05:40:32.103 I/InsetsSourceConsumer(20947): applyRequestedVisibilityToControl: visible=false, type=ime, host=com.madbearing.notes/crc64a40343abac877f5d.MainActivity
+05-18 05:40:41.578 I/VRI[MainActivity]@5f7a027(20947): ViewPostIme pointer 0
+05-18 05:40:41.587 I/VRI[MainActivity]@5f7a027(20947): call setFrameRateCategory for touch hint category=high hint, reason=touch, vri=VRI[MainActivity]@5f7a027
+05-18 05:40:41.588 I/VRI[MainActivity]@5f7a027(20947): ViewPostIme pointer 1
+05-18 05:40:41.589 I/VRI[MainActivity]@5f7a027(20947): ViewPostIme pointer 0
+05-18 05:40:41.592 I/VRI[MainActivity]@5f7a027(20947): ViewPostIme pointer 1
+05-18 05:40:41.593 I/VRI[MainActivity]@5f7a027(20947): ViewPostIme pointer 0
+05-18 05:40:41.595 I/VRI[MainActivity]@5f7a027(20947): ViewPostIme pointer 1
+05-18 05:40:41.626 D/ProfileInstaller(20947): Installing profile for com.madbearing.notes
+05-18 05:40:41.664 D/DeviceStateManagerGlobal(20947): handleDeviceStateInfoChanged state=DeviceState{identifier=3, name='OPENED', app_accessible=true, cancel_when_requester_not_on_top=false}, baseState=DeviceState{identifier=3, name='OPENED', app_accessible=true, cancel_when_requester_not_on_top=false}
+05-18 05:40:41.665 I/WindowManager(20947): WindowManagerGlobal#addView, ty=1002, view=android.widget.PopupWindow$PopupDecorView{db8c751 V.E...... R.....I. 0,0-0,0}, caller=android.view.WindowManagerImpl.addView:158 android.widget.PopupWindow.invokePopup:1712 android.widget.PopupWindow.showAsDropDown:1499 
+05-18 05:40:41.665 I/ViewRootImpl(20947): dVRR is disabled
+05-18 05:40:41.666 D/NativeCustomFrequencyManager(20947): [NativeCFMS] BpCustomFrequencyManager::BpCustomFrequencyManager()
+05-18 05:40:41.677 D/InputTransport(20947): Input channel constructed: '5c5bb38', fd=173
+05-18 05:40:41.677 I/InsetsController(20947): onStateChanged: host=PopupWindow:cdea478, from=android.view.ViewRootImpl.setView:1999, state=InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2640), mDisplayCutout=DisplayCutout{insets=Rect(0, 94 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(505, 0 - 576, 94), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2640 physicalDisplayWidth=1080 physicalDisplayHeight=2640 density={3.0} cutoutSpec={M 0,0 H -11.83333333333333 V 31.33333333333333 H 11.83333333333333 V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}} sideOverrides={}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=95, center=Point(95, 95)}, RoundedCorner{position=TopRight, radius=95, center=Point(985, 95)}, RoundedCorner{position=BottomRight, radius=95, center=Point(985, 2545)}, RoundedCorner{position=BottomLeft, radius=95, center=Point(95, 2545)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2640), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(964, 0 - 1080, 94) rotation=0}, mDisplayShape=DisplayShape{ spec=-311912193 displayWidth=1080 displayHeight=2640 physicalPixelDisplaySizeRatio=1.0 rotation=0 offsetX=0 offsetY=0 scale=1.0}, mSources= { InsetsSource: {e94f0001 mType=navigationBars mFrame=[0,2601][1080,2640] mVisible=true mFlags=SUPPRESS_SCRIM mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {e94f0004 mType=systemGestures mFrame=[0,0][78,2640] mVisible=true mFlags= mSideHint=LEFT mBoundingRects=null}, InsetsSource: {e94f0005 mType=mandatorySystemGestures mFrame=[0,2556][1080,2640] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {e94f0006 mType=tappableElement mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {e94f0024 mType=systemGestures mFrame=[1002,0][1080,2640] mVisible=true mFlags= mSideHint=RIGHT mBoundingRects=null}, InsetsSource: {27 mType=displayCutout mFrame=[0,0][1080,94] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {7cc90000 mType=statusBars mFrame=[0,0][1080,94] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {7cc90005 mType=mandatorySystemGestures mFrame=[0,0][1080,126] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {7cc90006 mType=tappableElement mFrame=[0,0][1080,94] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null} }
+05-18 05:40:41.677 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): synced displayState. AttachInfo displayState=2
+05-18 05:40:41.679 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): setView = android.widget.PopupWindow$PopupDecorView@db8c751 IsHRR=false TM=true
+05-18 05:40:41.691 I/InsetsSourceConsumer(20947): applyRequestedVisibilityToControl: visible=true, type=statusBars, host=PopupWindow:cdea478
+05-18 05:40:41.692 I/InsetsSourceConsumer(20947): applyRequestedVisibilityToControl: visible=true, type=navigationBars, host=PopupWindow:cdea478
+05-18 05:40:41.692 I/BufferQueueProducer(20947): [](id:51d300000001,api:0,p:8,c:20947) setDequeueTimeout:2077252342
+05-18 05:40:41.693 I/BLASTBufferQueue_Java(20947): new BLASTBufferQueue, mName= VRI[PopupWindow:cdea478]@e0dbbb6 mNativeObject= 0xb400007bb4d3f590 sc.mNativeObject= 0xb400007a14d4d910 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3397 android.view.ViewRootImpl.relayoutWindow:11361 android.view.ViewRootImpl.performTraversals:4544 android.view.ViewRootImpl.doTraversal:3708 android.view.ViewRootImpl$TraversalRunnable.run:12542 android.view.Choreographer$CallbackRecord.run:1751 android.view.Choreographer$CallbackRecord.run:1760 android.view.Choreographer.doCallbacks:1216 android.view.Choreographer.doFrame:1142 android.view.Choreographer$FrameDisplayEventReceiver.run:1707 
+05-18 05:40:41.693 I/BLASTBufferQueue_Java(20947): update, w= 599 h= 756 mName = VRI[PopupWindow:cdea478]@e0dbbb6 mNativeObject= 0xb400007bb4d3f590 sc.mNativeObject= 0xb400007a14d4d910 format= -3 caller= android.graphics.BLASTBufferQueue.<init>:88 android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3397 android.view.ViewRootImpl.relayoutWindow:11361 android.view.ViewRootImpl.performTraversals:4544 android.view.ViewRootImpl.doTraversal:3708 android.view.ViewRootImpl$TraversalRunnable.run:12542 
+05-18 05:40:41.693 W/libc    (20947): Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+05-18 05:40:41.693 W/libc    (20947): Access denied finding property "vendor.gpp.create_frc_extension"
+05-18 05:40:41.693 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): Relayout returned: old=(555,105,1070,105) new=(555,105,1070,777) relayoutAsync=false req=(515,672)0 dur=3 res=0x3 s={true 0xb400007aa5eb6f70} ch=true seqId=0
+05-18 05:40:41.694 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): performConfigurationChange setNightDimText nightDimLevel=0
+05-18 05:40:41.694 D/VRI[PopupWindow:cdea478]@e0dbbb6(20947): mThreadedRenderer.initialize() mSurface={isValid=true 0xb400007aa5eb6f70} hwInitialized=true
+05-18 05:40:41.708 D/AbsListView(20947):  in onLayout changed 
+05-18 05:40:41.709 D/VRI[PopupWindow:cdea478]@e0dbbb6(20947): reportNextDraw android.view.ViewRootImpl.performTraversals:5193 android.view.ViewRootImpl.doTraversal:3708 android.view.ViewRootImpl$TraversalRunnable.run:12542 android.view.Choreographer$CallbackRecord.run:1751 android.view.Choreographer$CallbackRecord.run:1760 
+05-18 05:40:41.711 D/VRI[PopupWindow:cdea478]@e0dbbb6(20947): Setup new sync=wmsSync-VRI[PopupWindow:cdea478]@e0dbbb6#2
+05-18 05:40:41.711 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): Creating new active sync group VRI[PopupWindow:cdea478]@e0dbbb6#3
+05-18 05:40:41.711 D/VRI[PopupWindow:cdea478]@e0dbbb6(20947): registerCallbacksForSync syncBuffer=false
+05-18 05:40:41.713 D/VRI[PopupWindow:cdea478]@e0dbbb6(20947): Received frameDrawingCallback syncResult=0 frameNum=1.
+05-18 05:40:41.713 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): mWNT: t=0xb400007ac4d9c6d0 mBlastBufferQueue=0xb400007bb4d3f590 fn= 1 HdrRenderState mRenderHdrSdrRatio=1.0 caller= android.view.ViewRootImpl$11.onFrameDraw:15016 android.view.ThreadedRenderer$1.onFrameDraw:761 <bottom of call stack> 
+05-18 05:40:41.713 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): Setting up sync and frameCommitCallback
+05-18 05:40:41.715 I/BLASTBufferQueue(20947): [VRI[PopupWindow:cdea478]@e0dbbb6#1](f:0,a:0,s:0) onFrameAvailable the first frame is available
+05-18 05:40:41.715 I/SurfaceComposerClient(20947): apply transaction with the first frame. layerId: 7303, bufferData(ID: 89966679949319, frameNumber: 1)
+05-18 05:40:41.715 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): Received frameCommittedCallback lastAttemptedDrawFrameNum=1 didProduceBuffer=true
+05-18 05:40:41.716 D/HWUI    (20947): CFMS:: SetUp Pid : 20947    Tid : 20995
+05-18 05:40:41.716 D/VRI[PopupWindow:cdea478]@e0dbbb6(20947): reportDrawFinished seqId=0
+05-18 05:40:41.717 D/HWUI    (20947): HWUI - treat SMPTE_170M as sRGB
+05-18 05:40:41.720 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): handleResized, frames=ClientWindowFrames{frame=[555,105][1070,777] display=[-100000,-100000][100000,100000] parentFrame=[0,0][0,0] attachedFrame=[0,0][1080,2640]} displayId=0 dragResizing=false compatScale=1.0 frameChanged=false attachedFrameChanged=false configChanged=false displayChanged=false compatScaleChanged=false dragResizingChanged=false
+05-18 05:40:41.720 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): handleResized mSyncSeqId = 0
+05-18 05:40:41.720 D/VRI[PopupWindow:cdea478]@e0dbbb6(20947): reportNextDraw android.view.ViewRootImpl.handleResized:2864 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:13691 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59 
+05-18 05:40:41.723 D/VRI[PopupWindow:cdea478]@e0dbbb6(20947): Setup new sync=wmsSync-VRI[PopupWindow:cdea478]@e0dbbb6#4
+05-18 05:40:41.723 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): Creating new active sync group VRI[PopupWindow:cdea478]@e0dbbb6#5
+05-18 05:40:41.723 D/VRI[PopupWindow:cdea478]@e0dbbb6(20947): registerCallbacksForSync syncBuffer=false
+05-18 05:40:41.723 D/VRI[PopupWindow:cdea478]@e0dbbb6(20947): Received frameDrawingCallback syncResult=0 frameNum=2.
+05-18 05:40:41.723 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): Setting up sync and frameCommitCallback
+05-18 05:40:41.724 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): Received frameCommittedCallback lastAttemptedDrawFrameNum=2 didProduceBuffer=true
+05-18 05:40:41.724 D/VRI[PopupWindow:cdea478]@e0dbbb6(20947): reportDrawFinished seqId=0
+05-18 05:40:41.729 I/ImeFocusController(20947): onPreWindowFocus: skipped hasWindowFocus=false mHasImeFocus=true
+05-18 05:40:41.730 I/ImeFocusController(20947): onPostWindowFocus: skipped hasWindowFocus=false mHasImeFocus=true
+05-18 05:40:41.749 D/VRI[PopupWindow:cdea478]@e0dbbb6(20947): mThreadedRenderer.initializeIfNeeded()#2 mSurface={isValid=true 0xb400007aa5eb6f70}
+05-18 05:40:41.750 I/ImeFocusController(20947): onPreWindowFocus: skipped hasWindowFocus=true mHasImeFocus=false
+05-18 05:40:41.750 I/ImeFocusController(20947): onPostWindowFocus: skipped hasWindowFocus=true mHasImeFocus=false
+05-18 05:40:43.487 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): ViewPostIme pointer 0
+05-18 05:40:43.488 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): call setFrameRateCategory for touch hint category=high hint, reason=touch, vri=VRI[PopupWindow:cdea478]@e0dbbb6
+05-18 05:40:43.617 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): ViewPostIme pointer 1
+05-18 05:40:43.618 D/AbsListView(20947): onTouchUp() mTouchMode : 2
+05-18 05:40:43.630 I/BLASTBufferQueue_Java(20947): update, w= 599 h= 756 mName = VRI[PopupWindow:cdea478]@e0dbbb6 mNativeObject= 0xb400007bb4d3f590 sc.mNativeObject= 0xb400007a14d4d910 format= -3 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3386 android.view.ViewRootImpl.relayoutWindow:11361 android.view.ViewRootImpl.performTraversals:4544 android.view.ViewRootImpl.doTraversal:3708 android.view.ViewRootImpl$TraversalRunnable.run:12542 android.view.Choreographer$CallbackRecord.run:1751 
+05-18 05:40:43.631 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): Relayout returned: old=(555,105,1070,777) new=(555,105,1070,777) relayoutAsync=true req=(515,672)0 dur=0 res=0x0 s={true 0xb400007aa5eb6f70} ch=false seqId=0
+05-18 05:40:43.631 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): registerCallbackForPendingTransactions
+05-18 05:40:43.633 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): mWNT: t=0xb400007ac4dd5850 mBlastBufferQueue=0xb400007bb4d3f590 fn= 20 HdrRenderState mRenderHdrSdrRatio=1.0 caller= android.view.ViewRootImpl$9.onFrameDraw:6276 android.view.ViewRootImpl$3.onFrameDraw:2440 android.view.ThreadedRenderer$1.onFrameDraw:761 
+05-18 05:40:43.642 I/InsetsSourceConsumer(20947): applyRequestedVisibilityToControl: visible=true, type=statusBars, host=com.madbearing.notes/crc64a40343abac877f5d.MainActivity
+05-18 05:40:43.642 I/InsetsSourceConsumer(20947): applyRequestedVisibilityToControl: visible=true, type=navigationBars, host=com.madbearing.notes/crc64a40343abac877f5d.MainActivity
+05-18 05:40:43.666 I/ImeFocusController(20947): onPreWindowFocus: skipped hasWindowFocus=false mHasImeFocus=false
+05-18 05:40:43.667 I/ImeFocusController(20947): onPostWindowFocus: skipped hasWindowFocus=false mHasImeFocus=false
+05-18 05:40:43.674 D/VRI[MainActivity]@5f7a027(20947): mThreadedRenderer.initializeIfNeeded()#2 mSurface={isValid=true 0xb400007aa6c82d20}
+05-18 05:40:43.674 D/InputMethodManagerUtils(20947): startInputInner - Id : 0
+05-18 05:40:43.674 I/InputMethodManager(20947): startInputInner - IInputMethodManagerGlobalInvoker.startInputOrWindowGainedFocus
+05-18 05:40:43.680 D/InputTransport(20947): Input channel constructed: 'ClientS', fd=168
+05-18 05:40:53.290 I/Choreographer(20947): Skipped 561 frames!  The application may be doing too much work on its main thread.
+05-18 05:40:53.293 I/WindowManager(20947): WindowManagerGlobal#removeView, ty=1002, view=android.widget.PopupWindow$PopupDecorView{db8c751 V.E...... R.....ID 0,0-515,672}, caller=android.view.WindowManagerGlobal.removeView:626 android.view.WindowManagerImpl.removeViewImmediate:216 android.widget.PopupWindow.dismissImmediate:2421 
+05-18 05:40:53.293 W/WindowOnBackDispatcher(20947): sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda15@dc8dfaf
+05-18 05:40:53.300 I/VRI[PopupWindow:cdea478]@e0dbbb6(20947): dispatchDetachedFromWindow
+05-18 05:40:53.306 D/InputTransport(20947): Input channel destroyed: '5c5bb38', fd=173
+05-18 05:40:53.339 I/VRI[MainActivity]@5f7a027(20947): call setFrameRateCategory for touch hint category=no preference, reason=boost timeout, vri=VRI[MainActivity]@5f7a027
+05-18 05:40:54.433 D/InputTransport(20947): Input channel destroyed: 'ClientS', fd=168
+05-18 05:40:55.536 I/adbearing.notes(20947): Explicit concurrent copying GC freed 325KB AllocSpace bytes, 0(0B) LOS objects, 83% free, 4699KB/28MB, paused 26us,23us total 12.896ms
+05-18 05:40:59.081 I/VRI[MainActivity]@5f7a027(20947): ViewPostIme pointer 0
+05-18 05:40:59.083 I/VRI[MainActivity]@5f7a027(20947): call setFrameRateCategory for touch hint category=high hint, reason=touch, vri=VRI[MainActivity]@5f7a027
+05-18 05:40:59.212 I/VRI[MainActivity]@5f7a027(20947): ViewPostIme pointer 1
+05-18 05:40:59.283 W/WindowOnBackDispatcher(20947): OnBackInvokedCallback is not enabled for the application.
+05-18 05:40:59.283 W/WindowOnBackDispatcher(20947): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+05-18 05:40:59.310 W/MaterialButton(20947): MaterialButton manages its own background to control elevation, shape, color and states. Consider using backgroundTint, shapeAppearance and other attributes where available. A custom background will ignore these attributes and you should consider handling interaction states such as pressed, focused and disabled
+05-18 05:41:00.936 I/VRI[MainActivity]@5f7a027(20947): ViewPostIme pointer 0
+05-18 05:41:01.037 I/VRI[MainActivity]@5f7a027(20947): ViewPostIme pointer 1
+05-18 05:41:01.056 W/WindowOnBackDispatcher(20947): OnBackInvokedCallback is not enabled for the application.
+05-18 05:41:01.056 W/WindowOnBackDispatcher(20947): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+05-18 05:41:01.392 W/adbearing.notes(20947): Cleared Reference was only reachable from finalizer (only reported once)
+05-18 05:41:01.394 I/adbearing.notes(20947): Explicit concurrent copying GC freed 536KB AllocSpace bytes, 13(1040KB) LOS objects, 83% free, 4786KB/28MB, paused 26us,16us total 12.369ms
+05-18 05:41:10.915 I/VRI[MainActivity]@5f7a027(20947): ViewPostIme pointer 0
+05-18 05:41:10.919 I/VRI[MainActivity]@5f7a027(20947): ViewPostIme pointer 1
+05-18 05:41:10.974 I/WindowManager(20947): WindowManagerGlobal#addView, ty=1002, view=android.widget.PopupWindow$PopupDecorView{22d612f V.E...... R.....I. 0,0-0,0}, caller=android.view.WindowManagerImpl.addView:158 android.widget.PopupWindow.invokePopup:1712 android.widget.PopupWindow.showAsDropDown:1499 
+05-18 05:41:10.975 I/ViewRootImpl(20947): dVRR is disabled
+05-18 05:41:10.976 D/NativeCustomFrequencyManager(20947): [NativeCFMS] BpCustomFrequencyManager::BpCustomFrequencyManager()
+05-18 05:41:10.985 D/InputTransport(20947): Input channel constructed: '8d1d71 ', fd=157
+05-18 05:41:10.985 I/InsetsController(20947): onStateChanged: host=PopupWindow:d8c230e, from=android.view.ViewRootImpl.setView:1999, state=InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2640), mDisplayCutout=DisplayCutout{insets=Rect(0, 94 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(505, 0 - 576, 94), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2640 physicalDisplayWidth=1080 physicalDisplayHeight=2640 density={3.0} cutoutSpec={M 0,0 H -11.83333333333333 V 31.33333333333333 H 11.83333333333333 V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}} sideOverrides={}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=95, center=Point(95, 95)}, RoundedCorner{position=TopRight, radius=95, center=Point(985, 95)}, RoundedCorner{position=BottomRight, radius=95, center=Point(985, 2545)}, RoundedCorner{position=BottomLeft, radius=95, center=Point(95, 2545)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2640), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(964, 0 - 1080, 94) rotation=0}, mDisplayShape=DisplayShape{ spec=-311912193 displayWidth=1080 displayHeight=2640 physicalPixelDisplaySizeRatio=1.0 rotation=0 offsetX=0 offsetY=0 scale=1.0}, mSources= { InsetsSource: {e94f0001 mType=navigationBars mFrame=[0,2601][1080,2640] mVisible=true mFlags=SUPPRESS_SCRIM mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {e94f0004 mType=systemGestures mFrame=[0,0][78,2640] mVisible=true mFlags= mSideHint=LEFT mBoundingRects=null}, InsetsSource: {e94f0005 mType=mandatorySystemGestures mFrame=[0,2556][1080,2640] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {e94f0006 mType=tappableElement mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {e94f0024 mType=systemGestures mFrame=[1002,0][1080,2640] mVisible=true mFlags= mSideHint=RIGHT mBoundingRects=null}, InsetsSource: {27 mType=displayCutout mFrame=[0,0][1080,94] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {7cc90000 mType=statusBars mFrame=[0,0][1080,94] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {7cc90005 mType=mandatorySystemGestures mFrame=[0,0][1080,126] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {7cc90006 mType=tappableElement mFrame=[0,0][1080,94] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null} }
+05-18 05:41:10.986 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): synced displayState. AttachInfo displayState=2
+05-18 05:41:10.987 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): setView = android.widget.PopupWindow$PopupDecorView@22d612f IsHRR=false TM=true
+05-18 05:41:11.006 I/InsetsSourceConsumer(20947): applyRequestedVisibilityToControl: visible=true, type=statusBars, host=PopupWindow:d8c230e
+05-18 05:41:11.006 I/InsetsSourceConsumer(20947): applyRequestedVisibilityToControl: visible=true, type=navigationBars, host=PopupWindow:d8c230e
+05-18 05:41:11.006 I/BufferQueueProducer(20947): [](id:51d300000002,api:0,p:-2139062144,c:20947) setDequeueTimeout:2077252342
+05-18 05:41:11.007 I/BLASTBufferQueue_Java(20947): new BLASTBufferQueue, mName= VRI[PopupWindow:d8c230e]@a48e33c mNativeObject= 0xb400007bb4ddd8d0 sc.mNativeObject= 0xb400007a14d5d5d0 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3397 android.view.ViewRootImpl.relayoutWindow:11361 android.view.ViewRootImpl.performTraversals:4544 android.view.ViewRootImpl.doTraversal:3708 android.view.ViewRootImpl$TraversalRunnable.run:12542 android.view.Choreographer$CallbackRecord.run:1751 android.view.Choreographer$CallbackRecord.run:1760 android.view.Choreographer.doCallbacks:1216 android.view.Choreographer.doFrame:1142 android.view.Choreographer$FrameDisplayEventReceiver.run:1707 
+05-18 05:41:11.007 I/BLASTBufferQueue_Java(20947): update, w= 599 h= 756 mName = VRI[PopupWindow:d8c230e]@a48e33c mNativeObject= 0xb400007bb4ddd8d0 sc.mNativeObject= 0xb400007a14d5d5d0 format= -3 caller= android.graphics.BLASTBufferQueue.<init>:88 android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3397 android.view.ViewRootImpl.relayoutWindow:11361 android.view.ViewRootImpl.performTraversals:4544 android.view.ViewRootImpl.doTraversal:3708 android.view.ViewRootImpl$TraversalRunnable.run:12542 
+05-18 05:41:11.007 W/libc    (20947): Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+05-18 05:41:11.007 W/libc    (20947): Access denied finding property "vendor.gpp.create_frc_extension"
+05-18 05:41:11.007 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): Relayout returned: old=(555,105,1070,105) new=(555,105,1070,777) relayoutAsync=false req=(515,672)0 dur=3 res=0x3 s={true 0xb400007aa724eab0} ch=true seqId=0
+05-18 05:41:11.008 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): performConfigurationChange setNightDimText nightDimLevel=0
+05-18 05:41:11.008 D/VRI[PopupWindow:d8c230e]@a48e33c(20947): mThreadedRenderer.initialize() mSurface={isValid=true 0xb400007aa724eab0} hwInitialized=true
+05-18 05:41:11.022 D/AbsListView(20947):  in onLayout changed 
+05-18 05:41:11.024 D/VRI[PopupWindow:d8c230e]@a48e33c(20947): reportNextDraw android.view.ViewRootImpl.performTraversals:5193 android.view.ViewRootImpl.doTraversal:3708 android.view.ViewRootImpl$TraversalRunnable.run:12542 android.view.Choreographer$CallbackRecord.run:1751 android.view.Choreographer$CallbackRecord.run:1760 
+05-18 05:41:11.024 D/VRI[PopupWindow:d8c230e]@a48e33c(20947): Setup new sync=wmsSync-VRI[PopupWindow:d8c230e]@a48e33c#6
+05-18 05:41:11.024 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): Creating new active sync group VRI[PopupWindow:d8c230e]@a48e33c#7
+05-18 05:41:11.025 D/VRI[PopupWindow:d8c230e]@a48e33c(20947): registerCallbacksForSync syncBuffer=false
+05-18 05:41:11.026 D/VRI[PopupWindow:d8c230e]@a48e33c(20947): Received frameDrawingCallback syncResult=0 frameNum=1.
+05-18 05:41:11.026 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): mWNT: t=0xb400007ac4dbc250 mBlastBufferQueue=0xb400007bb4ddd8d0 fn= 1 HdrRenderState mRenderHdrSdrRatio=1.0 caller= android.view.ViewRootImpl$11.onFrameDraw:15016 android.view.ThreadedRenderer$1.onFrameDraw:761 <bottom of call stack> 
+05-18 05:41:11.026 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): Setting up sync and frameCommitCallback
+05-18 05:41:11.027 I/BLASTBufferQueue(20947): [VRI[PopupWindow:d8c230e]@a48e33c#2](f:0,a:0,s:0) onFrameAvailable the first frame is available
+05-18 05:41:11.027 I/SurfaceComposerClient(20947): apply transaction with the first frame. layerId: 7309, bufferData(ID: 89966679949323, frameNumber: 1)
+05-18 05:41:11.027 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): Received frameCommittedCallback lastAttemptedDrawFrameNum=1 didProduceBuffer=true
+05-18 05:41:11.027 D/HWUI    (20947): CFMS:: SetUp Pid : 20947    Tid : 20995
+05-18 05:41:11.027 D/VRI[PopupWindow:d8c230e]@a48e33c(20947): reportDrawFinished seqId=0
+05-18 05:41:11.029 D/HWUI    (20947): HWUI - treat SMPTE_170M as sRGB
+05-18 05:41:11.030 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): handleResized, frames=ClientWindowFrames{frame=[555,105][1070,777] display=[-100000,-100000][100000,100000] parentFrame=[0,0][0,0] attachedFrame=[0,0][1080,2640]} displayId=0 dragResizing=false compatScale=1.0 frameChanged=false attachedFrameChanged=false configChanged=false displayChanged=false compatScaleChanged=false dragResizingChanged=false
+05-18 05:41:11.030 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): handleResized mSyncSeqId = 0
+05-18 05:41:11.030 D/VRI[PopupWindow:d8c230e]@a48e33c(20947): reportNextDraw android.view.ViewRootImpl.handleResized:2864 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:13691 android.app.servertransaction.WindowStateResizeItem.execute:64 android.app.servertransaction.WindowStateTransactionItem.execute:59 
+05-18 05:41:11.031 D/VRI[PopupWindow:d8c230e]@a48e33c(20947): Setup new sync=wmsSync-VRI[PopupWindow:d8c230e]@a48e33c#8
+05-18 05:41:11.031 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): Creating new active sync group VRI[PopupWindow:d8c230e]@a48e33c#9
+05-18 05:41:11.031 D/VRI[PopupWindow:d8c230e]@a48e33c(20947): registerCallbacksForSync syncBuffer=false
+05-18 05:41:11.032 D/VRI[PopupWindow:d8c230e]@a48e33c(20947): Received frameDrawingCallback syncResult=8 frameNum=2.
+05-18 05:41:11.032 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): Setting up sync and frameCommitCallback
+05-18 05:41:11.034 I/ImeFocusController(20947): onPreWindowFocus: skipped hasWindowFocus=false mHasImeFocus=true
+05-18 05:41:11.034 I/ImeFocusController(20947): onPostWindowFocus: skipped hasWindowFocus=false mHasImeFocus=true
+05-18 05:41:11.044 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): Received frameCommittedCallback lastAttemptedDrawFrameNum=2 didProduceBuffer=true
+05-18 05:41:11.044 D/VRI[PopupWindow:d8c230e]@a48e33c(20947): reportDrawFinished seqId=0
+05-18 05:41:11.071 D/VRI[PopupWindow:d8c230e]@a48e33c(20947): mThreadedRenderer.initializeIfNeeded()#2 mSurface={isValid=true 0xb400007aa724eab0}
+05-18 05:41:11.071 I/ImeFocusController(20947): onPreWindowFocus: skipped hasWindowFocus=true mHasImeFocus=false
+05-18 05:41:11.071 I/ImeFocusController(20947): onPostWindowFocus: skipped hasWindowFocus=true mHasImeFocus=false
+05-18 05:41:13.389 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): ViewPostIme pointer 0
+05-18 05:41:13.390 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): call setFrameRateCategory for touch hint category=high hint, reason=touch, vri=VRI[PopupWindow:d8c230e]@a48e33c
+05-18 05:41:13.476 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): ViewPostIme pointer 1
+05-18 05:41:13.476 D/AbsListView(20947): onTouchUp() mTouchMode : 0
+05-18 05:41:13.557 I/BLASTBufferQueue_Java(20947): update, w= 599 h= 756 mName = VRI[PopupWindow:d8c230e]@a48e33c mNativeObject= 0xb400007bb4ddd8d0 sc.mNativeObject= 0xb400007a14d5d5d0 format= -3 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3386 android.view.ViewRootImpl.relayoutWindow:11361 android.view.ViewRootImpl.performTraversals:4544 android.view.ViewRootImpl.doTraversal:3708 android.view.ViewRootImpl$TraversalRunnable.run:12542 android.view.Choreographer$CallbackRecord.run:1751 
+05-18 05:41:13.557 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): Relayout returned: old=(555,105,1070,777) new=(555,105,1070,777) relayoutAsync=true req=(515,672)0 dur=0 res=0x0 s={true 0xb400007aa724eab0} ch=false seqId=0
+05-18 05:41:13.557 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): registerCallbackForPendingTransactions
+05-18 05:41:13.560 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): mWNT: t=0xb400007ac4ddd650 mBlastBufferQueue=0xb400007bb4ddd8d0 fn= 20 HdrRenderState mRenderHdrSdrRatio=1.0 caller= android.view.ViewRootImpl$9.onFrameDraw:6276 android.view.ViewRootImpl$3.onFrameDraw:2440 android.view.ThreadedRenderer$1.onFrameDraw:761 
+05-18 05:41:13.575 I/InsetsSourceConsumer(20947): applyRequestedVisibilityToControl: visible=true, type=statusBars, host=com.madbearing.notes/crc64a40343abac877f5d.MainActivity
+05-18 05:41:13.576 I/InsetsSourceConsumer(20947): applyRequestedVisibilityToControl: visible=true, type=navigationBars, host=com.madbearing.notes/crc64a40343abac877f5d.MainActivity
+05-18 05:41:13.601 I/ImeFocusController(20947): onPreWindowFocus: skipped hasWindowFocus=false mHasImeFocus=false
+05-18 05:41:13.602 I/ImeFocusController(20947): onPostWindowFocus: skipped hasWindowFocus=false mHasImeFocus=false
+05-18 05:41:13.608 D/VRI[MainActivity]@5f7a027(20947): mThreadedRenderer.initializeIfNeeded()#2 mSurface={isValid=true 0xb400007aa6c82d20}
+05-18 05:41:13.608 D/InputMethodManagerUtils(20947): startInputInner - Id : 0
+05-18 05:41:13.609 I/InputMethodManager(20947): startInputInner - IInputMethodManagerGlobalInvoker.startInputOrWindowGainedFocus
+05-18 05:41:13.615 D/InputTransport(20947): Input channel constructed: 'ClientS', fd=168
+05-18 05:41:13.873 I/WindowManager(20947): WindowManagerGlobal#removeView, ty=1002, view=android.widget.PopupWindow$PopupDecorView{22d612f V.E...... R.....ID 0,0-515,672}, caller=android.view.WindowManagerGlobal.removeView:626 android.view.WindowManagerImpl.removeViewImmediate:216 android.widget.PopupWindow.dismissImmediate:2421 
+05-18 05:41:13.873 W/WindowOnBackDispatcher(20947): sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda15@f0c0422
+05-18 05:41:13.875 I/VRI[PopupWindow:d8c230e]@a48e33c(20947): dispatchDetachedFromWindow
+05-18 05:41:13.878 D/InputTransport(20947): Input channel destroyed: '8d1d71 ', fd=157
+05-18 05:41:23.401 I/Choreographer(20947): Skipped 571 frames!  The application may be doing too much work on its main thread.
+05-18 05:41:23.402 I/VRI[MainActivity]@5f7a027(20947): call setFrameRateCategory for touch hint category=no preference, reason=boost timeout, vri=VRI[MainActivity]@5f7a027
+05-18 05:41:24.541 D/InputTransport(20947): Input channel destroyed: 'ClientS', fd=168
+05-18 05:41:26.741 I/adbearing.notes(20947): Explicit concurrent copying GC freed 341KB AllocSpace bytes, 0(0B) LOS objects, 83% free, 4751KB/28MB, paused 33us,18us total 13.346ms
+05-18 05:41:27.878 I/adbearing.notes(20947): Explicit concurrent copying GC freed 101KB AllocSpace bytes, 0(0B) LOS objects, 83% free, 4713KB/28MB, paused 28us,21us total 14.411ms
+05-18 05:41:27.895 I/adbearing.notes(20947): Explicit concurrent copying GC freed 66KB AllocSpace bytes, 0(0B) LOS objects, 83% free, 4694KB/28MB, paused 21us,17us total 11.842ms
+05-18 05:41:38.238 I/adbearing.notes(20947): Explicit concurrent copying GC freed 121KB AllocSpace bytes, 0(0B) LOS objects, 83% free, 4705KB/28MB, paused 22us,27us total 12.825ms

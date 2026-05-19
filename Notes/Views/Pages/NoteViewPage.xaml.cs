@@ -1,3 +1,4 @@
+using Notes.Helpers;
 using Notes.Models;
 using Notes.Services.Markdown;
 using Notes.Services.Notes;
@@ -81,9 +82,10 @@ public partial class NoteViewPage : ContentPage
         code {{ background-color: #f5f5f5; padding: 2px 4px; }}
         .media-lazy {{ display: block; min-height: 80px; background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }}
         @keyframes shimmer {{ 0%{{background-position:200% 0}} 100%{{background-position:-200% 0}} }}
+        {ImageViewerHtml.ViewerCss}
     </style>
 </head>
-<body>{body}</body>
+<body>{ImageViewerHtml.ViewerDiv}{body}{ImageViewerHtml.ViewerScript}</body>
 </html>";
 
   private async void OnEditClicked(object sender, EventArgs e)
