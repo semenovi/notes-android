@@ -136,7 +136,14 @@ public class MarkdownProcessor
 
   private string ProcessBasicMarkdown(string markdown)
   {
-    var processedText = markdown;
+    var processedText = markdown.Replace("\r\n", "\n").Replace("\r", "\n");
+
+    processedText = System.Text.RegularExpressions.Regex.Replace(
+        processedText,
+        @"^(-{3,}|\*{3,}|_{3,})$",
+        "<hr>",
+        System.Text.RegularExpressions.RegexOptions.Multiline
+    );
 
     processedText = System.Text.RegularExpressions.Regex.Replace(
         processedText,
@@ -269,6 +276,9 @@ public class MarkdownProcessor
     processedText = processedText.Replace("<p><ol>", "<ol>");
     processedText = processedText.Replace("</ol></p>", "</ol>");
     processedText = processedText.Replace("<p></p>", "");
+    processedText = processedText.Replace("<p><hr></p>", "<hr>");
+    processedText = processedText.Replace("<p><hr>", "<hr>");
+    processedText = processedText.Replace("<hr></p>", "<hr>");
 
     return processedText;
   }

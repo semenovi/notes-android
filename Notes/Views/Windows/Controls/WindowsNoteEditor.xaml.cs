@@ -241,8 +241,9 @@ public partial class WindowsNoteEditor : ContentView
 
   private void OnContentChanged(object sender, TextChangedEventArgs e)
   {
-    if (_currentNote == null || _currentNote.Content == e.NewTextValue) return;
-    _currentNote.Content = e.NewTextValue ?? "";
+    var normalized = (e.NewTextValue ?? "").Replace("\r\n", "\n").Replace("\r", "\n");
+    if (_currentNote == null || _currentNote.Content == normalized) return;
+    _currentNote.Content = normalized;
     _hasUnsavedChanges = true;
     StartAutoSave();
   }
