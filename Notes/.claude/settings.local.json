@@ -3,7 +3,10 @@
     "allow": [
       "Bash(dotnet build *)",
       "PowerShell(Get-ChildItem -Recurse \"C:\\\\Users\\\\user.DESKTOP-NJ64LO2\\\\Documents\\\\proj\\\\software\\\\notes-android\\\\Notes\" -Force -Exclude \".vs\",\"bin\",\"obj\",\".git\" | Where-Object { -not $_.PSIsContainer -or $_.Name -in @\\(\"Services\",\"Models\",\"Views\",\"Resources\"\\) } | Sort-Object FullName | Format-Table Name, FullName)",
-      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\user.DESKTOP-NJ64LO2\\\\Documents\\\\proj\\\\software\\\\srvapp\" -Recurse -Force | Where-Object { -not $_.PSIsContainer } | Sort-Object FullName)"
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\user.DESKTOP-NJ64LO2\\\\Documents\\\\proj\\\\software\\\\srvapp\" -Recurse -Force | Where-Object { -not $_.PSIsContainer } | Sort-Object FullName)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\user.DESKTOP-NJ64LO2\\\\Documents\\\\proj\\\\software\\\\notes-android\\\\Notes\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)"
     ]
   }
 }

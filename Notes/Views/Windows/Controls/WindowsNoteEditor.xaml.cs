@@ -1,3 +1,4 @@
+using Notes.Helpers;
 using Notes.Models;
 using Notes.Services.Markdown;
 using Notes.Services.Notes;
@@ -26,7 +27,55 @@ public partial class WindowsNoteEditor : ContentView
 
     _autoSaveTimer = new System.Timers.Timer(3000) { AutoReset = false };
     _autoSaveTimer.Elapsed += OnAutoSave;
+
+#if WINDOWS
+    ContentPreview.Navigating += OnImageViewerNavigating;
+#endif
   }
+
+#if WINDOWS
+  private void OnImageViewerNavigating(object? sender, WebNavigatingEventArgs e)
+  {
+    // Payload is encoded directly in the URL: img-viewer://open/{encodeURIComponent(id|src)}
+    if (!e.Url.StartsWith("img-viewer://open/")) return;
+    e.Cancel = true;
+    var payload = Uri.UnescapeDataString(e.Url["img-viewer://open/".Length..]);
+    _ = OpenImageViewerAsync(payload);
+  }
+
+  private async Task OpenImageViewerAsync(string payload)
+  {
+    string? imageUrl = null;
+
+    if (payload.StartsWith("media-"))
+    {
+      var mediaId = payload[6..]; // strip "media-"
+      _markdownProcessor.TryGetCachedDataUri(mediaId, out imageUrl);
+    }
+    else if (payload.StartsWith("http://") || payload.StartsWith("https://"))
+    {
+      imageUrl = payload;
+    }
+
+    if (string.IsNullOrEmpty(imageUrl)) return;
+
+    var page   = new Notes.Views.Windows.ImageViewerPage(imageUrl);
+    var window = new Window(page) { Title = string.Empty };
+
+    // Window.Activated fires after the WinUI handler is fully initialised —
+    // the only reliable moment to call AppWindow APIs on a newly opened window.
+    EventHandler? onActivated = null;
+    onActivated = (s, ev) =>
+    {
+      window.Activated -= onActivated;
+      Notes.Views.Windows.ImageViewerPage.ConfigureWindow(window);
+    };
+    window.Activated += onActivated;
+
+    Application.Current!.OpenWindow(window);
+  }
+
+#endif
 
   private void OnAutoSave(object? sender, ElapsedEventArgs e)
   {
@@ -173,9 +222,10 @@ public partial class WindowsNoteEditor : ContentView
   .media-lazy {{ display: block; min-height: 80px; background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }}
   @keyframes shimmer {{ 0%{{background-position:200% 0}} 100%{{background-position:-200% 0}} }}
   hr {{ border: none; border-top: 1px solid #E5E5EA; margin: 16px 0; }}
+  {ImageViewerHtml.ViewerCss}
 </style>
 </head>
-<body>{body}</body>
+<body>{ImageViewerHtml.ViewerDiv}{body}{ImageViewerHtml.ViewerScript}</body>
 </html>";
 
   private static string FormatDate(DateTime dt) =>

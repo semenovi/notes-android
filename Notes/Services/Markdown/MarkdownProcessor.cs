@@ -18,6 +18,9 @@ public class MarkdownProcessor
 
   public void InvalidateMediaCache(string mediaId) => _dataUriCache.TryRemove(mediaId, out _);
 
+  public bool TryGetCachedDataUri(string mediaId, out string? dataUri) =>
+      _dataUriCache.TryGetValue(mediaId, out dataUri!);
+
   public void RegisterExtension(ISyntaxExtension extension)
   {
     if (!_extensions.Any(e => e.Name == extension.Name))
