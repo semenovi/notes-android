@@ -12,6 +12,7 @@ public partial class WindowsNoteListView : ContentView
   private readonly NoteManager _noteManager;
   private readonly MediaManager _mediaManager;
   private string? _currentFolderId;
+  private string? _selectedNoteId;
   private List<NoteViewModel> _allNotes = new();
 
   public ObservableCollection<NoteViewModel> Notes { get; } = new();
@@ -31,8 +32,21 @@ public partial class WindowsNoteListView : ContentView
 
   private async void OnRemoteChangesApplied()
   {
-    if (!string.IsNullOrEmpty(_currentFolderId))
-      await LoadNotesAsync(_currentFolderId);
+    if (string.IsNullOrEmpty(_currentFolderId)) return;
+
+    var savedId = _selectedNoteId;
+    await LoadNotesAsync(_currentFolderId);
+
+    // Restore selection without re-triggering NoteSelected (editor stays untouched).
+    if (savedId != null)
+    {
+      var vm = Notes.FirstOrDefault(n => n.Note.Id == savedId);
+      if (vm != null)
+      {
+        foreach (var n in Notes) n.IsSelected = false;
+        vm.IsSelected = true;
+      }
+    }
   }
 
   public void SetFolderName(string name)
@@ -42,6 +56,8 @@ public partial class WindowsNoteListView : ContentView
 
   public async Task LoadNotesAsync(string folderId)
   {
+    if (_currentFolderId != folderId)
+      _selectedNoteId = null;
     _currentFolderId = folderId;
 
     var notes = await _noteManager.GetNotesAsync(folderId);
@@ -110,6 +126,7 @@ public partial class WindowsNoteListView : ContentView
   {
     foreach (var n in Notes) n.IsSelected = false;
     vm.IsSelected = true;
+    _selectedNoteId = vm.Note.Id;
     NoteSelected?.Invoke(this, vm.Note);
   }
 
@@ -182,6 +199,7 @@ public partial class WindowsNoteListView : ContentView
     {
       Notes.Remove(vm);
       _allNotes.RemoveAll(n => n.Note.Id == noteId);
+      if (_selectedNoteId == noteId) _selectedNoteId = null;
     }
   }
 

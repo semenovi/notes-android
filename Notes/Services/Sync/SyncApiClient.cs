@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Notes.Services;
 
 namespace Notes.Services.Sync;
 
@@ -170,13 +171,16 @@ public class SyncApiClient : IDisposable
     {
       try
       {
+        DebugLogService.Current?.Log($"chunk: id={req.Id} {req.ChunkIndex + 1}/{req.TotalChunks} bytes={req.Data.Length} attempt={attempt}");
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
         using var resp = await _pushHttp.PostAsync(_baseUrl + "/api/sync/chunk", content);
+        DebugLogService.Current?.Log($"chunk-resp: id={req.Id} {req.ChunkIndex + 1}/{req.TotalChunks} status={(int)resp.StatusCode}");
         if (resp.IsSuccessStatusCode) return true;
         if ((int)resp.StatusCode is >= 400 and < 500) return false;
       }
-      catch
+      catch (Exception ex)
       {
+        DebugLogService.Current?.Log($"chunk-err: id={req.Id} {req.ChunkIndex + 1}/{req.TotalChunks} attempt={attempt} {ex.GetType().Name}: {ex.Message}");
         if (attempt == 2) return false;
         await Task.Delay(TimeSpan.FromSeconds(attempt + 1));
       }

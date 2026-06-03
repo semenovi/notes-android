@@ -4,6 +4,7 @@ using Notes.Data.Repositories;
 using Notes.Data.Storage;
 using Notes.Models;
 using Notes.Services.Crypto;
+using Notes.Services;
 
 namespace Notes.Services.Sync;
 
@@ -84,6 +85,7 @@ public class NetworkSyncAdapter : ISyncAdapter
     _toUploadNotes = manifestResp.ToUpload.Notes;
     _toUploadFolders = manifestResp.ToUpload.Folders;
     _toUploadMedia = manifestResp.ToUpload.Media;
+    DebugLogService.Current?.Log($"manifest: ul(n={_toUploadNotes.Count} f={_toUploadFolders.Count} m={_toUploadMedia.Count}) dl(n={manifestResp.ToDownload.Notes.Count} f={manifestResp.ToDownload.Folders.Count} m={manifestResp.ToDownload.Media.Count})");
 
     PullResponse? pull = await _apiClient.PullChangesAsync(
         manifestResp.ToDownload.Notes,
@@ -208,7 +210,11 @@ public class NetworkSyncAdapter : ISyncAdapter
 
     // Each media item is uploaded in 4 MB chunks so large files survive slow/unstable connections.
     foreach (var item in syncMedia)
+    {
+      DebugLogService.Current?.Log($"full-sync-media: id={item.Id} encChars={item.EncryptedData.Length}");
       await _apiClient.PushChunkedAsync(item, "media", _settings?.DeviceId);
+      DebugLogService.Current?.Log($"full-sync-media-done: id={item.Id}");
+    }
   }
 
   public async Task DisconnectAsync()

@@ -1,4 +1,6 @@
+using CommunityToolkit.Maui.Storage;
 using Notes.Models;
+using Notes.Services;
 using Notes.Services.Export;
 using Notes.Services.Notes;
 using Notes.Services.Sync;
@@ -29,6 +31,10 @@ public partial class FoldersPage : ContentPage
     _syncSettingsService = syncSettingsService;
     _reactiveSync = reactiveSync;
     FoldersCollection.ItemsSource = Folders;
+
+    var exportLogsItem = new ToolbarItem { Text = "Export Logs", Order = ToolbarItemOrder.Secondary };
+    exportLogsItem.Clicked += OnExportLogsClicked;
+    ToolbarItems.Add(exportLogsItem);
   }
 
   protected override async void OnAppearing()
@@ -209,6 +215,20 @@ public partial class FoldersPage : ContentPage
 
     await _folderManager.DeleteFolderAsync(folder.Id);
     Folders.Remove(folder);
+  }
+
+  private async void OnExportLogsClicked(object sender, EventArgs e)
+  {
+    var log = DebugLogService.Current;
+    if (log == null) { await DisplayAlert("Logs", "Log service not initialized.", "OK"); return; }
+    var text = log.GetLogsText();
+    if (string.IsNullOrEmpty(text)) { await DisplayAlert("Logs", "No log entries yet.", "OK"); return; }
+    var bytes = System.Text.Encoding.UTF8.GetBytes(text);
+    using var stream = new MemoryStream(bytes);
+    var fileName = $"notes_debug_{DateTime.Now:yyyyMMddHHmmss}.log";
+    var result = await FileSaver.Default.SaveAsync(fileName, stream, CancellationToken.None);
+    if (!result.IsSuccessful)
+      await DisplayAlert("Error", result.Exception?.Message ?? "Save failed", "OK");
   }
 
   private async Task ImportBackupAsync()
