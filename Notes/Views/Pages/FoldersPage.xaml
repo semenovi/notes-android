@@ -32,7 +32,7 @@
                             <TapGestureRecognizer Tapped="OnFolderTapped" />
                         </Grid.GestureRecognizers>
                         <Label Grid.Column="0"
-                               Text="{x:Static helpers:MaterialIconCodes.Folder}"
+                               Text="{Binding Icon}"
                                FontFamily="MaterialIcons"
                                FontSize="24"
                                VerticalOptions="Center" />

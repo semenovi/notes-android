@@ -1,4 +1,4 @@
-﻿namespace Notes.Models;
+namespace Notes.Models;
 
 public class Folder
 {
@@ -6,4 +6,5 @@ public class Folder
   public string Name { get; set; } = string.Empty;
   public string? ParentId { get; set; } = null;
   public DateTime Modified { get; set; } = DateTime.Now;
+  public string Icon { get; set; } = "";
 }

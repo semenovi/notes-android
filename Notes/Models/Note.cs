@@ -1,4 +1,4 @@
-﻿namespace Notes.Models;
+namespace Notes.Models;
 
 public class Note
 {
@@ -9,4 +9,5 @@ public class Note
   public DateTime Modified { get; set; } = DateTime.Now;
   public string FolderId { get; set; } = string.Empty;
   public List<string> Tags { get; set; } = new List<string>();
+  public string Icon { get; set; } = "";
 }

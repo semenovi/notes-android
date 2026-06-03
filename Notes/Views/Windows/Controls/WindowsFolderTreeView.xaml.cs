@@ -1,3 +1,4 @@
+using Notes.Helpers;
 using Notes.Models;
 using Notes.Services.Export;
 using Notes.Services.Notes;
@@ -155,6 +156,25 @@ public partial class WindowsFolderTreeView : ContentView
     }
   }
 
+  private async void OnChangeFolderIconContextMenuClicked(object sender, EventArgs e)
+  {
+    if (sender is not MenuFlyoutItem item || item.BindingContext is not FolderViewModel vm) return;
+    var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+    if (page == null) return;
+
+    var icon = await IconSet.PickAsync(page);
+    if (icon == null) return;
+
+    vm.Folder.Icon = icon;
+    vm.Folder.Modified = DateTime.UtcNow;
+    await _folderManager.UpdateFolderAsync(vm.Folder);
+
+    var idx = Folders.IndexOf(vm);
+    var isSelected = vm.IsSelected;
+    if (idx >= 0)
+      Folders[idx] = new FolderViewModel(vm.Folder) { IsSelected = isSelected };
+  }
+
   private async void OnRenameFolderContextMenuClicked(object sender, EventArgs e)
   {
     if (sender is not MenuFlyoutItem item || item.BindingContext is not FolderViewModel vm)
@@ -303,6 +323,7 @@ public class FolderViewModel : INotifyPropertyChanged
 {
   public Folder Folder { get; }
   public string Name => Folder.Name;
+  public string Icon => Folder.Icon;
 
   private bool _isSelected;
   public bool IsSelected
