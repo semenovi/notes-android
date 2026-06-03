@@ -1,3 +1,4 @@
+using Notes.Helpers;
 using Notes.Models;
 using Notes.Services.Notes;
 using Notes.Services.Sync;
@@ -151,6 +152,26 @@ public partial class WindowsNoteListView : ContentView
     }
   }
 
+  private async void OnChangeNoteIconContextMenuClicked(object sender, EventArgs e)
+  {
+    if (sender is not MenuFlyoutItem item || item.BindingContext is not NoteViewModel vm) return;
+    var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+    if (page == null) return;
+
+    var icon = await IconSet.PickAsync(page);
+    if (icon == null) return;
+
+    vm.Note.Icon = icon;
+    await _noteManager.UpdateNoteAsync(vm.Note);
+
+    var idx = Notes.IndexOf(vm);
+    var allIdx = _allNotes.IndexOf(vm);
+    var isSelected = vm.IsSelected;
+    var updated = new NoteViewModel(vm.Note, vm.PreviewImages) { IsSelected = isSelected };
+    if (idx >= 0) Notes[idx] = updated;
+    if (allIdx >= 0) _allNotes[allIdx] = updated;
+  }
+
   private async void OnRenameNoteContextMenuClicked(object sender, EventArgs e)
   {
     if (sender is not MenuFlyoutItem item || item.BindingContext is not NoteViewModel vm)
@@ -221,6 +242,7 @@ public class NoteViewModel : INotifyPropertyChanged
 {
   public Note Note { get; }
   public string Title => Note.Title;
+  public string Icon => Note.Icon;
   public string Preview => GetPreview();
   public string ModifiedString => Note.Modified.ToString("dd.MM HH:mm");
   public IReadOnlyList<ImageSource> PreviewImages { get; }

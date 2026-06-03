@@ -1,3 +1,4 @@
+using Notes.Helpers;
 using Notes.Models;
 using Notes.Services.Notes;
 using Notes.Services.Sync;
@@ -88,14 +89,70 @@ public partial class NotesPage : ContentPage
     }
   }
 
-  private async void OnNoteSelectionChanged(object sender, SelectionChangedEventArgs e)
+  private async void OnNoteTapped(object sender, TappedEventArgs e)
   {
-    if (e.CurrentSelection.FirstOrDefault() is Note selectedNote)
-    {
-      NotesCollection.SelectedItem = null;
+    if (sender is View view && view.BindingContext is Note note)
+      await NavigateToNoteView(note);
+  }
 
-      await NavigateToNoteView(selectedNote);
+  private async void OnNoteMenuClicked(object sender, EventArgs e)
+  {
+    if (sender is not Button btn || btn.BindingContext is not Note note) return;
+
+    var action = await DisplayActionSheet(note.Title, "Cancel", null,
+        "Change Icon", "Rename", "Delete");
+
+    switch (action)
+    {
+      case "Change Icon":
+        await ChangeNoteIconAsync(note);
+        break;
+      case "Rename":
+        await RenameNoteAsync(note);
+        break;
+      case "Delete":
+        await DeleteNoteAsync(note);
+        break;
     }
+  }
+
+  private async Task ChangeNoteIconAsync(Note note)
+  {
+    var icon = await IconSet.PickAsync(this);
+    if (icon == null) return;
+    note.Icon = icon;
+    await _noteManager.UpdateNoteAsync(note);
+    await LoadNotesAsync();
+  }
+
+  private async Task RenameNoteAsync(Note note)
+  {
+    var newTitle = await DisplayPromptAsync("Rename Note", "New name:", initialValue: note.Title);
+    if (string.IsNullOrWhiteSpace(newTitle) || newTitle == note.Title) return;
+    note.Title = newTitle;
+    await _noteManager.UpdateNoteAsync(note);
+    await LoadNotesAsync();
+  }
+
+  private async Task DeleteNoteAsync(Note note)
+  {
+    bool confirm = await DisplayAlert("Delete Note", $"Delete \"{note.Title}\"?", "Delete", "Cancel");
+    if (!confirm) return;
+    await _noteManager.DeleteNoteAsync(note.Id);
+    Notes.Remove(note);
+  }
+
+  private async void OnChangeFolderIconClicked(object sender, EventArgs e)
+  {
+    var folder = await _folderManager.GetFolderAsync(FolderId);
+    if (folder == null) return;
+
+    var icon = await IconSet.PickAsync(this);
+    if (icon == null) return;
+
+    folder.Icon = icon;
+    folder.Modified = DateTime.UtcNow;
+    await _folderManager.UpdateFolderAsync(folder);
   }
 
   private async void OnRenameFolderClicked(object sender, EventArgs e)
