@@ -13,6 +13,10 @@ using Notes.Views.Windows.Controls;
 using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Storage;
 
+[assembly: Microsoft.Maui.Controls.ExportFont("MaterialIcons-Regular.ttf", Alias = "MaterialIcons")]
+[assembly: Microsoft.Maui.Controls.ExportFont("OpenSans-Regular.ttf", Alias = "OpenSansRegular")]
+[assembly: Microsoft.Maui.Controls.ExportFont("OpenSans-Semibold.ttf", Alias = "OpenSansSemibold")]
+
 namespace Notes;
 
 public static class MauiProgram
@@ -47,6 +51,7 @@ public static class MauiProgram
     builder.Services.AddSingleton<CryptoService>();
     builder.Services.AddSingleton<Services.Crypto.SecureStorage>();
 
+    builder.Services.AddSingleton<DebugLogService>();
     builder.Services.AddSingleton<ToastService>();
     builder.Services.AddSingleton<SyncSettingsService>();
     builder.Services.AddSingleton<ISyncAdapter, UsbSyncAdapter>();

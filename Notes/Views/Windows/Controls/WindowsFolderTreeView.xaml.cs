@@ -49,7 +49,7 @@ public partial class WindowsFolderTreeView : ContentView
     {
       toSelect.IsSelected = true;
       _selectedFolder = toSelect.Folder;
-      FolderSelected?.Invoke(this, toSelect.Folder);
+      // Don't fire FolderSelected — WindowsNoteListView handles its own refresh via RemoteChangesApplied.
     }
   }
 

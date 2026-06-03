@@ -76,6 +76,7 @@ public class ReactiveSyncService : IDisposable
     _syncKey = SyncCryptoHelper.DeriveKeyFromToken(settings.ApiToken);
     _client = new SyncApiClient(settings.ServerUrl, settings.ApiToken);
     _cts = new CancellationTokenSource();
+    DebugLogService.Current?.Log($"sync-start: url={settings.ServerUrl} device={_deviceId}");
     _sseTask = RunSseLoopAsync(_cts.Token);
     _periodicTask = RunPeriodicSyncAsync(_cts.Token);
   }
@@ -104,10 +105,12 @@ public class ReactiveSyncService : IDisposable
     {
       try
       {
+        DebugLogService.Current?.Log("periodic-sync-start");
         await _syncManager.SynchronizeAsync(DefaultProfile);
+        DebugLogService.Current?.Log("periodic-sync-done");
         MainThread.BeginInvokeOnMainThread(() => RemoteChangesApplied?.Invoke());
       }
-      catch { }
+      catch (Exception ex) { DebugLogService.Current?.Log($"periodic-sync-err: {ex.GetType().Name}: {ex.Message}"); }
     }
   }
 
@@ -183,11 +186,12 @@ public class ReactiveSyncService : IDisposable
       foreach (var id in (evt.DeletedFolders ?? new List<string>()))
         try { await _folderRepo.DeleteFolderAsync(id, createTombstone: false); } catch { }
 
-      if (pull.Notes.Count > 0 || pull.Folders.Count > 0
-          || (evt.DeletedNotes?.Count ?? 0) > 0 || (evt.DeletedFolders?.Count ?? 0) > 0)
+      int deletedNotes = evt.DeletedNotes?.Count ?? 0;
+      int deletedFolders = evt.DeletedFolders?.Count ?? 0;
+      if (pull.Notes.Count > 0 || pull.Folders.Count > 0 || deletedNotes > 0 || deletedFolders > 0)
       {
         MainThread.BeginInvokeOnMainThread(() => RemoteChangesApplied?.Invoke());
-        _toastService.Show("Синхронизировано");
+        _toastService.Show(BuildSyncMessage(pull.Notes.Count, pull.Folders.Count, deletedNotes, deletedFolders));
       }
     }
     catch { }
@@ -289,12 +293,17 @@ public class ReactiveSyncService : IDisposable
     var client = _client;
     var key = _syncKey;
     var deviceId = _deviceId;
-    if (client == null || key == null || deviceId == null) return;
+    if (client == null || key == null || deviceId == null)
+    {
+      DebugLogService.Current?.Log($"media-push-skip: id={mediaId} no client/key/device");
+      return;
+    }
     await _pushLock.WaitAsync();
     try
     {
+      DebugLogService.Current?.Log($"media-push: id={mediaId}");
       var item = await _mediaManager.GetMediaAsync(mediaId);
-      if (item == null) return;
+      if (item == null) { DebugLogService.Current?.Log($"media-push-skip: id={mediaId} item not found"); return; }
 
       using var contentStream = await _mediaManager.GetMediaContentAsync(mediaId);
       using var ms = new MemoryStream();
@@ -313,10 +322,34 @@ public class ReactiveSyncService : IDisposable
         EncryptedData = Convert.ToBase64String(enc),
         Modified = item.Created.ToUniversalTime().ToString(TimeFmt),
       };
+      DebugLogService.Current?.Log($"media-push-enc: id={mediaId} rawBytes={ms.Length} encChars={syncItem.EncryptedData.Length}");
       await client.PushChunkedAsync(syncItem, "media", deviceId);
+      DebugLogService.Current?.Log($"media-push-done: id={mediaId}");
     }
-    catch { }
+    catch (Exception ex)
+    {
+      DebugLogService.Current?.Log($"media-push-err: id={mediaId} {ex.GetType().Name}: {ex.Message}");
+    }
     finally { _pushLock.Release(); }
+  }
+
+  private static string BuildSyncMessage(int notes, int folders, int deletedNotes, int deletedFolders)
+  {
+    var parts = new List<string>();
+
+    var received = new List<string>();
+    if (notes > 0) received.Add($"{notes} {(notes == 1 ? "note" : "notes")}");
+    if (folders > 0) received.Add($"{folders} {(folders == 1 ? "folder" : "folders")}");
+    if (received.Count > 0)
+      parts.Add("Received: " + string.Join(", ", received));
+
+    var deleted = new List<string>();
+    if (deletedNotes > 0) deleted.Add($"{deletedNotes} {(deletedNotes == 1 ? "note" : "notes")}");
+    if (deletedFolders > 0) deleted.Add($"{deletedFolders} {(deletedFolders == 1 ? "folder" : "folders")}");
+    if (deleted.Count > 0)
+      parts.Add("Deleted: " + string.Join(", ", deleted));
+
+    return string.Join(" · ", parts);
   }
 
   public void Dispose()
