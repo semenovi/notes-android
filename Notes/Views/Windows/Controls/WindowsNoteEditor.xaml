@@ -7,7 +7,7 @@
 
         <!-- Empty state -->
         <Label x:Name="EmptyStateLabel"
-               Text="Выберите заметку или создайте новую"
+               Text="Select a note or create a new one"
                FontSize="16" TextColor="#8E8E93"
                HorizontalOptions="Center" VerticalOptions="Center"
                IsVisible="True" />
@@ -59,11 +59,11 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <Entry x:Name="TitleEntry" Grid.Column="0"
-                       Placeholder="Заголовок" PlaceholderColor="#C7C7CC"
+                       Placeholder="Title" PlaceholderColor="#C7C7CC"
                        FontSize="22" FontAttributes="Bold" TextColor="#1C1C1E"
                        BackgroundColor="Transparent"
                        TextChanged="OnTitleChanged" />
-                <Button Grid.Column="1" Text="Сохранить"
+                <Button Grid.Column="1" Text="Save"
                         BackgroundColor="Transparent" TextColor="#007AFF"
                         FontSize="13" FontAttributes="Bold"
                         BorderWidth="0" Padding="8,4"

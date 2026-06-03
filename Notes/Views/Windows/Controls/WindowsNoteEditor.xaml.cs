@@ -154,8 +154,8 @@ public partial class WindowsNoteEditor : ContentView
     }
     catch (Exception ex)
     {
-      await Application.Current!.Windows[0].Page!.DisplayAlert("Ошибка",
-          $"Не удалось сохранить: {ex.Message}", "OK");
+      await Application.Current!.Windows[0].Page!.DisplayAlert("Error",
+          $"Failed to save: {ex.Message}", "OK");
     }
   }
 
@@ -170,7 +170,7 @@ public partial class WindowsNoteEditor : ContentView
     try
     {
       string body = string.IsNullOrWhiteSpace(content)
-          ? "<p style='color:#8E8E93'>Нет содержимого</p>"
+          ? "<p style='color:#8E8E93'>No content</p>"
           : await _markdownProcessor.ConvertToHtmlAsync(content);
 
       string tempPath = Path.Combine(FileSystem.CacheDirectory, "note_preview.html");
@@ -256,10 +256,10 @@ public partial class WindowsNoteEditor : ContentView
   }
 
   private void OnBoldClicked(object sender, EventArgs e) =>
-      InsertMarkdownFormat("**", "**", "текст");
+      InsertMarkdownFormat("**", "**", "text");
 
   private void OnItalicClicked(object sender, EventArgs e) =>
-      InsertMarkdownFormat("*", "*", "текст");
+      InsertMarkdownFormat("*", "*", "text");
 
   private void OnListClicked(object sender, EventArgs e) =>
       InsertText("\n- ");
@@ -271,21 +271,26 @@ public partial class WindowsNoteEditor : ContentView
   {
     try
     {
-      var result = await FilePicker.PickAsync(new PickOptions
+      var results = await FilePicker.PickMultipleAsync(new PickOptions
       {
         FileTypes = FilePickerFileType.Images,
-        PickerTitle = "Выберите изображение"
+        PickerTitle = "Select images"
       });
-      if (result != null)
+      if (results == null || !results.Any()) return;
+
+      var parts = new List<string>();
+      foreach (var result in results)
       {
         using var stream = await result.OpenReadAsync();
         var media = await _mediaManager.AddMediaAsync(stream, result.FileName);
-        InsertText($"![{result.FileName}]({_mediaManager.GetMediaUrl(media.Id)})");
+        parts.Add($"![{result.FileName}]({_mediaManager.GetMediaUrl(media.Id)})");
       }
+
+      InsertText(string.Join("\n\n", parts));
     }
     catch (Exception ex)
     {
-      await Application.Current!.Windows[0].Page!.DisplayAlert("Ошибка", ex.Message, "OK");
+      await Application.Current!.Windows[0].Page!.DisplayAlert("Error", ex.Message, "OK");
     }
   }
 

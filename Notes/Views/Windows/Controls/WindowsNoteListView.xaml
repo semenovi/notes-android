@@ -12,7 +12,7 @@
 
         <!-- Header -->
         <Grid Grid.Row="0" Padding="14,0,8,0">
-            <Label x:Name="FolderTitleLabel" Text="Заметки"
+            <Label x:Name="FolderTitleLabel" Text="Notes"
                    FontSize="15" FontAttributes="Bold" TextColor="#1C1C1E"
                    VerticalOptions="Center" />
             <Button Text="+" BackgroundColor="Transparent" TextColor="#007AFF"
@@ -24,7 +24,7 @@
 
         <!-- Search -->
         <SearchBar x:Name="SearchEntry" Grid.Row="1"
-                   Placeholder="Поиск" PlaceholderColor="#8E8E93"
+                   Placeholder="Search" PlaceholderColor="#8E8E93"
                    TextChanged="OnSearchTextChanged"
                    Margin="8,0,8,6" />
 
@@ -43,9 +43,9 @@
                                 StrokeShape="RoundRectangle 8">
                             <FlyoutBase.ContextFlyout>
                                 <MenuFlyout>
-                                    <MenuFlyoutItem Text="Переименовать" Clicked="OnRenameNoteContextMenuClicked" />
+                                    <MenuFlyoutItem Text="Rename" Clicked="OnRenameNoteContextMenuClicked" />
                                     <MenuFlyoutSeparator />
-                                    <MenuFlyoutItem Text="Удалить" Clicked="OnDeleteNoteContextMenuClicked" />
+                                    <MenuFlyoutItem Text="Delete" Clicked="OnDeleteNoteContextMenuClicked" />
                                 </MenuFlyout>
                             </FlyoutBase.ContextFlyout>
                             <Grid Padding="12,10,12,10">

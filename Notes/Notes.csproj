@@ -96,6 +96,9 @@
 	  <Compile Update="Views\Controls\FolderTreeView.xaml.cs">
 	    <DependentUpon>FolderTreeView.xaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="Views\Controls\ToastOverlay.xaml.cs">
+	    <DependentUpon>ToastOverlay.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="Views\Pages\NotesPage.xaml.cs">
 	    <DependentUpon>NotesPage.xaml</DependentUpon>
 	  </Compile>
@@ -118,6 +121,9 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\Controls\FolderTreeView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\Controls\ToastOverlay.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\Controls\MarkdownEditor.xaml">

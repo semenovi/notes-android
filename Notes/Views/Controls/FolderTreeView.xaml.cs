@@ -97,8 +97,8 @@ public partial class FolderTreeView : ContentView
   {
     if (SelectedFolder == null) return;
 
-    bool confirm = await Application.Current.MainPage.DisplayAlert("Удалить папку",
-        $"Удалить «{SelectedFolder.Name}» и все заметки в ней?", "Удалить", "Отмена");
+    bool confirm = await Application.Current.MainPage.DisplayAlert("Delete Folder",
+        $"Delete \"{SelectedFolder.Name}\" and all notes inside?", "Delete", "Cancel");
     if (!confirm) return;
 
     var folderId = SelectedFolder.Folder.Id;

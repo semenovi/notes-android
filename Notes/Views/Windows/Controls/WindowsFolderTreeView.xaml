@@ -12,7 +12,7 @@
 
         <!-- Header -->
         <Grid Grid.Row="0" Padding="16,0,8,0">
-            <Label Text="Заметки" FontSize="18" FontAttributes="Bold"
+            <Label Text="Notes" FontSize="18" FontAttributes="Bold"
                    TextColor="#1C1C1E" VerticalOptions="Center" />
             <Button Text="⋯" HorizontalOptions="End" VerticalOptions="Center"
                     BackgroundColor="Transparent" TextColor="#007AFF" FontSize="18"
@@ -35,9 +35,9 @@
                                 StrokeShape="RoundRectangle 6">
                             <FlyoutBase.ContextFlyout>
                                 <MenuFlyout>
-                                    <MenuFlyoutItem Text="Переименовать" Clicked="OnRenameFolderContextMenuClicked" />
+                                    <MenuFlyoutItem Text="Rename" Clicked="OnRenameFolderContextMenuClicked" />
                                     <MenuFlyoutSeparator />
-                                    <MenuFlyoutItem Text="Удалить" Clicked="OnDeleteFolderContextMenuClicked" />
+                                    <MenuFlyoutItem Text="Delete" Clicked="OnDeleteFolderContextMenuClicked" />
                                 </MenuFlyout>
                             </FlyoutBase.ContextFlyout>
                             <StackLayout Orientation="Horizontal" Padding="10,8" Spacing="8">
@@ -52,7 +52,7 @@
         </CollectionView>
 
         <!-- New Folder -->
-        <Button Grid.Row="2" Text="+ Новая папка"
+        <Button Grid.Row="2" Text="+ New Folder"
                 BackgroundColor="Transparent" TextColor="#007AFF" FontSize="13"
                 BorderWidth="0" HorizontalOptions="Start" Margin="12,0"
                 Clicked="OnNewFolderButtonClicked" />

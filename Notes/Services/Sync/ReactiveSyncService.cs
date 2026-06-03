@@ -5,6 +5,7 @@ using Notes.Data.Storage;
 using Notes.Models;
 using Notes.Services.Crypto;
 using Notes.Services.Notes;
+using Notes.Services;
 
 namespace Notes.Services.Sync;
 
@@ -17,6 +18,7 @@ public class ReactiveSyncService : IDisposable
   private readonly FolderRepository _folderRepo;
   private readonly SyncSettingsService _settingsService;
   private readonly SyncManager _syncManager;
+  private readonly ToastService _toastService;
 
   private SyncApiClient? _client;
   private byte[]? _syncKey;
@@ -43,7 +45,7 @@ public class ReactiveSyncService : IDisposable
 
   public ReactiveSyncService(NoteManager noteManager, FolderManager folderManager,
       MediaManager mediaManager, NoteRepository noteRepo, FolderRepository folderRepo,
-      SyncSettingsService settingsService, SyncManager syncManager)
+      SyncSettingsService settingsService, SyncManager syncManager, ToastService toastService)
   {
     _noteManager = noteManager;
     _folderManager = folderManager;
@@ -52,6 +54,7 @@ public class ReactiveSyncService : IDisposable
     _folderRepo = folderRepo;
     _settingsService = settingsService;
     _syncManager = syncManager;
+    _toastService = toastService;
 
     _noteManager.NoteChanged += OnNoteChanged;
     _folderManager.FolderChanged += OnFolderChanged;
@@ -184,6 +187,7 @@ public class ReactiveSyncService : IDisposable
           || (evt.DeletedNotes?.Count ?? 0) > 0 || (evt.DeletedFolders?.Count ?? 0) > 0)
       {
         MainThread.BeginInvokeOnMainThread(() => RemoteChangesApplied?.Invoke());
+        _toastService.Show("Синхронизировано");
       }
     }
     catch { }
@@ -309,7 +313,7 @@ public class ReactiveSyncService : IDisposable
         EncryptedData = Convert.ToBase64String(enc),
         Modified = item.Created.ToUniversalTime().ToString(TimeFmt),
       };
-      await client.PushChangesAsync(new(), new(), new List<SyncItem> { syncItem }, new(), new(), deviceId);
+      await client.PushChunkedAsync(syncItem, "media", deviceId);
     }
     catch { }
     finally { _pushLock.Release(); }

@@ -118,12 +118,12 @@ public partial class WindowsNoteListView : ContentView
     if (string.IsNullOrEmpty(_currentFolderId))
     {
       await Application.Current!.Windows[0].Page!.DisplayAlert(
-          "Внимание", "Выберите папку", "OK");
+          "Warning", "Please select a folder", "OK");
       return;
     }
 
     var page = Application.Current!.Windows[0].Page!;
-    var title = await page.DisplayPromptAsync("Новая заметка", "Название:");
+    var title = await page.DisplayPromptAsync("New Note", "Title:");
     if (!string.IsNullOrWhiteSpace(title))
     {
       var note = await _noteManager.CreateNoteAsync(title, _currentFolderId);
@@ -141,7 +141,7 @@ public partial class WindowsNoteListView : ContentView
     var page = Application.Current?.Windows.FirstOrDefault()?.Page;
     if (page == null) return;
 
-    var newTitle = await page.DisplayPromptAsync("Переименовать заметку", "Новое название:", initialValue: vm.Title);
+    var newTitle = await page.DisplayPromptAsync("Rename Note", "New name:", initialValue: vm.Title);
     if (string.IsNullOrWhiteSpace(newTitle) || newTitle == vm.Title) return;
 
     vm.Note.Title = newTitle;
@@ -166,8 +166,8 @@ public partial class WindowsNoteListView : ContentView
     var page = Application.Current?.Windows.FirstOrDefault()?.Page;
     if (page == null) return;
 
-    bool confirm = await page.DisplayAlert("Удалить заметку",
-        $"Удалить «{vm.Title}»?", "Удалить", "Отмена");
+    bool confirm = await page.DisplayAlert("Delete Note",
+        $"Delete \"{vm.Title}\"?", "Delete", "Cancel");
     if (!confirm) return;
 
     await _noteManager.DeleteNoteAsync(vm.Note.Id);
@@ -222,7 +222,7 @@ public class NoteViewModel : INotifyPropertyChanged
 
   private string GetPreview()
   {
-    if (string.IsNullOrEmpty(Note.Content)) return "Нет текста";
+    if (string.IsNullOrEmpty(Note.Content)) return "No text";
 
     var text = Note.Content;
 

@@ -77,7 +77,7 @@ public partial class WindowsFolderTreeView : ContentView
     }
     if (Folders.Count == 0)
     {
-      await _folderManager.CreateFolderAsync("Общие");
+      await _folderManager.CreateFolderAsync("General");
       await LoadFoldersAsync();
     }
   }
@@ -99,7 +99,7 @@ public partial class WindowsFolderTreeView : ContentView
   private async void OnNewFolderButtonClicked(object sender, EventArgs e)
   {
     var page = Application.Current!.Windows[0].Page!;
-    var name = await page.DisplayPromptAsync("Новая папка", "Название папки:");
+    var name = await page.DisplayPromptAsync("New Folder", "Folder name:");
     if (!string.IsNullOrWhiteSpace(name))
     {
       await _folderManager.CreateFolderAsync(name);
@@ -111,29 +111,29 @@ public partial class WindowsFolderTreeView : ContentView
   {
     var page = Application.Current!.Windows[0].Page!;
     var settings = await _syncSettingsService.LoadAsync();
-    string syncToggleLabel = settings.Enabled ? "Синхронизация: ВКЛ" : "Синхронизация: ВЫКЛ";
+    string syncToggleLabel = settings.Enabled ? "Sync: ON" : "Sync: OFF";
 
     var action = await page.DisplayActionSheet(
-        "Действия", "Отмена", null,
+        "Actions", "Cancel", null,
         syncToggleLabel,
-        "Синхронизировать сейчас",
-        "Настройки синхронизации...",
-        "Экспорт архива",
-        "Импорт архива");
+        "Sync Now",
+        "Sync Settings...",
+        "Export Archive",
+        "Import Archive");
 
     switch (action)
     {
-      case "Синхронизация: ВКЛ":
-      case "Синхронизация: ВЫКЛ":
+      case "Sync: ON":
+      case "Sync: OFF":
         settings.Enabled = !settings.Enabled;
         await _syncSettingsService.SaveAsync(settings);
         if (settings.Enabled && string.IsNullOrEmpty(settings.ServerUrl))
           await ShowSyncSettingsDialogAsync(page);
         break;
 
-      case "Синхронизировать сейчас":
+      case "Sync Now":
         if (!settings.Enabled)
-          await page.DisplayAlert("Синхронизация", "Сначала включите синхронизацию.", "OK");
+          await page.DisplayAlert("Sync", "Please enable sync first.", "OK");
         else
         {
           await RunSyncAsync();
@@ -141,15 +141,15 @@ public partial class WindowsFolderTreeView : ContentView
         }
         break;
 
-      case "Настройки синхронизации...":
+      case "Sync Settings...":
         await ShowSyncSettingsDialogAsync(page);
         break;
 
-      case "Экспорт архива":
+      case "Export Archive":
         await ExportAsync(page);
         break;
 
-      case "Импорт архива":
+      case "Import Archive":
         await ImportAsync(page);
         break;
     }
@@ -162,7 +162,7 @@ public partial class WindowsFolderTreeView : ContentView
     var page = Application.Current?.Windows.FirstOrDefault()?.Page;
     if (page == null) return;
 
-    var newName = await page.DisplayPromptAsync("Переименовать папку", "Новое название:", initialValue: vm.Name);
+    var newName = await page.DisplayPromptAsync("Rename Folder", "New name:", initialValue: vm.Name);
     if (string.IsNullOrWhiteSpace(newName) || newName == vm.Name) return;
 
     vm.Folder.Name = newName;
@@ -186,8 +186,8 @@ public partial class WindowsFolderTreeView : ContentView
     var page = Application.Current?.Windows.FirstOrDefault()?.Page;
     if (page == null) return;
 
-    bool confirm = await page.DisplayAlert("Удалить папку",
-        $"Удалить «{vm.Name}» и все заметки в ней?", "Удалить", "Отмена");
+    bool confirm = await page.DisplayAlert("Delete Folder",
+        $"Delete \"{vm.Name}\" and all notes inside?", "Delete", "Cancel");
     if (!confirm) return;
 
     var folderId = vm.Folder.Id;
@@ -204,13 +204,13 @@ public partial class WindowsFolderTreeView : ContentView
   {
     var settings = await _syncSettingsService.LoadAsync();
 
-    string? url = await page.DisplayPromptAsync("Настройки синхронизации", "URL сервера:",
+    string? url = await page.DisplayPromptAsync("Sync Settings", "Server URL:",
         initialValue: settings.ServerUrl, placeholder: "http://46.148.142.210:8080");
     if (url == null) return;
 
-    string? token = await page.DisplayPromptAsync("Настройки синхронизации",
-        "API токен (из /api/sync/setup на сервере):",
-        initialValue: settings.ApiToken, placeholder: "вставьте токен");
+    string? token = await page.DisplayPromptAsync("Sync Settings",
+        "API token (from /api/sync/setup on the server):",
+        initialValue: settings.ApiToken, placeholder: "paste token here");
     if (token == null) return;
 
     settings.ServerUrl = url.TrimEnd('/');
@@ -218,7 +218,7 @@ public partial class WindowsFolderTreeView : ContentView
     settings.Enabled = true;
 
     await _syncSettingsService.SaveAsync(settings);
-    await page.DisplayAlert("Настройки синхронизации", "Настройки сохранены.", "OK");
+    await page.DisplayAlert("Sync Settings", "Settings saved.", "OK");
 
     await _reactiveSync.RestartAsync();
     await RunSyncAsync();
@@ -239,9 +239,14 @@ public partial class WindowsFolderTreeView : ContentView
     {
       var page = Application.Current?.Windows.FirstOrDefault()?.Page;
       if (page != null)
-        await page.DisplayAlert("Ошибка синхронизации", ex.Message, "OK");
+        await page.DisplayAlert("Sync Error", ex.Message, "OK");
     }
-    catch { /* transient network error — periodic sync will retry */ }
+    catch (Exception ex)
+    {
+      var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+      if (page != null)
+        await page.DisplayAlert("Sync Error", ex.GetType().Name + ": " + ex.Message, "OK");
+    }
   }
 
   private async Task ExportAsync(Page page)
@@ -249,18 +254,18 @@ public partial class WindowsFolderTreeView : ContentView
     try
     {
       await _exportService.ExportBackupAsync();
-      await page.DisplayAlert("Готово", "Архив успешно экспортирован.", "OK");
+      await page.DisplayAlert("Done", "Archive exported successfully.", "OK");
     }
     catch (Exception ex)
     {
-      await page.DisplayAlert("Ошибка", ex.Message, "OK");
+      await page.DisplayAlert("Error", ex.Message, "OK");
     }
   }
 
   private async Task ImportAsync(Page page)
   {
-    bool confirm = await page.DisplayAlert("Подтверждение",
-        "Импорт заменит все существующие данные. Продолжить?", "Да", "Отмена");
+    bool confirm = await page.DisplayAlert("Confirmation",
+        "Import will replace all existing data. Continue?", "Yes", "Cancel");
     if (!confirm) return;
 
     try
@@ -271,7 +276,7 @@ public partial class WindowsFolderTreeView : ContentView
         {
           { DevicePlatform.WinUI, new[] { ".zip" } }
         }),
-        PickerTitle = "Выберите файл резервной копии"
+        PickerTitle = "Select backup file"
       });
 
       if (fileResult == null) return;
@@ -285,11 +290,11 @@ public partial class WindowsFolderTreeView : ContentView
 
       await _exportService.ImportBackupAsync(tempPath);
       await LoadFoldersAsync();
-      await page.DisplayAlert("Готово", "Архив успешно импортирован.", "OK");
+      await page.DisplayAlert("Done", "Archive imported successfully.", "OK");
     }
     catch (Exception ex)
     {
-      await page.DisplayAlert("Ошибка", $"Не удалось импортировать: {ex.Message}", "OK");
+      await page.DisplayAlert("Error", $"Failed to import: {ex.Message}", "OK");
     }
   }
 }

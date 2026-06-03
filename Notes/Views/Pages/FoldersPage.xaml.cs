@@ -161,7 +161,10 @@ public partial class FoldersPage : ContentPage
     {
       await DisplayAlert("Sync Error", ex.Message, "OK");
     }
-    catch { /* transient network error — periodic sync will retry */ }
+    catch (Exception ex)
+    {
+      await DisplayAlert("Sync Error", ex.GetType().Name + ": " + ex.Message, "OK");
+    }
   }
 
   private async void OnExportBackupClicked(object sender, EventArgs e)
@@ -196,8 +199,8 @@ public partial class FoldersPage : ContentPage
 
   private async Task DeleteFolderWithContentsAsync(Folder folder)
   {
-    bool confirm = await DisplayAlert("Удалить папку",
-        $"Удалить «{folder.Name}» и все заметки в ней?", "Удалить", "Отмена");
+    bool confirm = await DisplayAlert("Delete Folder",
+        $"Delete \"{folder.Name}\" and all notes inside?", "Delete", "Cancel");
     if (!confirm) return;
 
     var notes = await _noteManager.GetNotesAsync(folder.Id);

@@ -1,13 +1,21 @@
 using Notes.Models;
+using Notes.Services;
 
 namespace Notes.Views.Windows;
 
 public partial class MainWindow : ContentPage
 {
+  private readonly ToastService _toastService;
+
   public MainWindow()
   {
     InitializeComponent();
+    _toastService = IPlatformApplication.Current.Services.GetRequiredService<ToastService>();
+    _toastService.ToastRequested += OnToastRequested;
   }
+
+  private void OnToastRequested(string message)
+    => Toast.ShowToast(message);
 
   protected override async void OnAppearing()
   {
