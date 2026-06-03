@@ -87,28 +87,29 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
 
   private async void OnAddMediaClicked(object sender, EventArgs e)
   {
-    var fileResult = await FilePicker.PickAsync(new PickOptions
+    var fileResults = await FilePicker.PickMultipleAsync(new PickOptions
     {
       FileTypes = FilePickerFileType.Images,
-      PickerTitle = "Select an image"
+      PickerTitle = "Select images"
     });
 
-    if (fileResult == null)
+    if (fileResults == null || !fileResults.Any())
       return;
 
-    using (var stream = await fileResult.OpenReadAsync())
+    var parts = new List<string>();
+    foreach (var fileResult in fileResults)
     {
+      using var stream = await fileResult.OpenReadAsync();
       var mediaItem = await _mediaManager.AddMediaAsync(stream, fileResult.FileName);
       string mediaUrl = _mediaManager.GetMediaUrl(mediaItem.Id);
-
-      int cursorPosition = ContentEditor.CursorPosition;
-      string insertText = $"![{fileResult.FileName}]({mediaUrl})";
-
-      string newContent = Content.Insert(cursorPosition, insertText);
-      Content = newContent;
-
-      ContentEditor.CursorPosition = cursorPosition + insertText.Length;
+      parts.Add($"![{fileResult.FileName}]({mediaUrl})");
     }
+
+    int cursorPosition = ContentEditor.CursorPosition;
+    string insertText = string.Join("\n\n", parts);
+
+    Content = Content.Insert(cursorPosition, insertText);
+    ContentEditor.CursorPosition = cursorPosition + insertText.Length;
   }
 
   private void OnFormatBoldClicked(object sender, EventArgs e)

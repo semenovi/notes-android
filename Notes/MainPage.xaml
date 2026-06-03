@@ -5,7 +5,7 @@
 
     <Grid>
         <Button 
-            Text="Нажми меня"
+            Text="Click me"
             VerticalOptions="Center"
             HorizontalOptions="Center"
             WidthRequest="200"

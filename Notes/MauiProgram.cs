@@ -6,6 +6,7 @@ using Notes.Services.Export;
 using Notes.Services.Markdown;
 using Notes.Services.Notes;
 using Notes.Services.Sync;
+using Notes.Services;
 using Notes.Views.Pages;
 using Notes.Views.Windows;
 using Notes.Views.Windows.Controls;
@@ -46,6 +47,7 @@ public static class MauiProgram
     builder.Services.AddSingleton<CryptoService>();
     builder.Services.AddSingleton<Services.Crypto.SecureStorage>();
 
+    builder.Services.AddSingleton<ToastService>();
     builder.Services.AddSingleton<SyncSettingsService>();
     builder.Services.AddSingleton<ISyncAdapter, UsbSyncAdapter>();
     builder.Services.AddSingleton<ISyncAdapter, NetworkSyncAdapter>();

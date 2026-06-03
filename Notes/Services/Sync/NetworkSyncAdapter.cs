@@ -76,7 +76,7 @@ public class NetworkSyncAdapter : ISyncAdapter
 
     ManifestResponse? manifestResp = await _apiClient.PostManifestAsync(manifestRequest);
     if (manifestResp == null)
-      throw new InvalidOperationException("Сервер не ответил на запрос манифеста. Проверьте URL и токен.");
+      throw new InvalidOperationException("Server did not respond to the manifest request. Check the URL and token.");
 
     foreach (var id in tombstoneNotes.Keys) await _noteRepo.ClearTombstoneAsync(id);
     foreach (var id in tombstoneFolders.Keys) await _folderRepo.ClearTombstoneAsync(id);
@@ -90,7 +90,7 @@ public class NetworkSyncAdapter : ISyncAdapter
         manifestResp.ToDownload.Folders,
         manifestResp.ToDownload.Media);
     if (pull == null)
-      throw new InvalidOperationException("Сервер не ответил на запрос загрузки данных.");
+      throw new InvalidOperationException("Server did not respond to the data pull request.");
 
     var changes = new List<SyncChange>();
 
@@ -202,8 +202,13 @@ public class NetworkSyncAdapter : ISyncAdapter
       });
     }
 
-    if (syncNotes.Count > 0 || syncFolders.Count > 0 || syncMedia.Count > 0)
-      await _apiClient.PushChangesAsync(syncNotes, syncFolders, syncMedia, new(), new());
+    // Notes and folders are small — send in one request via the push endpoint.
+    if (syncNotes.Count > 0 || syncFolders.Count > 0)
+      await _apiClient.PushChangesAsync(syncNotes, syncFolders, new(), new(), new(), _settings?.DeviceId);
+
+    // Each media item is uploaded in 4 MB chunks so large files survive slow/unstable connections.
+    foreach (var item in syncMedia)
+      await _apiClient.PushChunkedAsync(item, "media", _settings?.DeviceId);
   }
 
   public async Task DisconnectAsync()

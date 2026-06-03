@@ -103,7 +103,7 @@ public partial class NotesPage : ContentPage
     var folder = await _folderManager.GetFolderAsync(FolderId);
     if (folder == null) return;
 
-    var newName = await DisplayPromptAsync("Переименовать папку", "Новое название:", initialValue: folder.Name);
+    var newName = await DisplayPromptAsync("Rename Folder", "New name:", initialValue: folder.Name);
     if (string.IsNullOrWhiteSpace(newName) || newName == folder.Name) return;
 
     folder.Name = newName;
@@ -114,8 +114,8 @@ public partial class NotesPage : ContentPage
 
   private async void OnDeleteFolderClicked(object sender, EventArgs e)
   {
-    bool confirm = await DisplayAlert("Удалить папку",
-        $"Удалить «{FolderName}» и все заметки в ней?", "Удалить", "Отмена");
+    bool confirm = await DisplayAlert("Delete Folder",
+        $"Delete \"{FolderName}\" and all notes inside?", "Delete", "Cancel");
     if (!confirm) return;
 
     var notes = await _noteManager.GetNotesAsync(FolderId);
