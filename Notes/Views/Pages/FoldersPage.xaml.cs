@@ -201,6 +201,8 @@ public partial class FoldersPage : ContentPage
   {
     if (sender is View view && view.BindingContext is Folder folder)
     {
+      await view.ScaleTo(0.96, 80);
+      await view.ScaleTo(1.0, 80);
       await Shell.Current.GoToAsync(nameof(NotesPage), new Dictionary<string, object>
       {
         { "FolderId", folder.Id },
