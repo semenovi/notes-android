@@ -52,7 +52,7 @@ public partial class FoldersPage : ContentPage
       PageProgress.ShowProgress(_progressService.Current);
     await UpdateSyncToggleTextAsync();
     await LoadFoldersAsync();
-    await AutoSyncAsync();
+    _ = AutoSyncAsync();
   }
 
   protected override void OnDisappearing()
@@ -171,11 +171,11 @@ public partial class FoldersPage : ContentPage
     using var session = _progressService.Begin("Syncing");
     try
     {
-      await _syncManager.SynchronizeAsync(new Notes.Models.SyncProfile
+      await Task.Run(() => _syncManager.SynchronizeAsync(new Notes.Models.SyncProfile
       {
         Name = "Network",
         Protocol = Notes.Models.SyncProtocolType.Network,
-      });
+      }, session.Report));
     }
     catch (InvalidOperationException ex)
     {

@@ -60,7 +60,7 @@ public class NetworkSyncAdapter : ISyncAdapter
     return true;
   }
 
-  public async Task<List<SyncChange>> GetChangesAsync()
+  public async Task<List<SyncChange>> GetChangesAsync(Action<double, string?>? onProgress = null)
   {
     if (_apiClient == null || _syncKey == null || _settings == null)
       return new List<SyncChange>();
@@ -142,8 +142,13 @@ public class NetworkSyncAdapter : ISyncAdapter
 
     // Media items are pulled one by one and saved immediately to avoid loading all images
     // into memory at once, which causes OOM crashes on Android with large photo libraries.
-    foreach (var mediaId in manifestResp.ToDownload.Media)
+    var mediaToDownload = manifestResp.ToDownload.Media;
+    int totalDl = mediaToDownload.Count;
+    for (int dlIdx = 0; dlIdx < totalDl; dlIdx++)
     {
+      var mediaId = mediaToDownload[dlIdx];
+      onProgress?.Invoke((double)dlIdx / totalDl,
+          totalDl > 1 ? $"Downloading media {dlIdx + 1} of {totalDl}" : "Downloading media");
       try
       {
         PullResponse? mediaPull = await _apiClient.PullChangesAsync(
@@ -186,7 +191,7 @@ public class NetworkSyncAdapter : ISyncAdapter
     return changes;
   }
 
-  public async Task ApplyChangesAsync(List<SyncChange> localChanges)
+  public async Task ApplyChangesAsync(List<SyncChange> localChanges, Action<double, string?>? onProgress = null)
   {
     if (_apiClient == null || _syncKey == null) return;
 
@@ -228,10 +233,13 @@ public class NetworkSyncAdapter : ISyncAdapter
     }
 
     // Media: load content only for items that actually need uploading (lazy — avoids loading all media into memory).
-    foreach (var c in localChanges.Where(c => c.EntityType == SyncEntityType.Media
+    var mediaToUpload = localChanges.Where(c => c.EntityType == SyncEntityType.Media
         && c.ChangeType != SyncChangeType.Delete
-        && _toUploadMedia.Contains(c.Id)))
+        && _toUploadMedia.Contains(c.Id)).ToList();
+    int totalUl = mediaToUpload.Count;
+    for (int ulIdx = 0; ulIdx < totalUl; ulIdx++)
     {
+      var c = mediaToUpload[ulIdx];
       try
       {
         var metadata = JsonSerializer.Deserialize<MediaItem>(c.Data, JsonOpts);
@@ -247,7 +255,10 @@ public class NetworkSyncAdapter : ISyncAdapter
           Modified = c.Timestamp.ToUniversalTime().ToString(FMT),
         };
         DebugLogService.Current?.Log($"full-sync-media: id={syncItem.Id} encChars={syncItem.EncryptedData.Length}");
-        await _apiClient.PushChunkedAsync(syncItem, "media", _settings?.DeviceId);
+        int captured = ulIdx;
+        await _apiClient.PushChunkedAsync(syncItem, "media", _settings?.DeviceId,
+            (sent, total) => onProgress?.Invoke((double)sent / total,
+                totalUl > 1 ? $"Uploading media {captured + 1} of {totalUl}" : null));
         DebugLogService.Current?.Log($"full-sync-media-done: id={syncItem.Id}");
       }
       catch (Exception ex)

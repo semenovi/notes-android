@@ -108,27 +108,6 @@ public partial class NotesPage : ContentPage
       await NavigateToNoteView(note);
   }
 
-  private async void OnNoteMenuClicked(object sender, EventArgs e)
-  {
-    if (sender is not Button btn || btn.BindingContext is not Note note) return;
-
-    var action = await DisplayActionSheet(note.Title, "Cancel", null,
-        "Change Icon", "Rename", "Delete");
-
-    switch (action)
-    {
-      case "Change Icon":
-        await ChangeNoteIconAsync(note);
-        break;
-      case "Rename":
-        await RenameNoteAsync(note);
-        break;
-      case "Delete":
-        await DeleteNoteAsync(note);
-        break;
-    }
-  }
-
   private async Task ChangeNoteIconAsync(Note note)
   {
     var icon = await IconSet.PickAsync(this);

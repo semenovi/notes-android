@@ -19,12 +19,12 @@ public class UsbSyncAdapter : ISyncAdapter
     await Task.CompletedTask;
   }
 
-  public async Task<List<SyncChange>> GetChangesAsync()
+  public async Task<List<SyncChange>> GetChangesAsync(Action<double, string?>? onProgress = null)
   {
     return await Task.FromResult(new List<SyncChange>());
   }
 
-  public async Task ApplyChangesAsync(List<SyncChange> changes)
+  public async Task ApplyChangesAsync(List<SyncChange> changes, Action<double, string?>? onProgress = null)
   {
     await Task.CompletedTask;
   }

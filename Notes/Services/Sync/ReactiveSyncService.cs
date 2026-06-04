@@ -111,7 +111,7 @@ public class ReactiveSyncService : IDisposable
       try
       {
         DebugLogService.Current?.Log("initial-sync-start");
-        await _syncManager.SynchronizeAsync(DefaultProfile);
+        await _syncManager.SynchronizeAsync(DefaultProfile, session.Report);
         DebugLogService.Current?.Log("initial-sync-done");
         MainThread.BeginInvokeOnMainThread(() => RemoteChangesApplied?.Invoke());
       }
@@ -126,7 +126,7 @@ public class ReactiveSyncService : IDisposable
       try
       {
         DebugLogService.Current?.Log("periodic-sync-start");
-        await _syncManager.SynchronizeAsync(DefaultProfile);
+        await _syncManager.SynchronizeAsync(DefaultProfile, session.Report);
         DebugLogService.Current?.Log("periodic-sync-done");
         MainThread.BeginInvokeOnMainThread(() => RemoteChangesApplied?.Invoke());
       }
@@ -243,7 +243,7 @@ public class ReactiveSyncService : IDisposable
       _pendingPush[key] = cts;
     }
 
-    try { await Task.Delay(400, cts.Token); }
+    try { await Task.Delay(400, cts.Token).ConfigureAwait(false); }
     catch (OperationCanceledException) { return; }
 
     lock (_pendingPush) _pendingPush.Remove(key);

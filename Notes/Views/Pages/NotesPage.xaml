@@ -29,37 +29,24 @@
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Grid Padding="20,10" ColumnDefinitions="*,Auto">
-                        <!-- Tappable area: icon + title + date -->
-                        <Grid Grid.Column="0" ColumnDefinitions="Auto,*">
-                            <Grid.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnNoteTapped" />
-                            </Grid.GestureRecognizers>
-                            <Label Grid.Column="0"
-                                   Text="{Binding Icon}"
-                                   FontFamily="MaterialIcons"
-                                   FontSize="24"
-                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                                   VerticalOptions="Center" />
-                            <StackLayout Grid.Column="1" Margin="12,0,0,0" VerticalOptions="Center">
-                                <Label Text="{Binding Title}"
-                                       FontSize="18"
-                                       FontAttributes="Bold" />
-                                <Label Text="{Binding Modified, StringFormat='{0:g}'}"
-                                       FontSize="12"
-                                       TextColor="Gray" />
-                            </StackLayout>
-                        </Grid>
-                        <!-- Note menu button -->
-                        <Button Grid.Column="1"
-                                Text="⋯"
-                                FontSize="18"
-                                BackgroundColor="Transparent"
-                                TextColor="#007AFF"
-                                BorderWidth="0"
-                                Padding="8,0"
-                                VerticalOptions="Center"
-                                Clicked="OnNoteMenuClicked" />
+                    <Grid Padding="20,10" ColumnDefinitions="Auto,*">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNoteTapped" />
+                        </Grid.GestureRecognizers>
+                        <Label Grid.Column="0"
+                               Text="{Binding Icon}"
+                               FontFamily="MaterialIcons"
+                               FontSize="24"
+                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                               VerticalOptions="Center" />
+                        <StackLayout Grid.Column="1" Margin="12,0,0,0" VerticalOptions="Center">
+                            <Label Text="{Binding Title}"
+                                   FontSize="18"
+                                   FontAttributes="Bold" />
+                            <Label Text="{Binding Modified, StringFormat='{0:g}'}"
+                                   FontSize="12"
+                                   TextColor="Gray" />
+                        </StackLayout>
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
