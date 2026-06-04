@@ -1,4 +1,6 @@
-﻿using Microsoft.Maui.Graphics;
+﻿using System.Security.Cryptography;
+using System.Text;
+using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Graphics.Platform;
 using Notes.Models;
 using Notes.Services;
@@ -37,6 +39,15 @@ public class MediaStorage
         DebugLogService.Current?.Log($"media-resize: {mediaId} {before}→{data.Length} bytes");
     }
 
+    string contentHash = Convert.ToHexString(SHA256.HashData(data)).ToLower();
+    var existing = await GetAllMediaAsync();
+    var duplicate = existing.FirstOrDefault(m => !string.IsNullOrEmpty(m.ContentHash) && m.ContentHash == contentHash);
+    if (duplicate != null)
+    {
+      DebugLogService.Current?.Log($"media-dedup: reusing {duplicate.Id} for {fileName}");
+      return duplicate;
+    }
+
     await _storage.WriteFileAsync(storagePath, data);
 
     var mediaItem = new MediaItem
@@ -46,7 +57,8 @@ public class MediaStorage
       FileType = fileType,
       StoragePath = storagePath,
       Size = data.Length,
-      Created = DateTime.Now
+      Created = DateTime.Now,
+      ContentHash = contentHash,
     };
 
     await SaveMediaMetadataAsync(mediaItem);
@@ -74,7 +86,7 @@ public class MediaStorage
     }
   }
 
-  public async Task<bool> DeleteMediaAsync(string mediaId)
+  public async Task<bool> DeleteMediaAsync(string mediaId, bool createTombstone = true)
   {
     MediaItem? mediaItem = await GetMediaAsync(mediaId);
 
@@ -84,7 +96,32 @@ public class MediaStorage
     bool fileDeleted = await _storage.DeleteFileAsync(mediaItem.StoragePath);
     bool metadataDeleted = await _storage.DeleteFileAsync(GetMediaMetadataPath(mediaId));
 
+    if (fileDeleted && metadataDeleted && createTombstone)
+    {
+      string ts = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+      await _storage.WriteFileAsync(
+          Path.Combine(MEDIA_FOLDER, $"{mediaId}.deleted"),
+          Encoding.UTF8.GetBytes(ts));
+    }
+
     return fileDeleted && metadataDeleted;
+  }
+
+  public async Task<Dictionary<string, string>> GetDeletionTombstonesAsync()
+  {
+    var result = new Dictionary<string, string>();
+    foreach (var file in _storage.GetFiles(MEDIA_FOLDER).Where(f => f.EndsWith(".deleted")))
+    {
+      string mediaId = Path.GetFileNameWithoutExtension(file);
+      byte[] data = await _storage.ReadFileAsync(file);
+      result[mediaId] = Encoding.UTF8.GetString(data);
+    }
+    return result;
+  }
+
+  public async Task ClearTombstoneAsync(string mediaId)
+  {
+    await _storage.DeleteFileAsync(Path.Combine(MEDIA_FOLDER, $"{mediaId}.deleted"));
   }
 
   public async Task<MediaItem?> GetMediaAsync(string mediaId)

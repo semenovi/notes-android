@@ -70,6 +70,7 @@ public class NetworkSyncAdapter : ISyncAdapter
     var allMedia = await _mediaStorage.GetAllMediaAsync();
     var tombstoneNotes = await _noteRepo.GetDeletionTombstonesAsync();
     var tombstoneFolders = await _folderRepo.GetDeletionTombstonesAsync();
+    var tombstoneMedia = await _mediaStorage.GetDeletionTombstonesAsync();
 
     const string FMT = "yyyy-MM-ddTHH:mm:ssZ";
     var manifestRequest = new SyncManifestRequest
@@ -79,6 +80,7 @@ public class NetworkSyncAdapter : ISyncAdapter
       Media = allMedia.ToDictionary(m => m.Id, m => m.Created.ToUniversalTime().ToString(FMT)),
       DeletedNotes = tombstoneNotes,
       DeletedFolders = tombstoneFolders,
+      DeletedMedia = tombstoneMedia,
     };
 
     ManifestResponse? manifestResp = await _apiClient.PostManifestAsync(manifestRequest);
@@ -87,6 +89,7 @@ public class NetworkSyncAdapter : ISyncAdapter
 
     foreach (var id in tombstoneNotes.Keys) await _noteRepo.ClearTombstoneAsync(id);
     foreach (var id in tombstoneFolders.Keys) await _folderRepo.ClearTombstoneAsync(id);
+    foreach (var id in tombstoneMedia.Keys) await _mediaStorage.ClearTombstoneAsync(id);
 
     _toUploadNotes = manifestResp.ToUpload.Notes;
     _toUploadFolders = manifestResp.ToUpload.Folders;
@@ -176,6 +179,9 @@ public class NetworkSyncAdapter : ISyncAdapter
 
     foreach (var id in manifestResp.ToDeleteLocal.Folders)
       changes.Add(new SyncChange { Id = id, EntityType = SyncEntityType.Folder, ChangeType = SyncChangeType.Delete, Timestamp = DateTime.UtcNow });
+
+    foreach (var id in manifestResp.ToDeleteLocal.Media)
+      changes.Add(new SyncChange { Id = id, EntityType = SyncEntityType.Media, ChangeType = SyncChangeType.Delete, Timestamp = DateTime.UtcNow });
 
     return changes;
   }

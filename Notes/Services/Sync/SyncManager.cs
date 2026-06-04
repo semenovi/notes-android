@@ -151,6 +151,12 @@ public class SyncManager
 
   private async Task ApplyMediaChangeAsync(SyncChange change)
   {
+    if (change.ChangeType == SyncChangeType.Delete)
+    {
+      await _mediaStorage.DeleteMediaAsync(change.Id, createTombstone: false);
+      return;
+    }
+
     var payload = JsonSerializer.Deserialize<MediaSyncPayload>(change.Data, JsonOpts);
     if (payload?.Metadata == null || string.IsNullOrEmpty(payload.ContentBase64)) return;
 

@@ -32,9 +32,9 @@ public class MediaManager
     return await _storage.GetMediaContentAsync(mediaId);
   }
 
-  public async Task<bool> DeleteMediaAsync(string mediaId)
+  public async Task<bool> DeleteMediaAsync(string mediaId, bool createTombstone = true)
   {
-    var result = await _storage.DeleteMediaAsync(mediaId);
+    var result = await _storage.DeleteMediaAsync(mediaId, createTombstone);
     if (result)
       MediaDeleted?.Invoke(mediaId);
     return result;

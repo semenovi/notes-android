@@ -8,4 +8,5 @@ public class MediaItem
   public string StoragePath { get; set; } = string.Empty;
   public long Size { get; set; }
   public DateTime Created { get; set; } = DateTime.Now;
+  public string ContentHash { get; set; } = string.Empty;
 }
