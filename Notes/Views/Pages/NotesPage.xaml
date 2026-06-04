@@ -18,7 +18,10 @@
                      Clicked="OnDeleteFolderClicked" />
     </ContentPage.ToolbarItems>
 
-    <Grid>
+    <Grid x:Name="RootGrid">
+        <Grid.GestureRecognizers>
+            <PanGestureRecognizer PanUpdated="OnSwipePanUpdated" />
+        </Grid.GestureRecognizers>
         <CollectionView x:Name="NotesCollection"
                       SelectionMode="None">
             <CollectionView.EmptyView>

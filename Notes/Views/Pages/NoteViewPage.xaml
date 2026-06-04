@@ -16,9 +16,17 @@
                      Clicked="OnDeleteNoteClicked" />
     </ContentPage.ToolbarItems>
 
-    <Grid>
+    <Grid x:Name="RootGrid">
         <WebView x:Name="NoteContentWebView" />
         <shared:ProgressOverlay x:Name="PageProgress" />
+        <BoxView WidthRequest="20"
+                 HorizontalOptions="Start"
+                 VerticalOptions="Fill"
+                 Color="Transparent">
+            <BoxView.GestureRecognizers>
+                <PanGestureRecognizer PanUpdated="OnEdgePanUpdated" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
     </Grid>
 
 </ContentPage>

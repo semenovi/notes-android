@@ -18,6 +18,9 @@ public partial class NotesPage : ContentPage
   public ObservableCollection<Note> Notes { get; } = new ObservableCollection<Note>();
   private CancellationTokenSource? _loadCts;
 
+  private bool _swipeLocked;
+  private bool _swipeIgnored;
+
   private string _folderId;
   public string FolderId
   {
@@ -102,10 +105,61 @@ public partial class NotesPage : ContentPage
     }
   }
 
+  private void OnSwipePanUpdated(object sender, PanUpdatedEventArgs e)
+  {
+    switch (e.StatusType)
+    {
+      case GestureStatus.Started:
+        _swipeLocked = false;
+        _swipeIgnored = false;
+        break;
+
+      case GestureStatus.Running:
+        if (_swipeIgnored) return;
+        if (!_swipeLocked)
+        {
+          double ax = Math.Abs(e.TotalX);
+          double ay = Math.Abs(e.TotalY);
+          if (ax < 8 && ay < 8) return;
+          if (ay > ax || e.TotalX < 0) { _swipeIgnored = true; return; }
+          _swipeLocked = true;
+        }
+        RootGrid.TranslationX = Math.Max(0, e.TotalX);
+        break;
+
+      case GestureStatus.Completed:
+      case GestureStatus.Canceled:
+        if (!_swipeLocked) return;
+        _swipeLocked = false;
+        var screenWidth = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
+        if (RootGrid.TranslationX > screenWidth * 0.35)
+          _ = CompleteSwipeBackAsync();
+        else
+          _ = SpringBackAsync();
+        break;
+    }
+  }
+
+  private async Task CompleteSwipeBackAsync()
+  {
+    var screenWidth = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
+    await RootGrid.TranslateTo(screenWidth, 0, 180, Easing.CubicIn);
+    await Shell.Current.GoToAsync("..", false);
+  }
+
+  private async Task SpringBackAsync()
+  {
+    await RootGrid.TranslateTo(0, 0, 250, Easing.CubicOut);
+  }
+
   private async void OnNoteTapped(object sender, TappedEventArgs e)
   {
     if (sender is View view && view.BindingContext is Note note)
+    {
+      await view.ScaleTo(0.96, 80);
+      await view.ScaleTo(1.0, 80);
       await NavigateToNoteView(note);
+    }
   }
 
   private async Task ChangeNoteIconAsync(Note note)

@@ -14,6 +14,7 @@ public partial class NoteViewPage : ContentPage
   private readonly ProgressNotificationService _progressService;
   private Note _note;
   private string _noteId;
+  private bool _panActive;
 
   public string NoteId
   {
@@ -95,6 +96,48 @@ public partial class NoteViewPage : ContentPage
 </head>
 <body>{ImageViewerHtml.ViewerDiv}{body}{ImageViewerHtml.ViewerScript}{ImageViewerHtml.CopyCodeScript}</body>
 </html>";
+
+  private void OnEdgePanUpdated(object sender, PanUpdatedEventArgs e)
+  {
+    switch (e.StatusType)
+    {
+      case GestureStatus.Started:
+        _panActive = false;
+        break;
+
+      case GestureStatus.Running:
+        if (!_panActive)
+        {
+          if (e.TotalX > 0) _panActive = true;
+          else return;
+        }
+        RootGrid.TranslationX = Math.Max(0, e.TotalX);
+        break;
+
+      case GestureStatus.Completed:
+      case GestureStatus.Canceled:
+        if (!_panActive) return;
+        _panActive = false;
+        var screenWidth = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
+        if (RootGrid.TranslationX > screenWidth * 0.35)
+          _ = CompleteSwipeBackAsync();
+        else
+          _ = SpringBackAsync();
+        break;
+    }
+  }
+
+  private async Task CompleteSwipeBackAsync()
+  {
+    var screenWidth = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
+    await RootGrid.TranslateTo(screenWidth, 0, 180, Easing.CubicIn);
+    await Shell.Current.GoToAsync("..", false);
+  }
+
+  private async Task SpringBackAsync()
+  {
+    await RootGrid.TranslateTo(0, 0, 250, Easing.CubicOut);
+  }
 
   private async void OnEditClicked(object sender, EventArgs e)
   {
