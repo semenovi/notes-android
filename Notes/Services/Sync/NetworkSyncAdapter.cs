@@ -10,6 +10,12 @@ namespace Notes.Services.Sync;
 
 public class NetworkSyncAdapter : ISyncAdapter
 {
+  private static readonly JsonSerializerOptions JsonOpts = new()
+  {
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    PropertyNameCaseInsensitive = true,
+  };
+
   private readonly NoteRepository _noteRepo;
   private readonly FolderRepository _folderRepo;
   private readonly MediaStorage _mediaStorage;
@@ -87,10 +93,11 @@ public class NetworkSyncAdapter : ISyncAdapter
     _toUploadMedia = manifestResp.ToUpload.Media;
     DebugLogService.Current?.Log($"manifest: ul(n={_toUploadNotes.Count} f={_toUploadFolders.Count} m={_toUploadMedia.Count}) dl(n={manifestResp.ToDownload.Notes.Count} f={manifestResp.ToDownload.Folders.Count} m={manifestResp.ToDownload.Media.Count})");
 
+    // Notes and folders are small — pull in one batch.
     PullResponse? pull = await _apiClient.PullChangesAsync(
         manifestResp.ToDownload.Notes,
         manifestResp.ToDownload.Folders,
-        manifestResp.ToDownload.Media);
+        new List<string>());
     if (pull == null)
       throw new InvalidOperationException("Server did not respond to the data pull request.");
 
@@ -130,21 +137,38 @@ public class NetworkSyncAdapter : ISyncAdapter
       catch { /* skip undecryptable item — will be overwritten on push */ }
     }
 
-    foreach (var item in pull.Media)
+    // Media items are pulled one by one and saved immediately to avoid loading all images
+    // into memory at once, which causes OOM crashes on Android with large photo libraries.
+    foreach (var mediaId in manifestResp.ToDownload.Media)
     {
       try
       {
-        byte[] dec = SyncCryptoHelper.AesDecrypt(Convert.FromBase64String(item.EncryptedData), _syncKey);
-        changes.Add(new SyncChange
+        PullResponse? mediaPull = await _apiClient.PullChangesAsync(
+            new List<string>(), new List<string>(), new List<string> { mediaId });
+        if (mediaPull?.Media == null) continue;
+        foreach (var item in mediaPull.Media)
         {
-          Id = item.Id,
-          EntityType = SyncEntityType.Media,
-          ChangeType = SyncChangeType.Update,
-          Data = Encoding.UTF8.GetString(dec),
-          Timestamp = DateTime.Parse(item.Modified, null, System.Globalization.DateTimeStyles.RoundtripKind).ToLocalTime(),
-        });
+          try
+          {
+            byte[] dec = SyncCryptoHelper.AesDecrypt(Convert.FromBase64String(item.EncryptedData), _syncKey);
+            var payload = JsonSerializer.Deserialize<MediaSyncPayload>(Encoding.UTF8.GetString(dec), JsonOpts);
+            if (payload?.Metadata == null || string.IsNullOrEmpty(payload.ContentBase64)) continue;
+            var existing = await _mediaStorage.GetMediaAsync(payload.Metadata.Id);
+            if (existing != null) continue;
+            byte[] content = Convert.FromBase64String(payload.ContentBase64);
+            await _mediaStorage.SaveMediaFromSyncAsync(payload.Metadata, content);
+            DebugLogService.Current?.Log($"pull-media-done: id={mediaId}");
+          }
+          catch (Exception ex)
+          {
+            DebugLogService.Current?.Log($"pull-media-item-err: id={mediaId} {ex.GetType().Name}: {ex.Message}");
+          }
+        }
       }
-      catch { /* skip undecryptable item */ }
+      catch (Exception ex)
+      {
+        DebugLogService.Current?.Log($"pull-media-err: id={mediaId} {ex.GetType().Name}: {ex.Message}");
+      }
     }
 
     foreach (var id in manifestResp.ToDeleteLocal.Notes)
@@ -163,7 +187,6 @@ public class NetworkSyncAdapter : ISyncAdapter
     const string FMT = "yyyy-MM-ddTHH:mm:ssZ";
     var syncNotes = new List<SyncItem>();
     var syncFolders = new List<SyncItem>();
-    var syncMedia = new List<SyncItem>();
 
     foreach (var c in localChanges.Where(c => c.EntityType == SyncEntityType.Note
         && c.ChangeType != SyncChangeType.Delete
@@ -191,29 +214,40 @@ public class NetworkSyncAdapter : ISyncAdapter
       });
     }
 
+    // Notes and folders are small — send in one request via the push endpoint.
+    if (syncNotes.Count > 0 || syncFolders.Count > 0)
+    {
+      DebugLogService.Current?.Log($"full-sync-push: notes={syncNotes.Count} folders={syncFolders.Count}");
+      await _apiClient.PushChangesAsync(syncNotes, syncFolders, new(), new(), new(), _settings?.DeviceId);
+    }
+
+    // Media: load content only for items that actually need uploading (lazy — avoids loading all media into memory).
     foreach (var c in localChanges.Where(c => c.EntityType == SyncEntityType.Media
         && c.ChangeType != SyncChangeType.Delete
         && _toUploadMedia.Contains(c.Id)))
     {
-      byte[] enc = SyncCryptoHelper.AesEncrypt(Encoding.UTF8.GetBytes(c.Data), _syncKey);
-      syncMedia.Add(new SyncItem
+      try
       {
-        Id = c.Id,
-        EncryptedData = Convert.ToBase64String(enc),
-        Modified = c.Timestamp.ToUniversalTime().ToString(FMT),
-      });
-    }
-
-    // Notes and folders are small — send in one request via the push endpoint.
-    if (syncNotes.Count > 0 || syncFolders.Count > 0)
-      await _apiClient.PushChangesAsync(syncNotes, syncFolders, new(), new(), new(), _settings?.DeviceId);
-
-    // Each media item is uploaded in 4 MB chunks so large files survive slow/unstable connections.
-    foreach (var item in syncMedia)
-    {
-      DebugLogService.Current?.Log($"full-sync-media: id={item.Id} encChars={item.EncryptedData.Length}");
-      await _apiClient.PushChunkedAsync(item, "media", _settings?.DeviceId);
-      DebugLogService.Current?.Log($"full-sync-media-done: id={item.Id}");
+        var metadata = JsonSerializer.Deserialize<MediaItem>(c.Data, JsonOpts);
+        if (metadata == null) { DebugLogService.Current?.Log($"full-sync-media-skip: id={c.Id} no metadata"); continue; }
+        byte[] content = await _mediaStorage.GetRawContentAsync(c.Id);
+        var payload = new MediaSyncPayload { Metadata = metadata, ContentBase64 = Convert.ToBase64String(content) };
+        byte[] enc = SyncCryptoHelper.AesEncrypt(
+            Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload, JsonOpts)), _syncKey);
+        var syncItem = new SyncItem
+        {
+          Id = c.Id,
+          EncryptedData = Convert.ToBase64String(enc),
+          Modified = c.Timestamp.ToUniversalTime().ToString(FMT),
+        };
+        DebugLogService.Current?.Log($"full-sync-media: id={syncItem.Id} encChars={syncItem.EncryptedData.Length}");
+        await _apiClient.PushChunkedAsync(syncItem, "media", _settings?.DeviceId);
+        DebugLogService.Current?.Log($"full-sync-media-done: id={syncItem.Id}");
+      }
+      catch (Exception ex)
+      {
+        DebugLogService.Current?.Log($"full-sync-media-err: id={c.Id} {ex.GetType().Name}: {ex.Message}");
+      }
     }
   }
 

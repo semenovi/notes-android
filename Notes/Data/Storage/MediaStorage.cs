@@ -1,6 +1,7 @@
 ﻿using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Graphics.Platform;
 using Notes.Models;
+using Notes.Services;
 
 namespace Notes.Data.Storage;
 
@@ -29,7 +30,12 @@ public class MediaStorage
 
     bool isRaster = fileType is "jpg" or "jpeg" or "png" or "webp";
     if (isRaster)
-      data = ResizeImage(data);
+    {
+      int before = data.Length;
+      data = await Task.Run(() => ResizeImage(data));
+      if (data.Length != before)
+        DebugLogService.Current?.Log($"media-resize: {mediaId} {before}→{data.Length} bytes");
+    }
 
     await _storage.WriteFileAsync(storagePath, data);
 
@@ -125,7 +131,7 @@ public class MediaStorage
     string fileType = metadata.FileType?.ToLowerInvariant() ?? "";
     bool isRaster = fileType is "jpg" or "jpeg" or "png" or "webp";
     if (isRaster)
-      content = ResizeImage(content);
+      content = await Task.Run(() => ResizeImage(content));
     metadata.Size = content.Length;
     await _storage.WriteFileAsync(metadata.StoragePath, content);
     await SaveMediaMetadataAsync(metadata);

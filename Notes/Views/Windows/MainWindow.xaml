@@ -31,6 +31,7 @@
         </Grid>
 
         <shared:ToastOverlay x:Name="Toast" />
+        <shared:ProgressOverlay x:Name="Progress" />
     </Grid>
 
 </ContentPage>

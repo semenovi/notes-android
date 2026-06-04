@@ -6,12 +6,17 @@ namespace Notes.Views.Windows;
 public partial class MainWindow : ContentPage
 {
   private readonly ToastService _toastService;
+  private readonly ProgressNotificationService _progressService;
 
   public MainWindow()
   {
     InitializeComponent();
     _toastService = IPlatformApplication.Current.Services.GetRequiredService<ToastService>();
     _toastService.ToastRequested += OnToastRequested;
+    _progressService = IPlatformApplication.Current.Services.GetRequiredService<ProgressNotificationService>();
+    _progressService.ShowRequested += s => Progress.ShowProgress(s);
+    _progressService.UpdateRequested += s => Progress.UpdateProgress(s);
+    _progressService.HideRequested += () => Progress.HideProgress();
   }
 
   private void OnToastRequested(string message)

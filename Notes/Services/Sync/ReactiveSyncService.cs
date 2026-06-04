@@ -19,6 +19,7 @@ public class ReactiveSyncService : IDisposable
   private readonly SyncSettingsService _settingsService;
   private readonly SyncManager _syncManager;
   private readonly ToastService _toastService;
+  private readonly ProgressNotificationService _progressService;
 
   private SyncApiClient? _client;
   private byte[]? _syncKey;
@@ -45,7 +46,8 @@ public class ReactiveSyncService : IDisposable
 
   public ReactiveSyncService(NoteManager noteManager, FolderManager folderManager,
       MediaManager mediaManager, NoteRepository noteRepo, FolderRepository folderRepo,
-      SyncSettingsService settingsService, SyncManager syncManager, ToastService toastService)
+      SyncSettingsService settingsService, SyncManager syncManager, ToastService toastService,
+      ProgressNotificationService progressService)
   {
     _noteManager = noteManager;
     _folderManager = folderManager;
@@ -55,6 +57,7 @@ public class ReactiveSyncService : IDisposable
     _settingsService = settingsService;
     _syncManager = syncManager;
     _toastService = toastService;
+    _progressService = progressService;
 
     _noteManager.NoteChanged += OnNoteChanged;
     _folderManager.FolderChanged += OnFolderChanged;
@@ -100,9 +103,26 @@ public class ReactiveSyncService : IDisposable
 
   private async Task RunPeriodicSyncAsync(CancellationToken ct)
   {
+    // Run an immediate sync on start so any uploads that were cut short (app kill,
+    // StopAsync mid-queue) are recovered without waiting for the first 5-minute tick.
+    if (!ct.IsCancellationRequested)
+    {
+      using var session = _progressService.Begin("Syncing");
+      try
+      {
+        DebugLogService.Current?.Log("initial-sync-start");
+        await _syncManager.SynchronizeAsync(DefaultProfile);
+        DebugLogService.Current?.Log("initial-sync-done");
+        MainThread.BeginInvokeOnMainThread(() => RemoteChangesApplied?.Invoke());
+      }
+      catch (OperationCanceledException) { return; }
+      catch (Exception ex) { DebugLogService.Current?.Log($"initial-sync-err: {ex.GetType().Name}: {ex.Message}"); }
+    }
+
     using var timer = new PeriodicTimer(PeriodicInterval);
     while (await timer.WaitForNextTickAsync(ct))
     {
+      using var session = _progressService.Begin("Syncing");
       try
       {
         DebugLogService.Current?.Log("periodic-sync-start");
@@ -125,12 +145,15 @@ public class ReactiveSyncService : IDisposable
       {
         if (_client != null && _deviceId != null)
         {
-          delay = TimeSpan.FromSeconds(2); // reset backoff on successful connect
+          delay = TimeSpan.FromSeconds(2);
           await _client.SubscribeToEventsAsync(_deviceId, HandleSseEvent, ct);
         }
       }
       catch (OperationCanceledException) { break; }
-      catch { }
+      catch (Exception ex)
+      {
+        DebugLogService.Current?.Log($"sse-err: {ex.GetType().Name}: {ex.Message} reconnect={delay.TotalSeconds}s");
+      }
 
       if (ct.IsCancellationRequested) break;
       try { await Task.Delay(delay, ct); } catch (OperationCanceledException) { break; }
@@ -230,13 +253,15 @@ public class ReactiveSyncService : IDisposable
 
   private async Task PushNoteAsync(string noteId, EntityChangeKind kind)
   {
-    var client = _client;
-    var key = _syncKey;
-    var deviceId = _deviceId;
-    if (client == null || key == null || deviceId == null) return;
-    await _pushLock.WaitAsync();
+    var ct = _cts?.Token ?? CancellationToken.None;
+    try { await _pushLock.WaitAsync(ct); }
+    catch (OperationCanceledException) { return; }
     try
     {
+      var client = _client;
+      var key = _syncKey;
+      var deviceId = _deviceId;
+      if (client == null || key == null || deviceId == null) return;
       if (kind == EntityChangeKind.Deleted)
       {
         await client.PushChangesAsync(new(), new(), new(), new List<string> { noteId }, new(), deviceId);
@@ -260,13 +285,15 @@ public class ReactiveSyncService : IDisposable
 
   private async Task PushFolderAsync(string folderId, EntityChangeKind kind)
   {
-    var client = _client;
-    var key = _syncKey;
-    var deviceId = _deviceId;
-    if (client == null || key == null || deviceId == null) return;
-    await _pushLock.WaitAsync();
+    var ct = _cts?.Token ?? CancellationToken.None;
+    try { await _pushLock.WaitAsync(ct); }
+    catch (OperationCanceledException) { return; }
     try
     {
+      var client = _client;
+      var key = _syncKey;
+      var deviceId = _deviceId;
+      if (client == null || key == null || deviceId == null) return;
       if (kind == EntityChangeKind.Deleted)
       {
         await client.PushChangesAsync(new(), new(), new(), new(), new List<string> { folderId }, deviceId);
@@ -290,17 +317,25 @@ public class ReactiveSyncService : IDisposable
 
   private async Task PushMediaAsync(string mediaId)
   {
-    var client = _client;
-    var key = _syncKey;
-    var deviceId = _deviceId;
-    if (client == null || key == null || deviceId == null)
+    var ct = _cts?.Token ?? CancellationToken.None;
+    try { await _pushLock.WaitAsync(ct); }
+    catch (OperationCanceledException)
     {
-      DebugLogService.Current?.Log($"media-push-skip: id={mediaId} no client/key/device");
+      DebugLogService.Current?.Log($"media-push-cancel: id={mediaId}");
       return;
     }
-    await _pushLock.WaitAsync();
     try
     {
+      // Re-read after acquiring lock: StopAsync may have disposed _client while we waited.
+      var client = _client;
+      var key = _syncKey;
+      var deviceId = _deviceId;
+      if (client == null || key == null || deviceId == null)
+      {
+        DebugLogService.Current?.Log($"media-push-skip: id={mediaId} no client/key/device");
+        return;
+      }
+
       DebugLogService.Current?.Log($"media-push: id={mediaId}");
       var item = await _mediaManager.GetMediaAsync(mediaId);
       if (item == null) { DebugLogService.Current?.Log($"media-push-skip: id={mediaId} item not found"); return; }
@@ -323,7 +358,9 @@ public class ReactiveSyncService : IDisposable
         Modified = item.Created.ToUniversalTime().ToString(TimeFmt),
       };
       DebugLogService.Current?.Log($"media-push-enc: id={mediaId} rawBytes={ms.Length} encChars={syncItem.EncryptedData.Length}");
-      await client.PushChunkedAsync(syncItem, "media", deviceId);
+      using var session = _progressService.Begin("Uploading media", delayMs: 0);
+      await client.PushChunkedAsync(syncItem, "media", deviceId,
+          (sent, total) => session.Report((double)sent / total, total > 1 ? $"Chunk {sent} of {total}" : null));
       DebugLogService.Current?.Log($"media-push-done: id={mediaId}");
     }
     catch (Exception ex)
