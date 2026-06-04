@@ -81,8 +81,6 @@ public partial class FoldersPage : ContentPage
       await RunSyncAsync();
       await LoadFoldersAsync();
     }
-    if (Folders.Count == 0)
-      await CreateDefaultFolderAsync();
   }
 
   private async Task LoadFoldersAsync()
@@ -95,12 +93,6 @@ public partial class FoldersPage : ContentPage
     Folders.Clear();
     foreach (var folder in folders)
       Folders.Add(folder);
-  }
-
-  private async Task CreateDefaultFolderAsync()
-  {
-    var defaultFolder = await _folderManager.CreateFolderAsync("Default");
-    Folders.Add(defaultFolder);
   }
 
   private async void OnAddFolderClicked(object sender, EventArgs e)
