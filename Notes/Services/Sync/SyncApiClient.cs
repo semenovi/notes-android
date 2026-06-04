@@ -23,6 +23,7 @@ public class SyncManifestRequest
   public Dictionary<string, string> Media { get; set; } = new();
   public Dictionary<string, string> DeletedNotes { get; set; } = new();
   public Dictionary<string, string> DeletedFolders { get; set; } = new();
+  public Dictionary<string, string> DeletedMedia { get; set; } = new();
 }
 
 public class ManifestResponse
