@@ -1,4 +1,5 @@
 using Notes.Models;
+using Notes.Services;
 using Notes.Services.Notes;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -10,6 +11,7 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
 {
   private readonly NoteManager _noteManager;
   private readonly MediaManager _mediaManager;
+  private readonly ProgressNotificationService _progressService;
 
   private Note _note;
   private string _noteId;
@@ -43,12 +45,33 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     }
   }
 
-  public NoteEditorPage(NoteManager noteManager, MediaManager mediaManager)
+  public NoteEditorPage(NoteManager noteManager, MediaManager mediaManager,
+      ProgressNotificationService progressService)
   {
     InitializeComponent();
     _noteManager = noteManager;
     _mediaManager = mediaManager;
+    _progressService = progressService;
     BindingContext = this;
+  }
+
+  protected override void OnAppearing()
+  {
+    base.OnAppearing();
+    _progressService.ShowRequested += PageProgress.ShowProgress;
+    _progressService.UpdateRequested += PageProgress.UpdateProgress;
+    _progressService.HideRequested += PageProgress.HideProgress;
+    if (_progressService.Current != null)
+      PageProgress.ShowProgress(_progressService.Current);
+  }
+
+  protected override void OnDisappearing()
+  {
+    base.OnDisappearing();
+    _progressService.ShowRequested -= PageProgress.ShowProgress;
+    _progressService.UpdateRequested -= PageProgress.UpdateProgress;
+    _progressService.HideRequested -= PageProgress.HideProgress;
+    PageProgress.Reset();
   }
 
   private async Task LoadNoteAsync()
@@ -56,6 +79,7 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     if (string.IsNullOrEmpty(NoteId))
       return;
 
+    using var session = _progressService.Begin("Loading note");
     _note = await _noteManager.GetNoteAsync(NoteId);
     if (_note != null)
     {
@@ -96,13 +120,19 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     if (fileResults == null || !fileResults.Any())
       return;
 
+    var fileList = fileResults.ToList();
+    int total = fileList.Count;
+    using var session = _progressService.Begin("Adding images", delayMs: 0);
+
     var parts = new List<string>();
-    foreach (var fileResult in fileResults)
+    for (int i = 0; i < fileList.Count; i++)
     {
+      session.Report((double)i / total, total > 1 ? $"{i + 1} of {total}" : null);
+      var fileResult = fileList[i];
       using var stream = await fileResult.OpenReadAsync();
       var mediaItem = await _mediaManager.AddMediaAsync(stream, fileResult.FileName);
-      string mediaUrl = _mediaManager.GetMediaUrl(mediaItem.Id);
-      parts.Add($"![{fileResult.FileName}]({mediaUrl})");
+      parts.Add($"![{fileResult.FileName}]({_mediaManager.GetMediaUrl(mediaItem.Id)})");
+      session.Report((double)(i + 1) / total, total > 1 ? $"{i + 1} of {total}" : null);
     }
 
     int cursorPosition = ContentEditor.CursorPosition;

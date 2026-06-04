@@ -2,6 +2,7 @@ using System.Text.Json;
 using Notes.Data.Repositories;
 using Notes.Data.Storage;
 using Notes.Models;
+using Notes.Services;
 
 namespace Notes.Services.Sync;
 
@@ -84,24 +85,15 @@ public class SyncManager
     var mediaItems = await _mediaStorage.GetAllMediaAsync();
     foreach (var item in mediaItems)
     {
-      try
+      // Content is loaded lazily in the adapter — only for items that actually need uploading.
+      changes.Add(new SyncChange
       {
-        byte[] content = await _mediaStorage.GetRawContentAsync(item.Id);
-        var payload = new MediaSyncPayload
-        {
-          Metadata = item,
-          ContentBase64 = Convert.ToBase64String(content),
-        };
-        changes.Add(new SyncChange
-        {
-          Id = item.Id,
-          EntityType = SyncEntityType.Media,
-          ChangeType = SyncChangeType.Update,
-          Data = JsonSerializer.Serialize(payload, JsonOpts),
-          Timestamp = item.Created,
-        });
-      }
-      catch { }
+        Id = item.Id,
+        EntityType = SyncEntityType.Media,
+        ChangeType = SyncChangeType.Update,
+        Data = JsonSerializer.Serialize(item, JsonOpts),
+        Timestamp = item.Created,
+      });
     }
 
     return changes;
@@ -126,7 +118,10 @@ public class SyncManager
             break;
         }
       }
-      catch { }
+      catch (Exception ex)
+      {
+        DebugLogService.Current?.Log($"apply-{change.EntityType.ToString().ToLower()}-err: id={change.Id} {ex.GetType().Name}: {ex.Message}");
+      }
     }
   }
 

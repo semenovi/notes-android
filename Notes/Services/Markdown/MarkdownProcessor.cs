@@ -53,7 +53,8 @@ public class MarkdownProcessor
     return Task.FromResult(result);
   }
 
-  public async Task InjectImagesIntoWebViewAsync(string markdown, WebView webView)
+  public async Task InjectImagesIntoWebViewAsync(string markdown, WebView webView,
+      Action<int, int>? onProgress = null)
   {
     var mediaIds = new System.Text.RegularExpressions.Regex(@"!\[.*?\]\(media:(.*?)\)")
       .Matches(markdown)
@@ -65,15 +66,26 @@ public class MarkdownProcessor
     if (mediaIds.Count == 0)
       return;
 
-    await Task.WhenAll(mediaIds.Select(async id =>
+    int total = mediaIds.Count;
+
+    // Load and inject images one at a time: limits peak memory to a single image
+    // and lets GC run between items. Concurrent loading via Task.WhenAll caused
+    // OOM on Android when notes contain many photos, silently dropping the last half.
+    for (int i = 0; i < mediaIds.Count; i++)
     {
-      var item = await _mediaManager.GetMediaAsync(id);
-      if (item == null) return;
-      string dataUri = await GetMediaDataUriAsync(id, item);
-      if (string.IsNullOrEmpty(dataUri)) return;
-      string js = $"(function(){{var e=document.getElementById('media-{id}');if(e)e.src='{dataUri}';}})();";
-      await MainThread.InvokeOnMainThreadAsync(() => _ = webView.EvaluateJavaScriptAsync(js));
-    }));
+      var id = mediaIds[i];
+      try
+      {
+        var item = await _mediaManager.GetMediaAsync(id);
+        if (item == null) continue;
+        string dataUri = await GetMediaDataUriAsync(id, item);
+        if (string.IsNullOrEmpty(dataUri)) continue;
+        string js = $"(function(){{var e=document.getElementById('media-{id}');if(e)e.src='{dataUri}';}})();";
+        await MainThread.InvokeOnMainThreadAsync(() => webView.EvaluateJavaScriptAsync(js));
+        onProgress?.Invoke(i + 1, total);
+      }
+      catch { }
+    }
   }
 
   private async Task<string> GetMediaDataUriAsync(string mediaId, Models.MediaItem? mediaItem = null)

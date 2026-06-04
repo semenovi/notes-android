@@ -12,6 +12,7 @@ public partial class WindowsNoteEditor : ContentView
   private readonly NoteManager _noteManager;
   private readonly MediaManager _mediaManager;
   private readonly MarkdownProcessor _markdownProcessor;
+  private readonly Services.ProgressNotificationService _progressService;
 
   private Note? _currentNote;
   private readonly System.Timers.Timer _autoSaveTimer;
@@ -24,6 +25,7 @@ public partial class WindowsNoteEditor : ContentView
     _noteManager = App.Current!.Handler!.MauiContext!.Services.GetService<NoteManager>()!;
     _mediaManager = App.Current!.Handler!.MauiContext!.Services.GetService<MediaManager>()!;
     _markdownProcessor = App.Current!.Handler!.MauiContext!.Services.GetService<MarkdownProcessor>()!;
+    _progressService = App.Current!.Handler!.MauiContext!.Services.GetService<Services.ProgressNotificationService>()!;
 
     _autoSaveTimer = new System.Timers.Timer(3000) { AutoReset = false };
     _autoSaveTimer.Elapsed += OnAutoSave;
@@ -103,7 +105,8 @@ public partial class WindowsNoteEditor : ContentView
     EditMode.IsVisible = false;
     ViewMode.IsVisible = true;
 
-    await UpdatePreviewAsync();
+    using var session = _progressService.Begin("Loading note");
+    await UpdatePreviewAsync(session);
   }
 
   public void ClearEditor()
@@ -159,7 +162,7 @@ public partial class WindowsNoteEditor : ContentView
     }
   }
 
-  private async Task UpdatePreviewAsync()
+  private async Task UpdatePreviewAsync(Services.ProgressSession? session = null)
   {
     if (_currentNote == null) return;
 
@@ -181,7 +184,9 @@ public partial class WindowsNoteEditor : ContentView
       await navTask;
 
       if (!string.IsNullOrWhiteSpace(content))
-        await _markdownProcessor.InjectImagesIntoWebViewAsync(content, ContentPreview);
+        await _markdownProcessor.InjectImagesIntoWebViewAsync(content, ContentPreview,
+            (loaded, total) => session?.Report((double)loaded / total,
+                total - loaded > 0 ? $"{total - loaded} images left" : null));
     }
     catch
     {
@@ -278,12 +283,19 @@ public partial class WindowsNoteEditor : ContentView
       });
       if (results == null || !results.Any()) return;
 
+      var fileList = results.ToList();
+      int total = fileList.Count;
+      using var session = _progressService.Begin("Adding images", delayMs: 0);
+
       var parts = new List<string>();
-      foreach (var result in results)
+      for (int i = 0; i < fileList.Count; i++)
       {
+        session.Report((double)i / total, total > 1 ? $"{i + 1} of {total}" : null);
+        var result = fileList[i];
         using var stream = await result.OpenReadAsync();
         var media = await _mediaManager.AddMediaAsync(stream, result.FileName);
         parts.Add($"![{result.FileName}]({_mediaManager.GetMediaUrl(media.Id)})");
+        session.Report((double)(i + 1) / total, total > 1 ? $"{i + 1} of {total}" : null);
       }
 
       InsertText(string.Join("\n\n", parts));

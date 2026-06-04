@@ -4,6 +4,7 @@ using Notes.Services;
 using Notes.Services.Export;
 using Notes.Services.Notes;
 using Notes.Services.Sync;
+using Notes.Views.Controls;
 using System.Collections.ObjectModel;
 
 namespace Notes.Views.Pages;
@@ -16,12 +17,14 @@ public partial class FoldersPage : ContentPage
   private readonly SyncManager _syncManager;
   private readonly SyncSettingsService _syncSettingsService;
   private readonly ReactiveSyncService _reactiveSync;
+  private readonly ProgressNotificationService _progressService;
   public ObservableCollection<Folder> Folders { get; } = new ObservableCollection<Folder>();
   private CancellationTokenSource? _loadCts;
 
   public FoldersPage(FolderManager folderManager, NoteManager noteManager,
       ExportService exportService, SyncManager syncManager,
-      SyncSettingsService syncSettingsService, ReactiveSyncService reactiveSync)
+      SyncSettingsService syncSettingsService, ReactiveSyncService reactiveSync,
+      ProgressNotificationService progressService)
   {
     InitializeComponent();
     _folderManager = folderManager;
@@ -30,6 +33,7 @@ public partial class FoldersPage : ContentPage
     _syncManager = syncManager;
     _syncSettingsService = syncSettingsService;
     _reactiveSync = reactiveSync;
+    _progressService = progressService;
     FoldersCollection.ItemsSource = Folders;
 
     var exportLogsItem = new ToolbarItem { Text = "Export Logs", Order = ToolbarItemOrder.Secondary };
@@ -41,6 +45,11 @@ public partial class FoldersPage : ContentPage
   {
     base.OnAppearing();
     _reactiveSync.RemoteChangesApplied += OnRemoteChangesApplied;
+    _progressService.ShowRequested += PageProgress.ShowProgress;
+    _progressService.UpdateRequested += PageProgress.UpdateProgress;
+    _progressService.HideRequested += PageProgress.HideProgress;
+    if (_progressService.Current != null)
+      PageProgress.ShowProgress(_progressService.Current);
     await UpdateSyncToggleTextAsync();
     await LoadFoldersAsync();
     await AutoSyncAsync();
@@ -50,6 +59,10 @@ public partial class FoldersPage : ContentPage
   {
     base.OnDisappearing();
     _reactiveSync.RemoteChangesApplied -= OnRemoteChangesApplied;
+    _progressService.ShowRequested -= PageProgress.ShowProgress;
+    _progressService.UpdateRequested -= PageProgress.UpdateProgress;
+    _progressService.HideRequested -= PageProgress.HideProgress;
+    PageProgress.Reset();
   }
 
   private async void OnRemoteChangesApplied() => await LoadFoldersAsync();
@@ -155,6 +168,7 @@ public partial class FoldersPage : ContentPage
 
   private async Task RunSyncAsync()
   {
+    using var session = _progressService.Begin("Syncing");
     try
     {
       await _syncManager.SynchronizeAsync(new Notes.Models.SyncProfile

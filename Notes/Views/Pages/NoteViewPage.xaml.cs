@@ -1,5 +1,6 @@
 using Notes.Helpers;
 using Notes.Models;
+using Notes.Services;
 using Notes.Services.Markdown;
 using Notes.Services.Notes;
 
@@ -10,6 +11,7 @@ public partial class NoteViewPage : ContentPage
 {
   private readonly NoteManager _noteManager;
   private readonly MarkdownProcessor _markdownProcessor;
+  private readonly ProgressNotificationService _progressService;
   private Note _note;
   private string _noteId;
 
@@ -25,11 +27,13 @@ public partial class NoteViewPage : ContentPage
 
   public string Title => _note?.Title ?? "Note";
 
-  public NoteViewPage(NoteManager noteManager, MarkdownProcessor markdownProcessor)
+  public NoteViewPage(NoteManager noteManager, MarkdownProcessor markdownProcessor,
+      ProgressNotificationService progressService)
   {
     InitializeComponent();
     _noteManager = noteManager;
     _markdownProcessor = markdownProcessor;
+    _progressService = progressService;
     BindingContext = this;
   }
 
@@ -58,7 +62,10 @@ public partial class NoteViewPage : ContentPage
     NoteContentWebView.Source = new HtmlWebViewSource { Html = BuildFullHtml(html) };
     await navTask;
 
-    await _markdownProcessor.InjectImagesIntoWebViewAsync(content, NoteContentWebView);
+    using var session = _progressService.Begin("Loading note");
+    await _markdownProcessor.InjectImagesIntoWebViewAsync(content, NoteContentWebView,
+        (loaded, total) => session.Report((double)loaded / total,
+            total - loaded > 0 ? $"{total - loaded} images left" : null));
   }
 
   private static Task WaitForNavigationAsync(WebView webView)
@@ -120,10 +127,22 @@ public partial class NoteViewPage : ContentPage
   protected override void OnAppearing()
   {
     base.OnAppearing();
+    _progressService.ShowRequested += PageProgress.ShowProgress;
+    _progressService.UpdateRequested += PageProgress.UpdateProgress;
+    _progressService.HideRequested += PageProgress.HideProgress;
+    if (_progressService.Current != null)
+      PageProgress.ShowProgress(_progressService.Current);
 
     if (_note != null)
-    {
       RenderNoteContentAsync().ConfigureAwait(false);
-    }
+  }
+
+  protected override void OnDisappearing()
+  {
+    base.OnDisappearing();
+    _progressService.ShowRequested -= PageProgress.ShowProgress;
+    _progressService.UpdateRequested -= PageProgress.UpdateProgress;
+    _progressService.HideRequested -= PageProgress.HideProgress;
+    PageProgress.Reset();
   }
 }

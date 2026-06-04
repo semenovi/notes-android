@@ -53,6 +53,7 @@ public static class MauiProgram
 
     builder.Services.AddSingleton<DebugLogService>();
     builder.Services.AddSingleton<ToastService>();
+    builder.Services.AddSingleton<ProgressNotificationService>();
     builder.Services.AddSingleton<SyncSettingsService>();
     builder.Services.AddSingleton<ISyncAdapter, UsbSyncAdapter>();
     builder.Services.AddSingleton<ISyncAdapter, NetworkSyncAdapter>();

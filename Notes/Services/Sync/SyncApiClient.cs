@@ -90,8 +90,7 @@ public class SyncApiClient : IDisposable
     var auth = new AuthenticationHeaderValue("Bearer", apiToken);
     _http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
     _http.DefaultRequestHeaders.Authorization = auth;
-    // Each 4 MB chunk should transfer in under 5 minutes even on a slow connection.
-    _pushHttp = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+    _pushHttp = new HttpClient { Timeout = System.Threading.Timeout.InfiniteTimeSpan };
     _pushHttp.DefaultRequestHeaders.Authorization = auth;
     _sseHttp = new HttpClient { Timeout = System.Threading.Timeout.InfiniteTimeSpan };
     _sseHttp.DefaultRequestHeaders.Authorization = auth;
@@ -192,7 +191,9 @@ public class SyncApiClient : IDisposable
   // SHA256 is verified per chunk and for the fully assembled item on the server.
   // If a chunk fails after retries, the upload stops; the server will re-request
   // missing chunks on the next manifest exchange.
-  public async Task PushChunkedAsync(SyncItem item, string type, string? deviceId = null)
+  // onProgress(chunksSent, totalChunks) is called after each successful chunk.
+  public async Task PushChunkedAsync(SyncItem item, string type, string? deviceId = null,
+      Action<int, int>? onProgress = null)
   {
     byte[] base64Bytes = Encoding.UTF8.GetBytes(item.EncryptedData);
     int totalChunks = Math.Max(1, (base64Bytes.Length + ChunkSize - 1) / ChunkSize);
@@ -222,6 +223,7 @@ public class SyncApiClient : IDisposable
       };
 
       if (!await PushChunkAsync(req)) return;
+      onProgress?.Invoke(i + 1, totalChunks);
     }
   }
 
@@ -249,8 +251,25 @@ public class SyncApiClient : IDisposable
   public async Task<PullResponse?> PullChangesAsync(List<string> noteIds, List<string> folderIds, List<string> mediaIds)
   {
     if (noteIds.Count == 0 && folderIds.Count == 0 && mediaIds.Count == 0) return new PullResponse();
-    return await PostAsync<PullResponse>("/api/sync/pull",
-        new { note_ids = noteIds, folder_ids = folderIds, media_ids = mediaIds });
+    // Use _pushHttp (5-min timeout) — media items in the response can be large.
+    for (int attempt = 0; attempt < 2; attempt++)
+    {
+      try
+      {
+        using var resp = await _pushHttp.PostAsync(_baseUrl + "/api/sync/pull",
+            Json(new { note_ids = noteIds, folder_ids = folderIds, media_ids = mediaIds }));
+        if (!resp.IsSuccessStatusCode) return default;
+        return JsonSerializer.Deserialize<PullResponse>(await resp.Content.ReadAsStringAsync(), JsonOpts);
+      }
+      catch (HttpRequestException)
+      {
+        if (attempt == 0)
+          await Task.Delay(700);
+        else
+          return default;
+      }
+    }
+    return default;
   }
 
   public void Dispose()

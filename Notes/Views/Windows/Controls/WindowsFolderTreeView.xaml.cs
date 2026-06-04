@@ -21,6 +21,7 @@ public partial class WindowsFolderTreeView : ContentView
 
   private readonly ReactiveSyncService _reactiveSync;
   private readonly NoteManager _noteManager;
+  private readonly Services.ProgressNotificationService _progressService;
   private Folder? _selectedFolder;
 
   public WindowsFolderTreeView()
@@ -33,6 +34,7 @@ public partial class WindowsFolderTreeView : ContentView
     _syncManager = services.GetService<SyncManager>()!;
     _syncSettingsService = services.GetService<SyncSettingsService>()!;
     _reactiveSync = services.GetService<ReactiveSyncService>()!;
+    _progressService = services.GetService<Services.ProgressNotificationService>()!;
     FoldersCollectionView.ItemsSource = Folders;
     _reactiveSync.RemoteChangesApplied += OnRemoteChangesApplied;
   }
@@ -247,6 +249,7 @@ public partial class WindowsFolderTreeView : ContentView
 
   private async Task RunSyncAsync()
   {
+    using var session = _progressService.Begin("Syncing");
     try
     {
       await _syncManager.SynchronizeAsync(new SyncProfile

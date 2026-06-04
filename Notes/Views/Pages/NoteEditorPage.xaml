@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:helpers="clr-namespace:Notes.Helpers"
+             xmlns:shared="clr-namespace:Notes.Views.Controls"
              x:Class="Notes.Views.Pages.NoteEditorPage"
              Title="{Binding Title}">
 
@@ -51,11 +52,13 @@
         </HorizontalStackLayout>
 
         <ScrollView Grid.Row="1" Margin="10">
-            <Editor x:Name="ContentEditor" 
+            <Editor x:Name="ContentEditor"
                     Text="{Binding Content}"
                     FontFamily="Monospace"
                     VerticalOptions="Fill"
                     AutoSize="TextChanges" />
         </ScrollView>
+
+        <shared:ProgressOverlay x:Name="PageProgress" Grid.RowSpan="2" />
     </Grid>
 </ContentPage>

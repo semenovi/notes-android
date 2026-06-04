@@ -1,5 +1,6 @@
 using Notes.Helpers;
 using Notes.Models;
+using Notes.Services;
 using Notes.Services.Notes;
 using Notes.Services.Sync;
 using System.Collections.ObjectModel;
@@ -13,6 +14,7 @@ public partial class NotesPage : ContentPage
   private readonly NoteManager _noteManager;
   private readonly FolderManager _folderManager;
   private readonly ReactiveSyncService _reactiveSync;
+  private readonly ProgressNotificationService _progressService;
   public ObservableCollection<Note> Notes { get; } = new ObservableCollection<Note>();
   private CancellationTokenSource? _loadCts;
 
@@ -38,12 +40,14 @@ public partial class NotesPage : ContentPage
     }
   }
 
-  public NotesPage(NoteManager noteManager, FolderManager folderManager, ReactiveSyncService reactiveSync)
+  public NotesPage(NoteManager noteManager, FolderManager folderManager,
+      ReactiveSyncService reactiveSync, ProgressNotificationService progressService)
   {
     InitializeComponent();
     _noteManager = noteManager;
     _folderManager = folderManager;
     _reactiveSync = reactiveSync;
+    _progressService = progressService;
     NotesCollection.ItemsSource = Notes;
     BindingContext = this;
   }
@@ -52,12 +56,21 @@ public partial class NotesPage : ContentPage
   {
     base.OnAppearing();
     _reactiveSync.RemoteChangesApplied += OnRemoteChangesApplied;
+    _progressService.ShowRequested += PageProgress.ShowProgress;
+    _progressService.UpdateRequested += PageProgress.UpdateProgress;
+    _progressService.HideRequested += PageProgress.HideProgress;
+    if (_progressService.Current != null)
+      PageProgress.ShowProgress(_progressService.Current);
   }
 
   protected override void OnDisappearing()
   {
     base.OnDisappearing();
     _reactiveSync.RemoteChangesApplied -= OnRemoteChangesApplied;
+    _progressService.ShowRequested -= PageProgress.ShowProgress;
+    _progressService.UpdateRequested -= PageProgress.UpdateProgress;
+    _progressService.HideRequested -= PageProgress.HideProgress;
+    PageProgress.Reset();
   }
 
   private async void OnRemoteChangesApplied() => await LoadNotesAsync();
