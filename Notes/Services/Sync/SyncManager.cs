@@ -28,7 +28,7 @@ public class SyncManager
     _mediaStorage = mediaStorage;
   }
 
-  public async Task SynchronizeAsync(SyncProfile profile)
+  public async Task SynchronizeAsync(SyncProfile profile, Action<double, string?>? onProgress = null)
   {
     ISyncAdapter? adapter = _adapters.FirstOrDefault(a => a.ProtocolType == profile.Protocol);
     if (adapter == null)
@@ -39,11 +39,11 @@ public class SyncManager
 
     try
     {
-      List<SyncChange> remoteChanges = await adapter.GetChangesAsync();
+      List<SyncChange> remoteChanges = await adapter.GetChangesAsync(onProgress);
       await ApplyRemoteChangesAsync(remoteChanges);
 
       List<SyncChange> localChanges = await GetLocalChangesAsync();
-      await adapter.ApplyChangesAsync(localChanges);
+      await adapter.ApplyChangesAsync(localChanges, onProgress);
     }
     finally
     {

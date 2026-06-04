@@ -8,8 +8,8 @@ public interface ISyncAdapter
   Task<bool> ConnectAsync(SyncProfile profile);
   Task DisconnectAsync();
   bool IsConnected { get; }
-  Task<List<SyncChange>> GetChangesAsync();
-  Task ApplyChangesAsync(List<SyncChange> changes);
+  Task<List<SyncChange>> GetChangesAsync(Action<double, string?>? onProgress = null);
+  Task ApplyChangesAsync(List<SyncChange> changes, Action<double, string?>? onProgress = null);
 }
 
 public class SyncChange
