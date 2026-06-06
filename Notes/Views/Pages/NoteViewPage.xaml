@@ -16,17 +16,28 @@
                      Clicked="OnDeleteNoteClicked" />
     </ContentPage.ToolbarItems>
 
-    <Grid x:Name="RootGrid">
-        <WebView x:Name="NoteContentWebView" />
-        <shared:ProgressOverlay x:Name="PageProgress" />
-        <BoxView WidthRequest="20"
-                 HorizontalOptions="Start"
-                 VerticalOptions="Fill"
-                 Color="Transparent">
-            <BoxView.GestureRecognizers>
-                <PanGestureRecognizer PanUpdated="OnEdgePanUpdated" />
-            </BoxView.GestureRecognizers>
-        </BoxView>
-    </Grid>
+    <Grid IsClippedToBounds="False">
+        <!-- Current screen — opaque, slides right on swipe -->
+        <Grid x:Name="RootGrid"
+              BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
+            <WebView x:Name="NoteContentWebView" />
+            <shared:ProgressOverlay x:Name="PageProgress" />
+        </Grid>
 
+        <!-- Shadow cast from RootGrid onto the previous screen.
+             Positioned to the left of RootGrid, moves with it. -->
+        <ContentView x:Name="SwipeShadow"
+                     WidthRequest="24"
+                     HorizontalOptions="Start"
+                     VerticalOptions="Fill"
+                     InputTransparent="True"
+                     Opacity="0">
+            <ContentView.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#00000000" Offset="0" />
+                    <GradientStop Color="#55000000" Offset="1" />
+                </LinearGradientBrush>
+            </ContentView.Background>
+        </ContentView>
+    </Grid>
 </ContentPage>

@@ -358,9 +358,7 @@ public class ReactiveSyncService : IDisposable
         Modified = item.Created.ToUniversalTime().ToString(TimeFmt),
       };
       DebugLogService.Current?.Log($"media-push-enc: id={mediaId} rawBytes={ms.Length} encChars={syncItem.EncryptedData.Length}");
-      using var session = _progressService.Begin("Uploading media", delayMs: 0);
-      await client.PushChunkedAsync(syncItem, "media", deviceId,
-          (sent, total) => session.Report((double)sent / total, total > 1 ? $"Chunk {sent} of {total}" : null));
+      await client.PushChunkedAsync(syncItem, "media", deviceId);
       DebugLogService.Current?.Log($"media-push-done: id={mediaId}");
     }
     catch (Exception ex)

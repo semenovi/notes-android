@@ -22,7 +22,8 @@ public class ProgressNotificationService
 
     internal void OnHide(ProgressSession s)
     {
-        if (Current == s) Current = null;
+        if (Current != s) return;
+        Current = null;
         MainThread.BeginInvokeOnMainThread(() => HideRequested?.Invoke());
     }
 }

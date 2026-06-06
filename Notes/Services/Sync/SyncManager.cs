@@ -13,6 +13,8 @@ public class SyncManager
   private readonly FolderRepository _folderRepo;
   private readonly MediaStorage _mediaStorage;
 
+  private readonly SemaphoreSlim _syncLock = new(1, 1);
+
   private static readonly JsonSerializerOptions JsonOpts = new()
   {
     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -30,24 +32,32 @@ public class SyncManager
 
   public async Task SynchronizeAsync(SyncProfile profile, Action<double, string?>? onProgress = null)
   {
-    ISyncAdapter? adapter = _adapters.FirstOrDefault(a => a.ProtocolType == profile.Protocol);
-    if (adapter == null)
-      throw new InvalidOperationException($"No adapter registered for protocol {profile.Protocol}");
-
-    if (!await adapter.ConnectAsync(profile))
-      throw new InvalidOperationException("Failed to connect with the sync adapter");
-
+    await _syncLock.WaitAsync();
     try
     {
-      List<SyncChange> remoteChanges = await adapter.GetChangesAsync(onProgress);
-      await ApplyRemoteChangesAsync(remoteChanges);
+      ISyncAdapter? adapter = _adapters.FirstOrDefault(a => a.ProtocolType == profile.Protocol);
+      if (adapter == null)
+        throw new InvalidOperationException($"No adapter registered for protocol {profile.Protocol}");
 
-      List<SyncChange> localChanges = await GetLocalChangesAsync();
-      await adapter.ApplyChangesAsync(localChanges, onProgress);
+      if (!await adapter.ConnectAsync(profile))
+        throw new InvalidOperationException("Failed to connect with the sync adapter");
+
+      try
+      {
+        List<SyncChange> remoteChanges = await adapter.GetChangesAsync(onProgress);
+        await ApplyRemoteChangesAsync(remoteChanges);
+
+        List<SyncChange> localChanges = await GetLocalChangesAsync();
+        await adapter.ApplyChangesAsync(localChanges, onProgress);
+      }
+      finally
+      {
+        await adapter.DisconnectAsync();
+      }
     }
     finally
     {
-      await adapter.DisconnectAsync();
+      _syncLock.Release();
     }
   }
 

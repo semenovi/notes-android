@@ -18,56 +18,73 @@
                      Clicked="OnDeleteFolderClicked" />
     </ContentPage.ToolbarItems>
 
-    <Grid x:Name="RootGrid">
-        <Grid.GestureRecognizers>
-            <PanGestureRecognizer PanUpdated="OnSwipePanUpdated" />
-        </Grid.GestureRecognizers>
-        <CollectionView x:Name="NotesCollection"
-                      SelectionMode="None">
-            <CollectionView.EmptyView>
-                <StackLayout HorizontalOptions="Center" VerticalOptions="Center">
-                    <Label Text="No notes yet" FontSize="18" HorizontalOptions="Center" TextColor="Gray" />
-                    <Label Text="Create your first note" FontSize="14" HorizontalOptions="Center" TextColor="Gray" />
-                </StackLayout>
-            </CollectionView.EmptyView>
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Grid Padding="20,10" ColumnDefinitions="Auto,*">
-                        <Grid.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnNoteTapped" />
-                        </Grid.GestureRecognizers>
-                        <Label Grid.Column="0"
-                               Text="{Binding Icon}"
-                               FontFamily="MaterialIcons"
-                               FontSize="24"
-                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                               VerticalOptions="Center" />
-                        <StackLayout Grid.Column="1" Margin="12,0,0,0" VerticalOptions="Center">
-                            <Label Text="{Binding Title}"
-                                   FontSize="18"
-                                   FontAttributes="Bold" />
-                            <Label Text="{Binding Modified, StringFormat='{0:g}'}"
-                                   FontSize="12"
-                                   TextColor="Gray" />
-                        </StackLayout>
-                    </Grid>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+    <Grid IsClippedToBounds="False">
+        <!-- Current screen — опaque, slides right on swipe -->
+        <Grid x:Name="RootGrid"
+              BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
+            <CollectionView x:Name="NotesCollection"
+                          SelectionMode="None">
+                <CollectionView.EmptyView>
+                    <StackLayout HorizontalOptions="Center" VerticalOptions="Center">
+                        <Label Text="No notes yet" FontSize="18" HorizontalOptions="Center" TextColor="Gray" />
+                        <Label Text="Create your first note" FontSize="14" HorizontalOptions="Center" TextColor="Gray" />
+                    </StackLayout>
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="20,10" ColumnDefinitions="Auto,*">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnNoteTapped" />
+                            </Grid.GestureRecognizers>
+                            <Label Grid.Column="0"
+                                   Text="{Binding Icon}"
+                                   FontFamily="MaterialIcons"
+                                   FontSize="24"
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                   VerticalOptions="Center" />
+                            <StackLayout Grid.Column="1" Margin="12,0,0,0" VerticalOptions="Center">
+                                <Label Text="{Binding Title}"
+                                       FontSize="18"
+                                       FontAttributes="Bold" />
+                                <Label Text="{Binding Modified, StringFormat='{0:g}'}"
+                                       FontSize="12"
+                                       TextColor="Gray" />
+                            </StackLayout>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
 
-        <Button x:Name="AddNoteButton"
-                Text="{x:Static helpers:MaterialIconCodes.Add}"
-                FontFamily="MaterialIcons"
-                FontSize="24"
-                CornerRadius="30"
-                WidthRequest="60"
-                HeightRequest="60"
-                Padding="0"
-                VerticalOptions="End"
-                HorizontalOptions="End"
-                Margin="0,0,20,20"
-                Clicked="OnAddNoteClicked" />
+            <Button x:Name="AddNoteButton"
+                    Text="{x:Static helpers:MaterialIconCodes.Add}"
+                    FontFamily="MaterialIcons"
+                    FontSize="24"
+                    CornerRadius="30"
+                    WidthRequest="60"
+                    HeightRequest="60"
+                    Padding="0"
+                    VerticalOptions="End"
+                    HorizontalOptions="End"
+                    Margin="0,0,20,20"
+                    Clicked="OnAddNoteClicked" />
 
-        <shared:ProgressOverlay x:Name="PageProgress" />
+            <shared:ProgressOverlay x:Name="PageProgress" />
+        </Grid>
+
+        <!-- Shadow cast from RootGrid onto the previous screen.
+             Positioned to the left of RootGrid, moves with it. -->
+        <ContentView x:Name="SwipeShadow"
+                     WidthRequest="24"
+                     HorizontalOptions="Start"
+                     VerticalOptions="Fill"
+                     InputTransparent="True"
+                     Opacity="0">
+            <ContentView.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#00000000" Offset="0" />
+                    <GradientStop Color="#55000000" Offset="1" />
+                </LinearGradientBrush>
+            </ContentView.Background>
+        </ContentView>
     </Grid>
 </ContentPage>

@@ -144,11 +144,11 @@ public class NetworkSyncAdapter : ISyncAdapter
     // into memory at once, which causes OOM crashes on Android with large photo libraries.
     var mediaToDownload = manifestResp.ToDownload.Media;
     int totalDl = mediaToDownload.Count;
+    if (totalDl > 0)
+      onProgress?.Invoke(0.0, totalDl > 1 ? $"Downloading media 1 of {totalDl}" : "Downloading media");
     for (int dlIdx = 0; dlIdx < totalDl; dlIdx++)
     {
       var mediaId = mediaToDownload[dlIdx];
-      onProgress?.Invoke((double)dlIdx / totalDl,
-          totalDl > 1 ? $"Downloading media {dlIdx + 1} of {totalDl}" : "Downloading media");
       try
       {
         PullResponse? mediaPull = await _apiClient.PullChangesAsync(
@@ -177,6 +177,8 @@ public class NetworkSyncAdapter : ISyncAdapter
       {
         DebugLogService.Current?.Log($"pull-media-err: id={mediaId} {ex.GetType().Name}: {ex.Message}");
       }
+      onProgress?.Invoke((double)(dlIdx + 1) / totalDl,
+          totalDl > 1 ? $"Downloading media {dlIdx + 1} of {totalDl}" : "Downloading media");
     }
 
     foreach (var id in manifestResp.ToDeleteLocal.Notes)
@@ -237,6 +239,8 @@ public class NetworkSyncAdapter : ISyncAdapter
         && c.ChangeType != SyncChangeType.Delete
         && _toUploadMedia.Contains(c.Id)).ToList();
     int totalUl = mediaToUpload.Count;
+    if (totalUl > 0)
+      onProgress?.Invoke(0.0, totalUl > 1 ? $"Uploading media 1 of {totalUl}" : "Uploading media");
     for (int ulIdx = 0; ulIdx < totalUl; ulIdx++)
     {
       var c = mediaToUpload[ulIdx];
@@ -257,7 +261,7 @@ public class NetworkSyncAdapter : ISyncAdapter
         DebugLogService.Current?.Log($"full-sync-media: id={syncItem.Id} encChars={syncItem.EncryptedData.Length}");
         int captured = ulIdx;
         await _apiClient.PushChunkedAsync(syncItem, "media", _settings?.DeviceId,
-            (sent, total) => onProgress?.Invoke((double)sent / total,
+            (sent, total) => onProgress?.Invoke((captured + (double)sent / total) / totalUl,
                 totalUl > 1 ? $"Uploading media {captured + 1} of {totalUl}" : null));
         DebugLogService.Current?.Log($"full-sync-media-done: id={syncItem.Id}");
       }
