@@ -102,9 +102,11 @@ public static class ImageViewerHtml
               'touch-action:none;user-select:none;will-change:transform;opacity:1;';
             iv.style.cssText='display:block;position:fixed;top:0;left:0;' +
               'width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:9999;overflow:hidden;';
+            window.location.href='swipe://disable';
           }
           function hide() {
             iv.style.display='none'; vImg.src=''; sc=1; tx=0; ty=0; drag=false; pinch=false;
+            window.location.href='swipe://enable';
           }
 
           document.addEventListener('click', function(e){
