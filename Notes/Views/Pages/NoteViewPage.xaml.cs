@@ -20,6 +20,7 @@ public partial class NoteViewPage : ContentPage
   private Android.Views.ViewGroup? _actualCurrentContainer;
   private Android.Views.View? _nativeShadow;
   private float _shadowWidthPx;
+  private float _density = 1f;
 #endif
 
   public string NoteId
@@ -42,6 +43,7 @@ public partial class NoteViewPage : ContentPage
     _markdownProcessor = markdownProcessor;
     _progressService = progressService;
     BindingContext = this;
+    NoteContentWebView.Navigating += OnWebViewNavigating;
   }
 
   private async Task LoadNoteAsync()
@@ -103,6 +105,26 @@ public partial class NoteViewPage : ContentPage
 <body>{ImageViewerHtml.ViewerDiv}{body}{ImageViewerHtml.ViewerScript}{ImageViewerHtml.CopyCodeScript}</body>
 </html>";
 
+  private void OnWebViewNavigating(object sender, WebNavigatingEventArgs e)
+  {
+#if ANDROID
+    if (e.Url == "swipe://disable")
+    {
+      e.Cancel = true;
+      global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = null;
+      global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = null;
+      global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = null;
+    }
+    else if (e.Url == "swipe://enable")
+    {
+      e.Cancel = true;
+      global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = OnSwipeProgress;
+      global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = OnSwipeEnd;
+      global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = () => _ = SpringBackAsync();
+    }
+#endif
+  }
+
   private void OnSwipeProgress(float dx)
   {
     float d = Math.Max(0, dx);
@@ -111,10 +133,11 @@ public partial class NoteViewPage : ContentPage
       ShowPreviousPage();
     if (_actualCurrentContainer != null)
     {
-      _actualCurrentContainer.TranslationX = d;
+      float dPx = d * _density;
+      _actualCurrentContainer.TranslationX = dPx;
       if (_nativeShadow != null)
       {
-        _nativeShadow.TranslationX = d - _shadowWidthPx;
+        _nativeShadow.TranslationX = dPx - _shadowWidthPx;
         _nativeShadow.Alpha = Math.Min(1f, d / 200f);
       }
       return;
@@ -259,7 +282,8 @@ public partial class NoteViewPage : ContentPage
   {
     if (_actualCurrentContainer?.Parent is not Android.Views.ViewGroup parent) return;
     var ctx = Android.App.Application.Context!;
-    _shadowWidthPx = 24f * ctx.Resources!.DisplayMetrics!.Density;
+    _density = ctx.Resources!.DisplayMetrics!.Density;
+    _shadowWidthPx = 24f * _density;
     var gradient = new Android.Graphics.Drawables.GradientDrawable(
         Android.Graphics.Drawables.GradientDrawable.Orientation.LeftRight,
         new[] { 0x00000000, unchecked((int)0x55000000) });
