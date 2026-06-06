@@ -14,7 +14,10 @@ public partial class NoteViewPage : ContentPage
   private readonly ProgressNotificationService _progressService;
   private Note _note;
   private string _noteId;
-  private bool _panActive;
+  private bool _isSwipingBack;
+#if ANDROID
+  private Android.Views.View? _prevPageView;
+#endif
 
   public string NoteId
   {
@@ -97,47 +100,81 @@ public partial class NoteViewPage : ContentPage
 <body>{ImageViewerHtml.ViewerDiv}{body}{ImageViewerHtml.ViewerScript}{ImageViewerHtml.CopyCodeScript}</body>
 </html>";
 
-  private void OnEdgePanUpdated(object sender, PanUpdatedEventArgs e)
+  private void OnSwipeProgress(float dx)
   {
-    switch (e.StatusType)
-    {
-      case GestureStatus.Started:
-        _panActive = false;
-        break;
+    double d = Math.Max(0, dx);
+    RootGrid.TranslationX = d;
+    SwipeShadow.TranslationX = d - 24;
+    SwipeShadow.Opacity = 1.0;
+  }
 
-      case GestureStatus.Running:
-        if (!_panActive)
-        {
-          if (e.TotalX > 0) _panActive = true;
-          else return;
-        }
-        RootGrid.TranslationX = Math.Max(0, e.TotalX);
-        break;
-
-      case GestureStatus.Completed:
-      case GestureStatus.Canceled:
-        if (!_panActive) return;
-        _panActive = false;
-        var screenWidth = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
-        if (RootGrid.TranslationX > screenWidth * 0.35)
-          _ = CompleteSwipeBackAsync();
-        else
-          _ = SpringBackAsync();
-        break;
-    }
+  private void OnSwipeEnd(float dx)
+  {
+    var screenWidth = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
+    if (dx > screenWidth * 0.35)
+      _ = CompleteSwipeBackAsync();
+    else
+      _ = SpringBackAsync();
   }
 
   private async Task CompleteSwipeBackAsync()
   {
+    _isSwipingBack = true;
     var screenWidth = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
-    await RootGrid.TranslateTo(screenWidth, 0, 180, Easing.CubicIn);
+    await Task.WhenAll(
+      RootGrid.TranslateTo(screenWidth + 20, 0, 220, Easing.CubicIn),
+      SwipeShadow.TranslateTo(screenWidth - 4, 0, 220, Easing.CubicIn)
+    );
+    BackgroundColor = null;
     await Shell.Current.GoToAsync("..", false);
   }
 
   private async Task SpringBackAsync()
   {
-    await RootGrid.TranslateTo(0, 0, 250, Easing.CubicOut);
+    _isSwipingBack = false;
+    await Task.WhenAll(
+      RootGrid.TranslateTo(0, 0, 300, Easing.SpringOut),
+      SwipeShadow.FadeTo(0, 180)
+    );
+    SwipeShadow.TranslationX = -24;
   }
+
+#if ANDROID
+  private void ShowPreviousPage()
+  {
+    if (Handler?.PlatformView is not Android.Views.View currentView) return;
+
+    Android.Views.View cursor = currentView;
+    for (int level = 0; level < 6; level++)
+    {
+      if (cursor.Parent is not Android.Views.ViewGroup parent) break;
+      for (int i = 0; i < parent.ChildCount; i++)
+      {
+        var sibling = parent.GetChildAt(i);
+        if (sibling == null || sibling == cursor) continue;
+        if (sibling.Visibility == Android.Views.ViewStates.Gone && sibling is Android.Views.ViewGroup)
+        {
+          sibling.Visibility = Android.Views.ViewStates.Visible;
+          _prevPageView = sibling;
+          currentView.Background = null;
+          BackgroundColor = Colors.Transparent;
+          return;
+        }
+      }
+      cursor = parent;
+    }
+  }
+
+  private void HidePreviousPage()
+  {
+    if (_prevPageView != null)
+    {
+      _prevPageView.Visibility = Android.Views.ViewStates.Gone;
+      _prevPageView = null;
+    }
+    BackgroundColor = null;
+  }
+#endif
 
   private async void OnEditClicked(object sender, EventArgs e)
   {
@@ -170,6 +207,16 @@ public partial class NoteViewPage : ContentPage
   protected override void OnAppearing()
   {
     base.OnAppearing();
+    _isSwipingBack = false;
+    RootGrid.TranslationX = 0;
+    SwipeShadow.TranslationX = -24;
+    SwipeShadow.Opacity = 0;
+#if ANDROID
+    ShowPreviousPage();
+    global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = OnSwipeProgress;
+    global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = OnSwipeEnd;
+    global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = () => _ = SpringBackAsync();
+#endif
     _progressService.ShowRequested += PageProgress.ShowProgress;
     _progressService.UpdateRequested += PageProgress.UpdateProgress;
     _progressService.HideRequested += PageProgress.HideProgress;
@@ -183,6 +230,13 @@ public partial class NoteViewPage : ContentPage
   protected override void OnDisappearing()
   {
     base.OnDisappearing();
+#if ANDROID
+    if (!_isSwipingBack)
+      HidePreviousPage();
+    Notes.Platforms.Android.SwipeBackGesture.OnProgress = null;
+    Notes.Platforms.Android.SwipeBackGesture.OnEnd = null;
+    Notes.Platforms.Android.SwipeBackGesture.OnCancel = null;
+#endif
     _progressService.ShowRequested -= PageProgress.ShowProgress;
     _progressService.UpdateRequested -= PageProgress.UpdateProgress;
     _progressService.HideRequested -= PageProgress.HideProgress;
