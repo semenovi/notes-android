@@ -94,7 +94,7 @@ public static class ImageViewerHtml
           function xf() {
             return 'translate(calc(-50% + '+tx+'px), calc(-50% + '+ty+'px)) scale('+sc+')';
           }
-          function show(src) {
+          function show(src, mid) {
             vImg.src=src; sc=1; tx=0; ty=0; drag=false; pinch=false;
             vImg.style.cssText='position:absolute;top:50%;left:50%;' +
               'transform:translate(-50%,-50%) scale(1);' +
@@ -103,15 +103,29 @@ public static class ImageViewerHtml
             iv.style.cssText='display:block;position:fixed;top:0;left:0;' +
               'width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:9999;overflow:hidden;';
             window.location.href='swipe://disable';
+            if(mid) setTimeout(function(){window.location.href='img-viewer://open/'+encodeURIComponent(mid);},10);
           }
           function hide() {
             iv.style.display='none'; vImg.src=''; sc=1; tx=0; ty=0; drag=false; pinch=false;
             window.location.href='swipe://enable';
           }
 
+          window._setViewerFullRes = function(src) {
+            if(iv.style.display!=='none') vImg.src=src;
+          };
+
           document.addEventListener('click', function(e){
-            if(e.target.tagName==='IMG' && e.target.id!=='_iv_img' && e.target.src)
-              show(e.target.src);
+            if(e.target.tagName==='IMG' && e.target.id!=='_iv_img' && e.target.src){
+              var mid=e.target.getAttribute('data-media-id')||'';
+              show(e.target.src, mid);
+            }
+          });
+
+          document.addEventListener('contextmenu', function(e){
+            if(e.target.tagName==='IMG' && e.target.id!=='_iv_img'){
+              var mid=e.target.getAttribute('data-media-id');
+              if(mid){ e.preventDefault(); window.location.href='img-download://'+encodeURIComponent(mid); }
+            }
           });
 
           // Single finger: pan when zoomed, or swipe-to-dismiss when at scale≈1
