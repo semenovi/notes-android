@@ -31,20 +31,11 @@ public class FolderRepository
 
   public async Task<List<Folder>> GetAllFoldersAsync()
   {
-    List<Folder> result = new List<Folder>();
-    List<string> files = _storage.GetFiles(FOLDERS_FOLDER);
-
-    foreach (string file in files)
-    {
-      if (Path.GetExtension(file).Equals(".json", StringComparison.OrdinalIgnoreCase))
-      {
-        Folder? folder = await _storage.ReadJsonAsync<Folder>(file);
-        if (folder != null)
-          result.Add(folder);
-      }
-    }
-
-    return result;
+    var files = _storage.GetFiles(FOLDERS_FOLDER)
+        .Where(f => Path.GetExtension(f).Equals(".json", StringComparison.OrdinalIgnoreCase))
+        .ToList();
+    var results = await Task.WhenAll(files.Select(f => _storage.ReadJsonAsync<Folder>(f)));
+    return results.Where(f => f != null).ToList()!;
   }
 
   public async Task SaveFolderAsync(Folder folder)
@@ -75,14 +66,15 @@ public class FolderRepository
 
   public async Task<Dictionary<string, string>> GetDeletionTombstonesAsync()
   {
-    var result = new Dictionary<string, string>();
-    foreach (var file in _storage.GetFiles(FOLDERS_FOLDER).Where(f => f.EndsWith(".deleted")))
+    var files = _storage.GetFiles(FOLDERS_FOLDER).Where(f => f.EndsWith(".deleted")).ToList();
+    var tasks = files.Select(async f =>
     {
-      string folderId = Path.GetFileNameWithoutExtension(file);
-      byte[] data = await _storage.ReadFileAsync(file);
-      result[folderId] = Encoding.UTF8.GetString(data);
-    }
-    return result;
+      string id = Path.GetFileNameWithoutExtension(f);
+      byte[] data = await _storage.ReadFileAsync(f);
+      return (id, ts: Encoding.UTF8.GetString(data));
+    });
+    var results = await Task.WhenAll(tasks);
+    return results.ToDictionary(r => r.id, r => r.ts);
   }
 
   public async Task ClearTombstoneAsync(string id)

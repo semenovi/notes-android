@@ -77,13 +77,14 @@ public partial class NoteViewPage : ContentPage
             total - loaded > 0 ? $"{total - loaded} images left" : null));
   }
 
-  private static Task WaitForNavigationAsync(WebView webView)
+  private static async Task WaitForNavigationAsync(WebView webView)
   {
     var tcs = new TaskCompletionSource<bool>();
     EventHandler<WebNavigatedEventArgs>? handler = null;
     handler = (s, e) => { webView.Navigated -= handler; tcs.TrySetResult(true); };
     webView.Navigated += handler;
-    return tcs.Task;
+    if (await Task.WhenAny(tcs.Task, Task.Delay(5000)) != tcs.Task)
+      webView.Navigated -= handler;
   }
 
   private static string BuildFullHtml(string body) => $@"<!DOCTYPE html>

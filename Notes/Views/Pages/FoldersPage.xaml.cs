@@ -50,8 +50,7 @@ public partial class FoldersPage : ContentPage
     _progressService.HideRequested += PageProgress.HideProgress;
     if (_progressService.Current != null)
       PageProgress.ShowProgress(_progressService.Current);
-    await UpdateSyncToggleTextAsync();
-    await LoadFoldersAsync();
+    await Task.WhenAll(UpdateSyncToggleTextAsync(), LoadFoldersAsync());
     _ = AutoSyncAsync();
   }
 
@@ -90,9 +89,28 @@ public partial class FoldersPage : ContentPage
     _loadCts = cts;
     var folders = await _folderManager.GetFoldersAsync(null);
     if (cts.IsCancellationRequested) return;
-    Folders.Clear();
-    foreach (var folder in folders)
-      Folders.Add(folder);
+    DiffUpdateFolders(folders);
+  }
+
+  private void DiffUpdateFolders(List<Folder> newFolders)
+  {
+    var newById = newFolders.ToDictionary(f => f.Id);
+
+    for (int i = Folders.Count - 1; i >= 0; i--)
+      if (!newById.ContainsKey(Folders[i].Id))
+        Folders.RemoveAt(i);
+
+    foreach (var folder in newFolders)
+    {
+      int idx = -1;
+      for (int i = 0; i < Folders.Count; i++)
+        if (Folders[i].Id == folder.Id) { idx = i; break; }
+
+      if (idx < 0)
+        Folders.Add(folder);
+      else if (Folders[idx].Modified != folder.Modified)
+        Folders[idx] = folder;
+    }
   }
 
   private async void OnAddFolderClicked(object sender, EventArgs e)
