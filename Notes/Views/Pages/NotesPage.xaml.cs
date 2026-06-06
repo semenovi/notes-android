@@ -4,6 +4,7 @@ using Notes.Services;
 using Notes.Services.Notes;
 using Notes.Services.Sync;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace Notes.Views.Pages;
 
@@ -109,7 +110,7 @@ public partial class NotesPage : ContentPage
     var notes = await _noteManager.GetNotesAsync(FolderId);
     if (cts.IsCancellationRequested) return;
     Notes.Clear();
-    foreach (var note in notes)
+    foreach (var note in notes.OrderByDescending(n => n.Modified))
       Notes.Add(note);
   }
 
