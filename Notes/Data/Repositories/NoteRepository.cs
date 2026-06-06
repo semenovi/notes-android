@@ -27,20 +27,11 @@ public class NoteRepository
 
   public async Task<List<Note>> GetAllNotesAsync()
   {
-    List<Note> result = new List<Note>();
-    List<string> files = _storage.GetFiles(NOTES_FOLDER);
-
-    foreach (string file in files)
-    {
-      if (Path.GetExtension(file).Equals(".json", StringComparison.OrdinalIgnoreCase))
-      {
-        Note? note = await _storage.ReadJsonAsync<Note>(file);
-        if (note != null)
-          result.Add(note);
-      }
-    }
-
-    return result;
+    var files = _storage.GetFiles(NOTES_FOLDER)
+        .Where(f => Path.GetExtension(f).Equals(".json", StringComparison.OrdinalIgnoreCase))
+        .ToList();
+    var results = await Task.WhenAll(files.Select(f => _storage.ReadJsonAsync<Note>(f)));
+    return results.Where(n => n != null).ToList()!;
   }
 
   public async Task SaveNoteAsync(Note note)
@@ -66,14 +57,15 @@ public class NoteRepository
 
   public async Task<Dictionary<string, string>> GetDeletionTombstonesAsync()
   {
-    var result = new Dictionary<string, string>();
-    foreach (var file in _storage.GetFiles(NOTES_FOLDER).Where(f => f.EndsWith(".deleted")))
+    var files = _storage.GetFiles(NOTES_FOLDER).Where(f => f.EndsWith(".deleted")).ToList();
+    var tasks = files.Select(async f =>
     {
-      string noteId = Path.GetFileNameWithoutExtension(file);
-      byte[] data = await _storage.ReadFileAsync(file);
-      result[noteId] = Encoding.UTF8.GetString(data);
-    }
-    return result;
+      string id = Path.GetFileNameWithoutExtension(f);
+      byte[] data = await _storage.ReadFileAsync(f);
+      return (id, ts: Encoding.UTF8.GetString(data));
+    });
+    var results = await Task.WhenAll(tasks);
+    return results.ToDictionary(r => r.id, r => r.ts);
   }
 
   public async Task ClearTombstoneAsync(string id)

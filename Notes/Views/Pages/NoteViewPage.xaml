@@ -21,7 +21,6 @@
         <Grid x:Name="RootGrid"
               BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
             <WebView x:Name="NoteContentWebView" />
-            <shared:ProgressOverlay x:Name="PageProgress" />
         </Grid>
 
         <!-- Shadow cast from RootGrid onto the previous screen.
@@ -39,5 +38,7 @@
                 </LinearGradientBrush>
             </ContentView.Background>
         </ContentView>
+
+        <shared:ProgressOverlay x:Name="PageProgress" />
     </Grid>
 </ContentPage>

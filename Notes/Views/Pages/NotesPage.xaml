@@ -68,7 +68,6 @@
                     Margin="0,0,20,20"
                     Clicked="OnAddNoteClicked" />
 
-            <shared:ProgressOverlay x:Name="PageProgress" />
         </Grid>
 
         <!-- Shadow cast from RootGrid onto the previous screen.
@@ -86,5 +85,7 @@
                 </LinearGradientBrush>
             </ContentView.Background>
         </ContentView>
+
+        <shared:ProgressOverlay x:Name="PageProgress" />
     </Grid>
 </ContentPage>

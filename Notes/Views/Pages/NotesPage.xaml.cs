@@ -109,9 +109,19 @@ public partial class NotesPage : ContentPage
     _loadCts = cts;
     var notes = await _noteManager.GetNotesAsync(FolderId);
     if (cts.IsCancellationRequested) return;
+    var sorted = notes.OrderByDescending(n => n.Modified).ToList();
+    if (IsNotesCollectionUnchanged(sorted)) return;
     Notes.Clear();
-    foreach (var note in notes.OrderByDescending(n => n.Modified))
+    foreach (var note in sorted)
       Notes.Add(note);
+  }
+
+  private bool IsNotesCollectionUnchanged(List<Note> sorted)
+  {
+    if (sorted.Count != Notes.Count) return false;
+    for (int i = 0; i < sorted.Count; i++)
+      if (sorted[i].Id != Notes[i].Id || sorted[i].Modified != Notes[i].Modified) return false;
+    return true;
   }
 
   private async void OnAddNoteClicked(object sender, EventArgs e)

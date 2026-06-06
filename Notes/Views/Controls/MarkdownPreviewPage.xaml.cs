@@ -40,7 +40,8 @@ public partial class MarkdownPreviewPage : ContentPage
     handler = (s, e) => { PreviewWebView.Navigated -= handler; tcs.TrySetResult(true); };
     PreviewWebView.Navigated += handler;
     PreviewWebView.Source = new HtmlWebViewSource { Html = fullHtml };
-    await tcs.Task;
+    if (await Task.WhenAny(tcs.Task, Task.Delay(5000)) != tcs.Task)
+      PreviewWebView.Navigated -= handler;
 
     await _markdownProcessor.InjectImagesIntoWebViewAsync(markdown, PreviewWebView);
   }

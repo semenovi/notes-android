@@ -109,14 +109,15 @@ public class MediaStorage
 
   public async Task<Dictionary<string, string>> GetDeletionTombstonesAsync()
   {
-    var result = new Dictionary<string, string>();
-    foreach (var file in _storage.GetFiles(MEDIA_FOLDER).Where(f => f.EndsWith(".deleted")))
+    var files = _storage.GetFiles(MEDIA_FOLDER).Where(f => f.EndsWith(".deleted")).ToList();
+    var tasks = files.Select(async f =>
     {
-      string mediaId = Path.GetFileNameWithoutExtension(file);
-      byte[] data = await _storage.ReadFileAsync(file);
-      result[mediaId] = Encoding.UTF8.GetString(data);
-    }
-    return result;
+      string id = Path.GetFileNameWithoutExtension(f);
+      byte[] data = await _storage.ReadFileAsync(f);
+      return (id, ts: Encoding.UTF8.GetString(data));
+    });
+    var results = await Task.WhenAll(tasks);
+    return results.ToDictionary(r => r.id, r => r.ts);
   }
 
   public async Task ClearTombstoneAsync(string mediaId)
@@ -131,18 +132,10 @@ public class MediaStorage
 
   public async Task<List<MediaItem>> GetAllMediaAsync()
   {
-    List<MediaItem> result = new List<MediaItem>();
     string metadataDir = Path.Combine(MEDIA_FOLDER, "Metadata");
-    List<string> files = _storage.GetFiles(metadataDir);
-
-    foreach (string file in files)
-    {
-      MediaItem? mediaItem = await _storage.ReadJsonAsync<MediaItem>(file);
-      if (mediaItem != null)
-        result.Add(mediaItem);
-    }
-
-    return result;
+    var files = _storage.GetFiles(metadataDir);
+    var results = await Task.WhenAll(files.Select(f => _storage.ReadJsonAsync<MediaItem>(f)));
+    return results.Where(m => m != null).ToList()!;
   }
 
   public async Task<Stream> GetMediaContentAsync(string mediaId)
