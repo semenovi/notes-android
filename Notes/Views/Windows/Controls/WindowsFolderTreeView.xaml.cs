@@ -23,6 +23,7 @@ public partial class WindowsFolderTreeView : ContentView
   private readonly NoteManager _noteManager;
   private readonly Services.ProgressNotificationService _progressService;
   private Folder? _selectedFolder;
+  private CancellationTokenSource? _loadCts;
 
   public WindowsFolderTreeView()
   {
@@ -42,8 +43,12 @@ public partial class WindowsFolderTreeView : ContentView
   private async void OnRemoteChangesApplied()
   {
     var selectedId = _selectedFolder?.Id;
-    Folders.Clear();
+    _loadCts?.Cancel();
+    var cts = new CancellationTokenSource();
+    _loadCts = cts;
     var folders = await _folderManager.GetAllFoldersAsync();
+    if (cts.IsCancellationRequested) return;
+    Folders.Clear();
     foreach (var folder in folders)
       Folders.Add(new FolderViewModel(folder));
 
@@ -58,8 +63,12 @@ public partial class WindowsFolderTreeView : ContentView
 
   public async Task LoadFoldersAsync()
   {
-    Folders.Clear();
+    _loadCts?.Cancel();
+    var cts = new CancellationTokenSource();
+    _loadCts = cts;
     var folders = await _folderManager.GetAllFoldersAsync();
+    if (cts.IsCancellationRequested) return;
+    Folders.Clear();
     foreach (var folder in folders)
       Folders.Add(new FolderViewModel(folder));
 

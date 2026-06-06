@@ -1,6 +1,7 @@
 using Notes.Models;
 using Notes.Services.Notes;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -71,7 +72,7 @@ public partial class NoteListView : ContentView
     Notes.Clear();
     var notes = await _noteManager.GetNotesAsync(folderId);
 
-    foreach (var note in notes)
+    foreach (var note in notes.OrderByDescending(n => n.Modified))
     {
       Notes.Add(new NoteViewModel(note));
     }
