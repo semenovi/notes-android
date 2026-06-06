@@ -37,14 +37,40 @@ public partial class App : Application
   protected override void OnSleep()
   {
     base.OnSleep();
+#if ANDROID
+    if (_reactiveSync.IsRunning)
+      StartAndroidSyncService();
+#else
     _ = _reactiveSync.StopAsync();
+#endif
   }
 
   protected override void OnResume()
   {
     base.OnResume();
+#if ANDROID
+    StopAndroidSyncService();
+#endif
     _ = _reactiveSync.StartAsync();
   }
+
+#if ANDROID
+  private static void StartAndroidSyncService()
+  {
+    var ctx = Android.App.Application.Context;
+    var intent = new Android.Content.Intent(ctx, typeof(SyncForegroundService));
+    if (OperatingSystem.IsAndroidVersionAtLeast(26))
+      ctx.StartForegroundService(intent);
+    else
+      ctx.StartService(intent);
+  }
+
+  private static void StopAndroidSyncService()
+  {
+    var ctx = Android.App.Application.Context;
+    ctx.StopService(new Android.Content.Intent(ctx, typeof(SyncForegroundService)));
+  }
+#endif
 
 #if WINDOWS
   protected override void OnHandlerChanged()

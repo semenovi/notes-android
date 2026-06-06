@@ -34,6 +34,8 @@ public class ReactiveSyncService : IDisposable
   // Fires on the UI thread when remote changes are applied, so pages can refresh.
   public event Action? RemoteChangesApplied;
 
+  public bool IsRunning => _cts != null && !_cts.IsCancellationRequested;
+
   private static readonly JsonSerializerOptions JsonOpts = new()
   {
     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
