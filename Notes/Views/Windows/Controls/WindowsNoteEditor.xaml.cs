@@ -48,11 +48,14 @@ public partial class WindowsNoteEditor : ContentView
   private async Task OpenImageViewerAsync(string payload)
   {
     string? imageUrl = null;
+    string? mediaId = null;
 
     if (payload.StartsWith("media-"))
     {
-      var mediaId = payload[6..]; // strip "media-"
-      _markdownProcessor.TryGetCachedDataUri(mediaId, out imageUrl);
+      mediaId = payload[6..]; // strip "media-"
+      imageUrl = await _markdownProcessor.GetFullResDataUriAsync(mediaId);
+      if (string.IsNullOrEmpty(imageUrl))
+        _markdownProcessor.TryGetCachedDataUri(mediaId, out imageUrl);
     }
     else if (payload.StartsWith("http://") || payload.StartsWith("https://"))
     {
@@ -61,7 +64,7 @@ public partial class WindowsNoteEditor : ContentView
 
     if (string.IsNullOrEmpty(imageUrl)) return;
 
-    var page   = new Notes.Views.Windows.ImageViewerPage(imageUrl);
+    var page   = new Notes.Views.Windows.ImageViewerPage(imageUrl, _mediaManager, mediaId);
     var window = new Window(page) { Title = string.Empty };
 
     // Window.Activated fires after the WinUI handler is fully initialised —

@@ -1,6 +1,4 @@
-﻿using Notes.Data.Storage;
-using Notes.Services;
-using Notes.Services.Notes;
+﻿using Notes.Services;
 using Notes.Services.Sync;
 using Notes.Views.Windows;
 
@@ -9,13 +7,11 @@ namespace Notes;
 public partial class App : Application
 {
   private readonly ReactiveSyncService _reactiveSync;
-  private readonly MediaStorage _mediaStorage;
   private readonly DebugLogService _debugLog;
 
-  public App(ReactiveSyncService reactiveSync, MediaStorage mediaStorage, DebugLogService debugLog)
+  public App(ReactiveSyncService reactiveSync, DebugLogService debugLog)
   {
     _reactiveSync = reactiveSync;
-    _mediaStorage = mediaStorage;
     _debugLog = debugLog;
     InitializeComponent();
 
@@ -31,7 +27,6 @@ public partial class App : Application
     _debugLog.StartFileLogging(Path.Combine(AppContext.BaseDirectory, "notes_debug.log"));
 #endif
     _ = _reactiveSync.StartAsync();
-    _ = _mediaStorage.MigrateExistingMediaAsync();
   }
 
   protected override void OnSleep()

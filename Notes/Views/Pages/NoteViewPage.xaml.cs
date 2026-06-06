@@ -12,6 +12,7 @@ public partial class NoteViewPage : ContentPage
   private readonly NoteManager _noteManager;
   private readonly MarkdownProcessor _markdownProcessor;
   private readonly ProgressNotificationService _progressService;
+  private readonly MediaManager _mediaManager;
   private Note _note;
   private string _noteId;
   private bool _isSwipingBack;
@@ -36,12 +37,13 @@ public partial class NoteViewPage : ContentPage
   public string Title => _note?.Title ?? "Note";
 
   public NoteViewPage(NoteManager noteManager, MarkdownProcessor markdownProcessor,
-      ProgressNotificationService progressService)
+      ProgressNotificationService progressService, MediaManager mediaManager)
   {
     InitializeComponent();
     _noteManager = noteManager;
     _markdownProcessor = markdownProcessor;
     _progressService = progressService;
+    _mediaManager = mediaManager;
     BindingContext = this;
     NoteContentWebView.Navigating += OnWebViewNavigating;
   }
@@ -123,8 +125,61 @@ public partial class NoteViewPage : ContentPage
       global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = OnSwipeEnd;
       global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = () => _ = SpringBackAsync();
     }
+    else if (e.Url.StartsWith("img-viewer://open/"))
+    {
+      e.Cancel = true;
+      var mediaId = Uri.UnescapeDataString(e.Url["img-viewer://open/".Length..]);
+      _ = InjectFullResImageAsync(mediaId);
+    }
+    else if (e.Url.StartsWith("img-download://"))
+    {
+      e.Cancel = true;
+      var mediaId = Uri.UnescapeDataString(e.Url["img-download://".Length..]);
+      _ = DownloadMediaAsync(mediaId);
+    }
 #endif
   }
+
+#if ANDROID
+  private async Task InjectFullResImageAsync(string mediaId)
+  {
+    string dataUri = await _markdownProcessor.GetFullResDataUriAsync(mediaId);
+    if (string.IsNullOrEmpty(dataUri)) return;
+    string js = $"(function(){{if(window._setViewerFullRes)window._setViewerFullRes('{dataUri}')}})();";
+    await MainThread.InvokeOnMainThreadAsync(() => NoteContentWebView.EvaluateJavaScriptAsync(js));
+  }
+
+  private async Task DownloadMediaAsync(string mediaId)
+  {
+    try
+    {
+      var item = await _mediaManager.GetMediaAsync(mediaId);
+      if (item == null) return;
+      byte[] bytes = await _mediaManager.GetRawContentAsync(mediaId);
+      var downloadsDir = Android.OS.Environment.GetExternalStoragePublicDirectory(
+          Android.OS.Environment.DirectoryDownloads)!.AbsolutePath;
+      string baseName = string.IsNullOrEmpty(item.FileName)
+          ? $"{mediaId}.{item.FileType}"
+          : item.FileName;
+      string filePath = Path.Combine(downloadsDir, baseName);
+      if (File.Exists(filePath))
+      {
+        string ext = Path.GetExtension(baseName);
+        string name = Path.GetFileNameWithoutExtension(baseName);
+        int i = 1;
+        while (File.Exists(filePath))
+          filePath = Path.Combine(downloadsDir, $"{name}({i++}){ext}");
+      }
+      await File.WriteAllBytesAsync(filePath, bytes);
+      Android.Media.MediaScannerConnection.ScanFile(
+          Android.App.Application.Context, new[] { filePath }, null, null);
+      MainThread.BeginInvokeOnMainThread(() =>
+        Android.Widget.Toast.MakeText(Android.App.Application.Context,
+            "Saved to Downloads", Android.Widget.ToastLength.Short)?.Show());
+    }
+    catch { }
+  }
+#endif
 
   private void OnSwipeProgress(float dx)
   {

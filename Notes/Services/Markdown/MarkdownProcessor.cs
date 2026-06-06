@@ -49,7 +49,7 @@ public class MarkdownProcessor
     var result = System.Text.RegularExpressions.Regex.Replace(
       markdown,
       @"!\[(.*?)\]\(media:(.*?)\)",
-      m => $"<img id=\"media-{m.Groups[2].Value}\" alt=\"{m.Groups[1].Value}\" class=\"media-lazy\">");
+      m => $"<img id=\"media-{m.Groups[2].Value}\" data-media-id=\"{m.Groups[2].Value}\" alt=\"{m.Groups[1].Value}\" class=\"media-lazy\">");
     return Task.FromResult(result);
   }
 
@@ -85,6 +85,29 @@ public class MarkdownProcessor
         onProgress?.Invoke(i + 1, total);
       }
       catch { }
+    }
+  }
+
+  public async Task<string> GetFullResDataUriAsync(string mediaId)
+  {
+    try
+    {
+      var item = await _mediaManager.GetMediaAsync(mediaId);
+      if (item == null) return "";
+      string fileType = item.FileType?.ToLowerInvariant() ?? "png";
+      byte[] bytes = await _mediaManager.GetRawContentAsync(mediaId);
+      string mimeType = fileType switch
+      {
+        "jpg" or "jpeg" => "image/jpeg",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        _ => "image/png",
+      };
+      return $"data:{mimeType};base64,{Convert.ToBase64String(bytes)}";
+    }
+    catch
+    {
+      return "";
     }
   }
 
