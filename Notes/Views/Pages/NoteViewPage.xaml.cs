@@ -17,6 +17,9 @@ public partial class NoteViewPage : ContentPage
   private bool _isSwipingBack;
 #if ANDROID
   private Android.Views.View? _prevPageView;
+  private Android.Views.ViewGroup? _actualCurrentContainer;
+  private Android.Views.View? _nativeShadow;
+  private float _shadowWidthPx;
 #endif
 
   public string NoteId
@@ -102,7 +105,21 @@ public partial class NoteViewPage : ContentPage
 
   private void OnSwipeProgress(float dx)
   {
-    double d = Math.Max(0, dx);
+    float d = Math.Max(0, dx);
+#if ANDROID
+    if (_actualCurrentContainer == null || _actualCurrentContainer.Handle == IntPtr.Zero)
+      ShowPreviousPage();
+    if (_actualCurrentContainer != null)
+    {
+      _actualCurrentContainer.TranslationX = d;
+      if (_nativeShadow != null)
+      {
+        _nativeShadow.TranslationX = d - _shadowWidthPx;
+        _nativeShadow.Alpha = Math.Min(1f, d / 200f);
+      }
+      return;
+    }
+#endif
     RootGrid.TranslationX = d;
     SwipeShadow.TranslationX = d - 24;
     SwipeShadow.Opacity = 1.0;
@@ -121,6 +138,23 @@ public partial class NoteViewPage : ContentPage
   {
     _isSwipingBack = true;
     var screenWidth = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
+#if ANDROID
+    if (_actualCurrentContainer != null)
+    {
+      float screenWidthPx = (float)DeviceDisplay.MainDisplayInfo.Width;
+      await NativeTranslateAsync(_actualCurrentContainer, screenWidthPx + 20, 220,
+          _nativeShadow, screenWidthPx + 20 - _shadowWidthPx, 0f);
+      _actualCurrentContainer = null;
+      if (_nativeShadow != null)
+      {
+        (_nativeShadow.Parent as Android.Views.ViewGroup)?.RemoveView(_nativeShadow);
+        _nativeShadow.Dispose();
+        _nativeShadow = null;
+      }
+      await Shell.Current.GoToAsync("..", false);
+      return;
+    }
+#endif
     await Task.WhenAll(
       RootGrid.TranslateTo(screenWidth + 20, 0, 220, Easing.CubicIn),
       SwipeShadow.TranslateTo(screenWidth - 4, 0, 220, Easing.CubicIn)
@@ -132,6 +166,15 @@ public partial class NoteViewPage : ContentPage
   private async Task SpringBackAsync()
   {
     _isSwipingBack = false;
+#if ANDROID
+    if (_actualCurrentContainer != null)
+    {
+      await NativeTranslateAsync(_actualCurrentContainer, 0, 300,
+          _nativeShadow, -_shadowWidthPx, 0f);
+      HidePreviousPage();
+      return;
+    }
+#endif
     await Task.WhenAll(
       RootGrid.TranslateTo(0, 0, 300, Easing.SpringOut),
       SwipeShadow.FadeTo(0, 180)
@@ -142,25 +185,52 @@ public partial class NoteViewPage : ContentPage
 #if ANDROID
   private void ShowPreviousPage()
   {
-    if (Handler?.PlatformView is not Android.Views.View currentView) return;
+    if (_prevPageView != null && _prevPageView.Handle != IntPtr.Zero)
+      _prevPageView.Visibility = Android.Views.ViewStates.Gone;
+    _prevPageView = null;
+    _actualCurrentContainer = null;
 
-    Android.Views.View cursor = currentView;
-    for (int level = 0; level < 6; level++)
+    if (Handler?.PlatformView is not Android.Views.View handlerView) return;
+
+    Android.Views.View cursor = handlerView;
+    for (int level = 0; level < 8; level++)
     {
       if (cursor.Parent is not Android.Views.ViewGroup parent) break;
-      for (int i = 0; i < parent.ChildCount; i++)
+
+      Android.Views.ViewGroup? currentContainer = null;
+      Android.Views.ViewGroup? prevContainer = null;
+
+      if (cursor.Visibility == Android.Views.ViewStates.Visible && cursor is Android.Views.ViewGroup cursorVg)
       {
-        var sibling = parent.GetChildAt(i);
-        if (sibling == null || sibling == cursor) continue;
-        if (sibling.Visibility == Android.Views.ViewStates.Gone && sibling is Android.Views.ViewGroup)
+        currentContainer = cursorVg;
+        for (int i = parent.ChildCount - 1; i >= 0; i--)
         {
-          sibling.Visibility = Android.Views.ViewStates.Visible;
-          _prevPageView = sibling;
-          currentView.Background = null;
-          BackgroundColor = Colors.Transparent;
-          return;
+          if (parent.GetChildAt(i) is Android.Views.ViewGroup vg && vg != cursor
+              && vg.Visibility == Android.Views.ViewStates.Gone)
+          { prevContainer = vg; break; }
         }
       }
+      else
+      {
+        for (int i = parent.ChildCount - 1; i >= 0; i--)
+        {
+          if (parent.GetChildAt(i) is not Android.Views.ViewGroup vg || vg == cursor) continue;
+          if (vg.Visibility == Android.Views.ViewStates.Visible && currentContainer == null)
+            currentContainer = vg;
+          else if (vg.Visibility == Android.Views.ViewStates.Gone && currentContainer != null)
+          { prevContainer = vg; break; }
+        }
+      }
+
+      if (currentContainer != null && prevContainer != null)
+      {
+        _actualCurrentContainer = currentContainer;
+        prevContainer.Visibility = Android.Views.ViewStates.Visible;
+        _prevPageView = prevContainer;
+        AddNativeShadow();
+        return;
+      }
+
       cursor = parent;
     }
   }
@@ -172,7 +242,45 @@ public partial class NoteViewPage : ContentPage
       _prevPageView.Visibility = Android.Views.ViewStates.Gone;
       _prevPageView = null;
     }
-    BackgroundColor = null;
+    if (_actualCurrentContainer != null)
+    {
+      _actualCurrentContainer.TranslationX = 0;
+      _actualCurrentContainer = null;
+    }
+    if (_nativeShadow != null)
+    {
+      (_nativeShadow.Parent as Android.Views.ViewGroup)?.RemoveView(_nativeShadow);
+      _nativeShadow.Dispose();
+      _nativeShadow = null;
+    }
+  }
+
+  private void AddNativeShadow()
+  {
+    if (_actualCurrentContainer?.Parent is not Android.Views.ViewGroup parent) return;
+    var ctx = Android.App.Application.Context!;
+    _shadowWidthPx = 24f * ctx.Resources!.DisplayMetrics!.Density;
+    var gradient = new Android.Graphics.Drawables.GradientDrawable(
+        Android.Graphics.Drawables.GradientDrawable.Orientation.LeftRight,
+        new[] { 0x00000000, unchecked((int)0x55000000) });
+    var shadow = new Android.Views.View(ctx);
+    shadow.Background = gradient;
+    shadow.Alpha = 0f;
+    shadow.TranslationX = -_shadowWidthPx;
+    parent.AddView(shadow, new Android.Views.ViewGroup.LayoutParams(
+        (int)_shadowWidthPx, Android.Views.ViewGroup.LayoutParams.MatchParent));
+    _nativeShadow = shadow;
+  }
+
+  private static Task NativeTranslateAsync(Android.Views.View view, float toX, long ms,
+      Android.Views.View? shadow = null, float shadowToX = 0, float shadowAlpha = 0)
+  {
+    var tcs = new TaskCompletionSource<bool>();
+    view.Animate().TranslationX(toX).SetDuration(ms)
+        .WithEndAction(new Java.Lang.Runnable(() => tcs.TrySetResult(true)))
+        .Start();
+    shadow?.Animate().TranslationX(shadowToX).Alpha(shadowAlpha).SetDuration(ms).Start();
+    return tcs.Task;
   }
 #endif
 
@@ -212,7 +320,6 @@ public partial class NoteViewPage : ContentPage
     SwipeShadow.TranslationX = -24;
     SwipeShadow.Opacity = 0;
 #if ANDROID
-    ShowPreviousPage();
     global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = OnSwipeProgress;
     global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = OnSwipeEnd;
     global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = () => _ = SpringBackAsync();
