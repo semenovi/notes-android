@@ -369,6 +369,15 @@ public partial class NoteViewPage : ContentPage
     await NavigateToEditor();
   }
 
+  private async void OnChangeIconClicked(object sender, EventArgs e)
+  {
+    if (_note == null) return;
+    var icon = await IconSet.PickAsync(this);
+    if (icon == null) return;
+    _note.Icon = icon;
+    await _noteManager.UpdateNoteAsync(_note);
+  }
+
   private async void OnDeleteNoteClicked(object sender, EventArgs e)
   {
     bool confirm = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete note '{Title}'?", "Yes", "No");

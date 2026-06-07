@@ -43,7 +43,7 @@
                                 </MenuFlyout>
                             </FlyoutBase.ContextFlyout>
                             <StackLayout Orientation="Horizontal" Padding="10,8" Spacing="8">
-                                <Label Text="{Binding Icon}" FontFamily="MaterialIcons" FontSize="14" VerticalOptions="Center" />
+                                <Label Text="{Binding Icon}" Style="{StaticResource MaterialIconLabel}" FontSize="14" VerticalOptions="Center" />
                                 <Label Text="{Binding Name}" FontSize="13" TextColor="#1C1C1E"
                                        VerticalOptions="Center" />
                             </StackLayout>

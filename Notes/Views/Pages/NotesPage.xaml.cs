@@ -334,6 +334,24 @@ public partial class NotesPage : ContentPage
     }
   }
 
+  private async void OnChangeNoteIconMenuClicked(object sender, EventArgs e)
+  {
+    if (sender is MenuFlyoutItem item && item.BindingContext is Note note)
+      await ChangeNoteIconAsync(note);
+  }
+
+  private async void OnRenameNoteMenuClicked(object sender, EventArgs e)
+  {
+    if (sender is MenuFlyoutItem item && item.BindingContext is Note note)
+      await RenameNoteAsync(note);
+  }
+
+  private async void OnDeleteNoteMenuClicked(object sender, EventArgs e)
+  {
+    if (sender is MenuFlyoutItem item && item.BindingContext is Note note)
+      await DeleteNoteAsync(note);
+  }
+
   private async Task ChangeNoteIconAsync(Note note)
   {
     var icon = await IconSet.PickAsync(this);
