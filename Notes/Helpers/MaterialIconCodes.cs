@@ -16,6 +16,7 @@ public static class MaterialIconCodes
   public const string Image = "\ue410";
   public const string Preview = "\ue8f4";
   public const string Search = "\ue8b6";
+  public const string MoreVert = "\ue5d4";
 
   public const string FormatBold = "\ue238";
   public const string FormatItalic = "\ue23f";

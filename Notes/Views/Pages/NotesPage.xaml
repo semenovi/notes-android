@@ -33,12 +33,21 @@
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Grid Padding="20,10" ColumnDefinitions="Auto,*">
+                            <FlyoutBase.ContextFlyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem Text="Change Icon" Clicked="OnChangeNoteIconMenuClicked" />
+                                    <MenuFlyoutSeparator />
+                                    <MenuFlyoutItem Text="Rename" Clicked="OnRenameNoteMenuClicked" />
+                                    <MenuFlyoutSeparator />
+                                    <MenuFlyoutItem Text="Delete" Clicked="OnDeleteNoteMenuClicked" />
+                                </MenuFlyout>
+                            </FlyoutBase.ContextFlyout>
                             <Grid.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnNoteTapped" />
                             </Grid.GestureRecognizers>
                             <Label Grid.Column="0"
                                    Text="{Binding Icon}"
-                                   FontFamily="MaterialIcons"
+                                   Style="{StaticResource MaterialIconLabel}"
                                    FontSize="24"
                                    TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                                    VerticalOptions="Center" />
