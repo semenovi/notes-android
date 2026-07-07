@@ -113,9 +113,10 @@ public class ReactiveSyncService : IDisposable
       try
       {
         DebugLogService.Current?.Log("initial-sync-start");
-        await _syncManager.SynchronizeAsync(DefaultProfile, session.Report);
-        DebugLogService.Current?.Log("initial-sync-done");
-        MainThread.BeginInvokeOnMainThread(() => RemoteChangesApplied?.Invoke());
+        int applied = await _syncManager.SynchronizeAsync(DefaultProfile, session.Report);
+        DebugLogService.Current?.Log($"initial-sync-done applied={applied}");
+        if (applied > 0)
+          MainThread.BeginInvokeOnMainThread(() => RemoteChangesApplied?.Invoke());
       }
       catch (OperationCanceledException) { return; }
       catch (Exception ex) { DebugLogService.Current?.Log($"initial-sync-err: {ex.GetType().Name}: {ex.Message}"); }
@@ -128,9 +129,10 @@ public class ReactiveSyncService : IDisposable
       try
       {
         DebugLogService.Current?.Log("periodic-sync-start");
-        await _syncManager.SynchronizeAsync(DefaultProfile, session.Report);
-        DebugLogService.Current?.Log("periodic-sync-done");
-        MainThread.BeginInvokeOnMainThread(() => RemoteChangesApplied?.Invoke());
+        int applied = await _syncManager.SynchronizeAsync(DefaultProfile, session.Report);
+        DebugLogService.Current?.Log($"periodic-sync-done applied={applied}");
+        if (applied > 0)
+          MainThread.BeginInvokeOnMainThread(() => RemoteChangesApplied?.Invoke());
       }
       catch (Exception ex) { DebugLogService.Current?.Log($"periodic-sync-err: {ex.GetType().Name}: {ex.Message}"); }
     }

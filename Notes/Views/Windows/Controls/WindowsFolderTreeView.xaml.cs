@@ -42,23 +42,7 @@ public partial class WindowsFolderTreeView : ContentView
 
   private async void OnRemoteChangesApplied()
   {
-    var selectedId = _selectedFolder?.Id;
-    _loadCts?.Cancel();
-    var cts = new CancellationTokenSource();
-    _loadCts = cts;
-    var folders = await _folderManager.GetAllFoldersAsync();
-    if (cts.IsCancellationRequested) return;
-    Folders.Clear();
-    foreach (var folder in folders)
-      Folders.Add(new FolderViewModel(folder));
-
-    var toSelect = Folders.FirstOrDefault(f => f.Folder.Id == selectedId) ?? Folders.FirstOrDefault();
-    if (toSelect != null)
-    {
-      toSelect.IsSelected = true;
-      _selectedFolder = toSelect.Folder;
-      // Don't fire FolderSelected — WindowsNoteListView handles its own refresh via RemoteChangesApplied.
-    }
+    await LoadFoldersAsync();
   }
 
   public async Task LoadFoldersAsync()
@@ -68,21 +52,53 @@ public partial class WindowsFolderTreeView : ContentView
     _loadCts = cts;
     var folders = await _folderManager.GetAllFoldersAsync();
     if (cts.IsCancellationRequested) return;
-    Folders.Clear();
-    foreach (var folder in folders)
-      Folders.Add(new FolderViewModel(folder));
+    ApplyFolders(folders);
+  }
 
-    if (Folders.Count > 0)
+  // Diff-merge into the existing collection: unchanged folders keep their view
+  // models (no rebuild, no flicker) and the current selection survives a refresh.
+  private void ApplyFolders(List<Folder> folders)
+  {
+    var byId = Folders.ToDictionary(vm => vm.Folder.Id);
+    var desired = new List<FolderViewModel>(folders.Count);
+    foreach (var folder in folders)
     {
-      Folders[0].IsSelected = true;
-      FolderSelected?.Invoke(this, Folders[0].Folder);
+      if (byId.TryGetValue(folder.Id, out var vm))
+        vm.Update(folder);
+      else
+        vm = new FolderViewModel(folder);
+      desired.Add(vm);
+    }
+    CollectionMerge.MergeInto(Folders, desired);
+
+    var selected = _selectedFolder == null
+        ? null
+        : Folders.FirstOrDefault(f => f.Folder.Id == _selectedFolder.Id);
+    if (selected != null)
+    {
+      foreach (var f in Folders) f.IsSelected = f == selected;
+      _selectedFolder = selected.Folder;
+      // Selection unchanged — don't fire FolderSelected, the note list refreshes itself.
+    }
+    else if (Folders.Count > 0)
+    {
+      // Nothing selected yet, or the selected folder was deleted — fall back to
+      // the first folder and notify so the note list follows.
+      SelectFolder(Folders[0]);
+    }
+    else
+    {
+      _selectedFolder = null;
     }
   }
 
   public async Task SyncIfEnabledAsync()
   {
+    // Only block on a full sync when there is no local data yet (fresh install).
+    // Otherwise ReactiveSyncService already runs an initial sync in the background
+    // and fires RemoteChangesApplied when something new arrives.
     var settings = await _syncSettingsService.LoadAsync();
-    if (settings.Enabled)
+    if (settings.Enabled && Folders.Count == 0)
     {
       await RunSyncAsync();
       await LoadFoldersAsync();
@@ -179,11 +195,7 @@ public partial class WindowsFolderTreeView : ContentView
     vm.Folder.Icon = icon;
     vm.Folder.Modified = DateTime.UtcNow;
     await _folderManager.UpdateFolderAsync(vm.Folder);
-
-    var idx = Folders.IndexOf(vm);
-    var isSelected = vm.IsSelected;
-    if (idx >= 0)
-      Folders[idx] = new FolderViewModel(vm.Folder) { IsSelected = isSelected };
+    vm.Update(vm.Folder);
   }
 
   private async void OnRenameFolderContextMenuClicked(object sender, EventArgs e)
@@ -199,15 +211,9 @@ public partial class WindowsFolderTreeView : ContentView
     vm.Folder.Name = newName;
     vm.Folder.Modified = DateTime.UtcNow;
     await _folderManager.UpdateFolderAsync(vm.Folder);
-
-    var idx = Folders.IndexOf(vm);
-    var isSelected = vm.IsSelected;
-    if (idx >= 0)
-    {
-      Folders[idx] = new FolderViewModel(vm.Folder) { IsSelected = isSelected };
-      if (isSelected)
-        FolderSelected?.Invoke(this, vm.Folder);
-    }
+    vm.Update(vm.Folder);
+    if (vm.IsSelected)
+      FolderSelected?.Invoke(this, vm.Folder);
   }
 
   private async void OnDeleteFolderContextMenuClicked(object sender, EventArgs e)
@@ -333,9 +339,18 @@ public partial class WindowsFolderTreeView : ContentView
 
 public class FolderViewModel : INotifyPropertyChanged
 {
-  public Folder Folder { get; }
+  public Folder Folder { get; private set; }
   public string Name => Folder.Name;
   public string Icon => Folder.Icon;
+
+  // Swaps the underlying folder in place so the bound row refreshes
+  // without being recreated (keeps the list stable during sync updates).
+  public void Update(Folder folder)
+  {
+    Folder = folder;
+    OnPropertyChanged(nameof(Name));
+    OnPropertyChanged(nameof(Icon));
+  }
 
   private bool _isSelected;
   public bool IsSelected

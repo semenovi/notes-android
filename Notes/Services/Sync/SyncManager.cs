@@ -30,7 +30,9 @@ public class SyncManager
     _mediaStorage = mediaStorage;
   }
 
-  public async Task SynchronizeAsync(SyncProfile profile, Action<double, string?>? onProgress = null)
+  // Returns the number of remote note/folder changes applied locally, so callers
+  // can skip UI refreshes when a sync brought nothing new.
+  public async Task<int> SynchronizeAsync(SyncProfile profile, Action<double, string?>? onProgress = null)
   {
     await _syncLock.WaitAsync();
     try
@@ -49,6 +51,8 @@ public class SyncManager
 
         List<SyncChange> localChanges = await GetLocalChangesAsync();
         await adapter.ApplyChangesAsync(localChanges, onProgress);
+
+        return remoteChanges.Count;
       }
       finally
       {

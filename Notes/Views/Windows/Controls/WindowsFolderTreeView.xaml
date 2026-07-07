@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView x:Class="Notes.Views.Windows.Controls.WindowsFolderTreeView"
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Notes.Views.Windows.Controls">
 
     <Grid BackgroundColor="#EBEBEB">
         <Grid.RowDefinitions>
@@ -25,7 +26,7 @@
                         SelectionMode="None"
                         BackgroundColor="Transparent">
             <CollectionView.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="controls:FolderViewModel">
                     <Grid Padding="8,2">
                         <Grid.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnFolderTapped" />

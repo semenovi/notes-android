@@ -7,6 +7,7 @@ public partial class MainWindow : ContentPage
 {
   private readonly ToastService _toastService;
   private readonly ProgressNotificationService _progressService;
+  private bool _initialized;
 
   public MainWindow()
   {
@@ -25,6 +26,8 @@ public partial class MainWindow : ContentPage
   protected override async void OnAppearing()
   {
     base.OnAppearing();
+    if (_initialized) return;
+    _initialized = true;
     await FolderTree.LoadFoldersAsync();
     await FolderTree.SyncIfEnabledAsync();
   }

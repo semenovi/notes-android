@@ -15,6 +15,7 @@ public partial class WindowsNoteListView : ContentView
   private string? _currentFolderId;
   private string? _selectedNoteId;
   private List<NoteViewModel> _allNotes = new();
+  private CancellationTokenSource? _loadCts;
 
   public ObservableCollection<NoteViewModel> Notes { get; } = new();
 
@@ -33,21 +34,10 @@ public partial class WindowsNoteListView : ContentView
 
   private async void OnRemoteChangesApplied()
   {
+    // LoadNotesAsync merges into the existing list and keeps the current
+    // selection; NoteSelected is not re-fired, so the editor stays untouched.
     if (string.IsNullOrEmpty(_currentFolderId)) return;
-
-    var savedId = _selectedNoteId;
     await LoadNotesAsync(_currentFolderId);
-
-    // Restore selection without re-triggering NoteSelected (editor stays untouched).
-    if (savedId != null)
-    {
-      var vm = Notes.FirstOrDefault(n => n.Note.Id == savedId);
-      if (vm != null)
-      {
-        foreach (var n in Notes) n.IsSelected = false;
-        vm.IsSelected = true;
-      }
-    }
   }
 
   public void SetFolderName(string name)
@@ -61,27 +51,59 @@ public partial class WindowsNoteListView : ContentView
       _selectedNoteId = null;
     _currentFolderId = folderId;
 
+    _loadCts?.Cancel();
+    var cts = new CancellationTokenSource();
+    _loadCts = cts;
+
     var notes = await _noteManager.GetNotesAsync(folderId);
     var sorted = notes.OrderByDescending(n => n.Modified).ToList();
 
-    var viewModels = new List<NoteViewModel>(sorted.Count);
+    // Reuse view models of unchanged notes (same id + Modified) so their rows —
+    // including already-resolved preview images — stay as-is. Only new or
+    // modified notes get a fresh view model, with images resolved in parallel.
+    var existing = _allNotes.ToDictionary(vm => vm.Note.Id);
+    var viewModels = new List<NoteViewModel?>(sorted.Count);
+    var toResolve = new List<(int Index, Note Note)>();
     foreach (var note in sorted)
     {
-      var images = await ResolvePreviewImagesAsync(note.Content);
-      viewModels.Add(new NoteViewModel(note, images));
+      if (existing.TryGetValue(note.Id, out var vm) && vm.Note.Modified == note.Modified)
+      {
+        viewModels.Add(vm);
+      }
+      else
+      {
+        toResolve.Add((viewModels.Count, note));
+        viewModels.Add(null);
+      }
     }
 
-    _allNotes = viewModels;
+    var resolved = await Task.WhenAll(toResolve.Select(t => ResolvePreviewImagesAsync(t.Note.Content)));
+    if (cts.IsCancellationRequested) return;
+
+    for (int i = 0; i < toResolve.Count; i++)
+      viewModels[toResolve[i].Index] = new NoteViewModel(toResolve[i].Note, resolved[i]);
+
+    _allNotes = viewModels.Cast<NoteViewModel>().ToList();
+
+    if (_selectedNoteId != null)
+    {
+      var sel = _allNotes.FirstOrDefault(vm => vm.Note.Id == _selectedNoteId);
+      foreach (var vm in _allNotes) vm.IsSelected = vm == sel;
+      if (sel == null) _selectedNoteId = null;
+    }
+
     ApplySearch(SearchEntry.Text);
   }
+
+  private static readonly System.Text.RegularExpressions.Regex MediaRefRegex =
+      new(@"!\[[^\]]*\]\(media:([^)]+)\)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
   private async Task<IReadOnlyList<ImageSource>> ResolvePreviewImagesAsync(string? content)
   {
     if (string.IsNullOrEmpty(content)) return Array.Empty<ImageSource>();
 
     var result = new List<ImageSource>();
-    var matches = System.Text.RegularExpressions.Regex.Matches(
-        content, @"!\[[^\]]*\]\(media:([^)]+)\)");
+    var matches = MediaRefRegex.Matches(content);
 
     foreach (System.Text.RegularExpressions.Match m in matches.Cast<System.Text.RegularExpressions.Match>().Take(4))
     {
@@ -103,15 +125,13 @@ public partial class WindowsNoteListView : ContentView
 
   private void ApplySearch(string? query)
   {
-    Notes.Clear();
     var filtered = string.IsNullOrWhiteSpace(query)
         ? _allNotes
         : _allNotes.Where(n =>
             n.Title.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-            n.Preview.Contains(query, StringComparison.OrdinalIgnoreCase));
+            n.Preview.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
 
-    foreach (var note in filtered)
-      Notes.Add(note);
+    CollectionMerge.MergeInto(Notes, filtered);
   }
 
   private void OnSearchTextChanged(object sender, TextChangedEventArgs e) =>
@@ -243,8 +263,10 @@ public class NoteViewModel : INotifyPropertyChanged
   public Note Note { get; }
   public string Title => Note.Title;
   public string Icon => Note.Icon;
-  public string Preview => GetPreview();
+  public string Preview => _preview ??= GetPreview();
   public string ModifiedString => Note.Modified.ToString("dd.MM HH:mm");
+
+  private string? _preview;
   public IReadOnlyList<ImageSource> PreviewImages { get; }
 
   private bool _isSelected;
@@ -260,6 +282,17 @@ public class NoteViewModel : INotifyPropertyChanged
     PreviewImages = images ?? Array.Empty<ImageSource>();
   }
 
+  private static readonly System.Text.RegularExpressions.Regex CodeBlockRx = new(@"```[\s\S]*?```", System.Text.RegularExpressions.RegexOptions.Compiled);
+  private static readonly System.Text.RegularExpressions.Regex ImageRx = new(@"!\[[^\]]*\]\([^)]*\)", System.Text.RegularExpressions.RegexOptions.Compiled);
+  private static readonly System.Text.RegularExpressions.Regex LinkRx = new(@"\[([^\]]*)\]\([^)]*\)", System.Text.RegularExpressions.RegexOptions.Compiled);
+  private static readonly System.Text.RegularExpressions.Regex HeaderRx = new(@"^#{1,6}\s+", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
+  private static readonly System.Text.RegularExpressions.Regex BoldRx = new(@"\*{1,3}([^*]*)\*{1,3}", System.Text.RegularExpressions.RegexOptions.Compiled);
+  private static readonly System.Text.RegularExpressions.Regex ItalicRx = new(@"_{1,3}([^_]*)_{1,3}", System.Text.RegularExpressions.RegexOptions.Compiled);
+  private static readonly System.Text.RegularExpressions.Regex InlineCodeRx = new(@"`([^`]+)`", System.Text.RegularExpressions.RegexOptions.Compiled);
+  private static readonly System.Text.RegularExpressions.Regex ListMarkerRx = new(@"^[>*+\-]\s+", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
+  private static readonly System.Text.RegularExpressions.Regex NumberedListRx = new(@"^\d+\.\s+", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
+  private static readonly System.Text.RegularExpressions.Regex WhitespaceRx = new(@"\s+", System.Text.RegularExpressions.RegexOptions.Compiled);
+
   private string GetPreview()
   {
     if (string.IsNullOrEmpty(Note.Content)) return "No text";
@@ -267,23 +300,23 @@ public class NoteViewModel : INotifyPropertyChanged
     var text = Note.Content;
 
     // strip fenced code blocks first
-    text = System.Text.RegularExpressions.Regex.Replace(text, @"```[\s\S]*?```", " ");
+    text = CodeBlockRx.Replace(text, " ");
     // strip images
-    text = System.Text.RegularExpressions.Regex.Replace(text, @"!\[[^\]]*\]\([^)]*\)", "");
+    text = ImageRx.Replace(text, "");
     // strip links — keep label
-    text = System.Text.RegularExpressions.Regex.Replace(text, @"\[([^\]]*)\]\([^)]*\)", "$1");
+    text = LinkRx.Replace(text, "$1");
     // strip headers
-    text = System.Text.RegularExpressions.Regex.Replace(text, @"^#{1,6}\s+", "", System.Text.RegularExpressions.RegexOptions.Multiline);
+    text = HeaderRx.Replace(text, "");
     // strip bold/italic
-    text = System.Text.RegularExpressions.Regex.Replace(text, @"\*{1,3}([^*]*)\*{1,3}", "$1");
-    text = System.Text.RegularExpressions.Regex.Replace(text, @"_{1,3}([^_]*)_{1,3}", "$1");
+    text = BoldRx.Replace(text, "$1");
+    text = ItalicRx.Replace(text, "$1");
     // strip inline code
-    text = System.Text.RegularExpressions.Regex.Replace(text, @"`([^`]+)`", "$1");
+    text = InlineCodeRx.Replace(text, "$1");
     // strip blockquotes and list markers
-    text = System.Text.RegularExpressions.Regex.Replace(text, @"^[>*+\-]\s+", "", System.Text.RegularExpressions.RegexOptions.Multiline);
-    text = System.Text.RegularExpressions.Regex.Replace(text, @"^\d+\.\s+", "", System.Text.RegularExpressions.RegexOptions.Multiline);
+    text = ListMarkerRx.Replace(text, "");
+    text = NumberedListRx.Replace(text, "");
 
-    text = System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ").Trim();
+    text = WhitespaceRx.Replace(text, " ").Trim();
 
     return text.Length > 80 ? text[..80] + "…" : text;
   }
