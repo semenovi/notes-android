@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView x:Class="Notes.Views.Windows.Controls.WindowsNoteListView"
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Notes.Views.Windows.Controls">
 
     <Grid BackgroundColor="#F2F2F7">
         <Grid.RowDefinitions>
@@ -33,7 +34,7 @@
                         SelectionMode="None"
                         BackgroundColor="Transparent">
             <CollectionView.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="controls:NoteViewModel">
                     <Grid Padding="8,3">
                         <Grid.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnNoteTapped" />
@@ -82,7 +83,7 @@
                                                               Margin="4,0,0,0" VerticalOptions="Center"
                                                               BindableLayout.ItemsSource="{Binding PreviewImages}">
                                             <BindableLayout.ItemTemplate>
-                                                <DataTemplate>
+                                                <DataTemplate x:DataType="ImageSource">
                                                     <Image Source="{Binding .}"
                                                            HeightRequest="16" WidthRequest="16"
                                                            Aspect="AspectFill" />

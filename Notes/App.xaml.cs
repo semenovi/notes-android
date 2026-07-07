@@ -45,8 +45,13 @@ public partial class App : Application
     base.OnResume();
 #if ANDROID
     StopAndroidSyncService();
-#endif
     _ = _reactiveSync.StartAsync();
+#else
+    // On Windows OnStart and OnResume both fire on cold start — don't restart a
+    // running service (OnSleep stops it, so a real resume still restarts here).
+    if (!_reactiveSync.IsRunning)
+      _ = _reactiveSync.StartAsync();
+#endif
   }
 
 #if ANDROID
