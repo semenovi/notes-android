@@ -87,6 +87,10 @@
                         BackgroundColor="Transparent" TextColor="#3C3C43"
                         BorderWidth="0" Padding="6,2" WidthRequest="32" HeightRequest="30"
                         Clicked="OnListClicked" />
+                <Button Text="☑" FontSize="14"
+                        BackgroundColor="Transparent" TextColor="#3C3C43"
+                        BorderWidth="0" Padding="6,2" WidthRequest="32" HeightRequest="30"
+                        Clicked="OnTaskListClicked" />
                 <Button Text="H" FontSize="13"
                         BackgroundColor="Transparent" TextColor="#3C3C43"
                         BorderWidth="0" Padding="6,2" WidthRequest="32" HeightRequest="30"

@@ -30,9 +30,11 @@ public partial class MarkdownPreviewPage : ContentPage
         @keyframes shimmer {{ 0%{{background-position:200% 0}} 100%{{background-position:-200% 0}} }}
         {ImageViewerHtml.ViewerCss}
         {ImageViewerHtml.CopyCodeCss}
+        {Services.Markdown.TaskListMarkdown.Css}
     </style>
 </head>
-<body>{ImageViewerHtml.ViewerDiv}{html}{ImageViewerHtml.ViewerScript}{ImageViewerHtml.CopyCodeScript}</body>
+<body>{ImageViewerHtml.ViewerDiv}{html}{ImageViewerHtml.ViewerScript}{ImageViewerHtml.CopyCodeScript}
+<script>document.querySelectorAll('.task-checkbox').forEach(function(c){{c.disabled=true;}});</script></body>
 </html>";
 
     var tcs = new TaskCompletionSource<bool>();

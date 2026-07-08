@@ -103,13 +103,20 @@ public partial class NoteViewPage : ContentPage
         @keyframes shimmer {{ 0%{{background-position:200% 0}} 100%{{background-position:-200% 0}} }}
         {ImageViewerHtml.ViewerCss}
         {ImageViewerHtml.CopyCodeCss}
+        {Services.Markdown.TaskListMarkdown.Css}
     </style>
 </head>
-<body>{ImageViewerHtml.ViewerDiv}{body}{ImageViewerHtml.ViewerScript}{ImageViewerHtml.CopyCodeScript}</body>
+<body>{ImageViewerHtml.ViewerDiv}{body}{ImageViewerHtml.ViewerScript}{ImageViewerHtml.CopyCodeScript}{Services.Markdown.TaskListMarkdown.Script}</body>
 </html>";
 
   private void OnWebViewNavigating(object sender, WebNavigatingEventArgs e)
   {
+    if (Services.Markdown.TaskListMarkdown.TryParseToggleUrl(e.Url, out int taskIndex, out bool isChecked))
+    {
+      e.Cancel = true;
+      _ = ToggleTaskAsync(taskIndex, isChecked);
+      return;
+    }
 #if ANDROID
     if (e.Url == "swipe://disable")
     {
@@ -363,6 +370,17 @@ public partial class NoteViewPage : ContentPage
     return tcs.Task;
   }
 #endif
+
+  private async Task ToggleTaskAsync(int taskIndex, bool isChecked)
+  {
+    if (_note == null) return;
+    // The WebView already updated the checkbox visually — only persist the
+    // change, no re-render (that would reload all images).
+    var updated = Services.Markdown.TaskListMarkdown.Toggle(_note.Content ?? "", taskIndex, isChecked);
+    if (updated == null) return;
+    _note.Content = updated;
+    await _noteManager.UpdateNoteAsync(_note);
+  }
 
   private async void OnEditClicked(object sender, EventArgs e)
   {
