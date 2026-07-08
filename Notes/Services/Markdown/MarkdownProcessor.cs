@@ -173,6 +173,18 @@ public class MarkdownProcessor
   {
     var processedText = markdown.Replace("\r\n", "\n").Replace("\r", "\n");
 
+    // Task lines must be consumed before the generic "- " list rule below.
+    // data-task-index maps back to the Nth TaskLineRegex match in the source
+    // markdown — TaskListMarkdown.Toggle relies on that ordering.
+    int taskIndex = 0;
+    processedText = TaskListMarkdown.TaskLineRegex.Replace(processedText, m =>
+    {
+      bool done = m.Groups[1].Value != " ";
+      string check = done ? " checked" : "";
+      string doneClass = done ? " done" : "";
+      return $"<div class=\"task-item\"><input type=\"checkbox\" class=\"task-checkbox\" data-task-index=\"{taskIndex++}\"{check}><span class=\"task-text{doneClass}\">{m.Groups[2].Value}</span></div>";
+    });
+
     processedText = System.Text.RegularExpressions.Regex.Replace(
         processedText,
         @"^(-{3,}|\*{3,}|_{3,})$",
@@ -312,6 +324,8 @@ public class MarkdownProcessor
     processedText = processedText.Replace("</h3></p>", "</h3>");
     processedText = processedText.Replace("<p><pre>", "<pre>");
     processedText = processedText.Replace("</pre></p>", "</pre>");
+    processedText = processedText.Replace("<p><div class=\"task-item\">", "<div class=\"task-item\">");
+    processedText = processedText.Replace("</div></p>", "</div>");
     processedText = processedText.Replace("<p><ul>", "<ul>");
     processedText = processedText.Replace("</ul></p>", "</ul>");
     processedText = processedText.Replace("<p><ol>", "<ol>");

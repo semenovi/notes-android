@@ -38,6 +38,13 @@ public partial class WindowsNoteEditor : ContentView
 #if WINDOWS
   private void OnImageViewerNavigating(object? sender, WebNavigatingEventArgs e)
   {
+    if (TaskListMarkdown.TryParseToggleUrl(e.Url, out int taskIndex, out bool isChecked))
+    {
+      e.Cancel = true;
+      _ = ToggleTaskAsync(taskIndex, isChecked);
+      return;
+    }
+
     // Payload is encoded directly in the URL: img-viewer://open/{encodeURIComponent(id|src)}
     if (!e.Url.StartsWith("img-viewer://open/")) return;
     e.Cancel = true;
@@ -78,6 +85,16 @@ public partial class WindowsNoteEditor : ContentView
     window.Activated += onActivated;
 
     Application.Current!.OpenWindow(window);
+  }
+
+  private async Task ToggleTaskAsync(int taskIndex, bool isChecked)
+  {
+    if (_currentNote == null || _isEditMode) return;
+    // The WebView already updated the checkbox visually — only persist the change.
+    var updated = TaskListMarkdown.Toggle(_currentNote.Content ?? "", taskIndex, isChecked);
+    if (updated == null) return;
+    _currentNote.Content = updated;
+    await SaveNoteAsync();
   }
 
 #endif
@@ -232,9 +249,10 @@ public partial class WindowsNoteEditor : ContentView
   hr {{ border: none; border-top: 1px solid #E5E5EA; margin: 16px 0; }}
   {ImageViewerHtml.ViewerCss}
   {ImageViewerHtml.CopyCodeCss}
+  {TaskListMarkdown.Css}
 </style>
 </head>
-<body>{ImageViewerHtml.ViewerDiv}{body}{ImageViewerHtml.ViewerScript}{ImageViewerHtml.CopyCodeScript}</body>
+<body>{ImageViewerHtml.ViewerDiv}{body}{ImageViewerHtml.ViewerScript}{ImageViewerHtml.CopyCodeScript}{TaskListMarkdown.Script}</body>
 </html>";
 
   private static string FormatDate(DateTime dt) =>
@@ -271,6 +289,9 @@ public partial class WindowsNoteEditor : ContentView
 
   private void OnListClicked(object sender, EventArgs e) =>
       InsertText("\n- ");
+
+  private void OnTaskListClicked(object sender, EventArgs e) =>
+      InsertText("\n- [ ] ");
 
   private void OnHeaderClicked(object sender, EventArgs e) =>
       InsertText("\n## ");
