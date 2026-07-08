@@ -1,3 +1,4 @@
+using Notes.Helpers;
 using Notes.Models;
 using Notes.Services;
 using Notes.Services.Notes;
@@ -139,6 +140,45 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     string insertText = string.Join("\n\n", parts);
 
     Content = Content.Insert(cursorPosition, insertText);
+    ContentEditor.CursorPosition = cursorPosition + insertText.Length;
+  }
+
+  private async void OnPasteImageClicked(object sender, EventArgs e)
+  {
+    List<ClipboardImageHelper.ClipboardImage> images;
+    try
+    {
+      images = await ClipboardImageHelper.GetImagesAsync();
+    }
+    catch (Exception ex)
+    {
+      await DisplayAlert("Error", ex.Message, "OK");
+      return;
+    }
+
+    if (images.Count == 0)
+    {
+      await DisplayAlert("Paste image", "No image in the clipboard", "OK");
+      return;
+    }
+
+    int total = images.Count;
+    using var session = _progressService.Begin("Adding images", delayMs: 0);
+
+    var parts = new List<string>();
+    for (int i = 0; i < images.Count; i++)
+    {
+      session.Report((double)i / total, total > 1 ? $"{i + 1} of {total}" : null);
+      using var stream = images[i].Stream;
+      var mediaItem = await _mediaManager.AddMediaAsync(stream, images[i].FileName);
+      parts.Add($"![{images[i].FileName}]({_mediaManager.GetMediaUrl(mediaItem.Id)})");
+      session.Report((double)(i + 1) / total, total > 1 ? $"{i + 1} of {total}" : null);
+    }
+
+    int cursorPosition = ContentEditor.CursorPosition;
+    string insertText = string.Join("\n\n", parts);
+
+    Content = (Content ?? "").Insert(cursorPosition, insertText);
     ContentEditor.CursorPosition = cursorPosition + insertText.Length;
   }
 

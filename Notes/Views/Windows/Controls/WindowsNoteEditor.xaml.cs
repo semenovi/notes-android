@@ -32,6 +32,7 @@ public partial class WindowsNoteEditor : ContentView
 
 #if WINDOWS
     ContentPreview.Navigating += OnImageViewerNavigating;
+    ContentEditor.HandlerChanged += OnContentEditorHandlerChanged;
 #endif
   }
 
@@ -85,6 +86,36 @@ public partial class WindowsNoteEditor : ContentView
     window.Activated += onActivated;
 
     Application.Current!.OpenWindow(window);
+  }
+
+  private void OnContentEditorHandlerChanged(object? sender, EventArgs e)
+  {
+    if (ContentEditor.Handler?.PlatformView is Microsoft.UI.Xaml.Controls.TextBox textBox)
+    {
+      textBox.Paste -= OnNativePaste;
+      textBox.Paste += OnNativePaste;
+    }
+  }
+
+  private void OnNativePaste(object sender, Microsoft.UI.Xaml.Controls.TextControlPasteEventArgs e)
+  {
+    global::Windows.ApplicationModel.DataTransfer.DataPackageView content;
+    try
+    {
+      content = global::Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
+    }
+    catch
+    {
+      return;
+    }
+
+    // Text keeps the default paste; only an image-bearing clipboard without text is intercepted.
+    if (content.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.Text)) return;
+    if (!content.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.Bitmap) &&
+        !content.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems)) return;
+
+    e.Handled = true;
+    _ = PasteImagesFromClipboardAsync(showAlertIfEmpty: false);
   }
 
   private async Task ToggleTaskAsync(int taskIndex, bool isChecked)
@@ -319,6 +350,45 @@ public partial class WindowsNoteEditor : ContentView
         using var stream = await result.OpenReadAsync();
         var media = await _mediaManager.AddMediaAsync(stream, result.FileName);
         parts.Add($"![{result.FileName}]({_mediaManager.GetMediaUrl(media.Id)})");
+        session.Report((double)(i + 1) / total, total > 1 ? $"{i + 1} of {total}" : null);
+      }
+
+      InsertText(string.Join("\n\n", parts));
+    }
+    catch (Exception ex)
+    {
+      await Application.Current!.Windows[0].Page!.DisplayAlert("Error", ex.Message, "OK");
+    }
+  }
+
+  private async void OnPasteImageClicked(object sender, EventArgs e)
+  {
+    await PasteImagesFromClipboardAsync(showAlertIfEmpty: true);
+  }
+
+  private async Task PasteImagesFromClipboardAsync(bool showAlertIfEmpty)
+  {
+    try
+    {
+      var images = await ClipboardImageHelper.GetImagesAsync();
+      if (images.Count == 0)
+      {
+        if (showAlertIfEmpty)
+          await Application.Current!.Windows[0].Page!.DisplayAlert("Paste image",
+              "No image in the clipboard", "OK");
+        return;
+      }
+
+      int total = images.Count;
+      using var session = _progressService.Begin("Adding images", delayMs: 0);
+
+      var parts = new List<string>();
+      for (int i = 0; i < images.Count; i++)
+      {
+        session.Report((double)i / total, total > 1 ? $"{i + 1} of {total}" : null);
+        using var stream = images[i].Stream;
+        var media = await _mediaManager.AddMediaAsync(stream, images[i].FileName);
+        parts.Add($"![{images[i].FileName}]({_mediaManager.GetMediaUrl(media.Id)})");
         session.Report((double)(i + 1) / total, total > 1 ? $"{i + 1} of {total}" : null);
       }
 

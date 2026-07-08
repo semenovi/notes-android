@@ -29,7 +29,14 @@
                     HeightRequest="50"
                     Clicked="OnAddMediaClicked" />
 
-            <Button Text="{x:Static helpers:MaterialIconCodes.FormatBold}" 
+            <Button Text="{x:Static helpers:MaterialIconCodes.ContentPaste}"
+                    FontFamily="MaterialIcons"
+                    FontSize="22"
+                    WidthRequest="50"
+                    HeightRequest="50"
+                    Clicked="OnPasteImageClicked" />
+
+            <Button Text="{x:Static helpers:MaterialIconCodes.FormatBold}"
                     FontFamily="MaterialIcons"
                     FontSize="22" 
                     WidthRequest="50"

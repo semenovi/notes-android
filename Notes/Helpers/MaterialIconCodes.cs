@@ -14,6 +14,7 @@ public static class MaterialIconCodes
   public const string ArrowBack = "\ue5c4";
   public const string Check = "\ue876";
   public const string Image = "\ue410";
+  public const string ContentPaste = "\ue14f";
   public const string Preview = "\ue8f4";
   public const string Search = "\ue8b6";
   public const string MoreVert = "\ue5d4";
