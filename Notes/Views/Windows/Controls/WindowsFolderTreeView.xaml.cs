@@ -22,6 +22,7 @@ public partial class WindowsFolderTreeView : ContentView
   private readonly ReactiveSyncService _reactiveSync;
   private readonly NoteManager _noteManager;
   private readonly Services.ProgressNotificationService _progressService;
+  private readonly Services.ToastService _toastService;
   private Folder? _selectedFolder;
   private CancellationTokenSource? _loadCts;
 
@@ -36,6 +37,7 @@ public partial class WindowsFolderTreeView : ContentView
     _syncSettingsService = services.GetService<SyncSettingsService>()!;
     _reactiveSync = services.GetService<ReactiveSyncService>()!;
     _progressService = services.GetService<Services.ProgressNotificationService>()!;
+    _toastService = services.GetService<Services.ToastService>()!;
     FoldersCollectionView.ItemsSource = Folders;
     _reactiveSync.RemoteChangesApplied += OnRemoteChangesApplied;
   }
@@ -135,53 +137,42 @@ public partial class WindowsFolderTreeView : ContentView
     }
   }
 
-  private async void OnMoreButtonClicked(object sender, EventArgs e)
+  public event EventHandler? MenuRequested;
+
+  private void OnMenuButtonClicked(object sender, EventArgs e)
+    => MenuRequested?.Invoke(this, EventArgs.Empty);
+
+  public async Task ToggleSyncAsync()
   {
     var page = Application.Current!.Windows[0].Page!;
     var settings = await _syncSettingsService.LoadAsync();
-    string syncToggleLabel = settings.Enabled ? "Sync: ON" : "Sync: OFF";
+    settings.Enabled = !settings.Enabled;
+    await _syncSettingsService.SaveAsync(settings);
+    if (settings.Enabled && string.IsNullOrEmpty(settings.ServerUrl))
+      await ShowSyncSettingsDialogAsync(page);
+  }
 
-    var action = await page.DisplayActionSheet(
-        "Actions", "Cancel", null,
-        syncToggleLabel,
-        "Sync Now",
-        "Sync Settings...",
-        "Export Archive",
-        "Import Archive");
-
-    switch (action)
+  public async Task SyncNowAsync()
+  {
+    var page = Application.Current!.Windows[0].Page!;
+    var settings = await _syncSettingsService.LoadAsync();
+    if (!settings.Enabled)
+      await page.DisplayAlert("Sync", "Please enable sync first.", "OK");
+    else
     {
-      case "Sync: ON":
-      case "Sync: OFF":
-        settings.Enabled = !settings.Enabled;
-        await _syncSettingsService.SaveAsync(settings);
-        if (settings.Enabled && string.IsNullOrEmpty(settings.ServerUrl))
-          await ShowSyncSettingsDialogAsync(page);
-        break;
-
-      case "Sync Now":
-        if (!settings.Enabled)
-          await page.DisplayAlert("Sync", "Please enable sync first.", "OK");
-        else
-        {
-          await RunSyncAsync();
-          await LoadFoldersAsync();
-        }
-        break;
-
-      case "Sync Settings...":
-        await ShowSyncSettingsDialogAsync(page);
-        break;
-
-      case "Export Archive":
-        await ExportAsync(page);
-        break;
-
-      case "Import Archive":
-        await ImportAsync(page);
-        break;
+      await RunSyncAsync();
+      await LoadFoldersAsync();
     }
   }
+
+  public async Task ShowSyncSettingsAsync()
+    => await ShowSyncSettingsDialogAsync(Application.Current!.Windows[0].Page!);
+
+  public async Task ExportArchiveAsync()
+    => await ExportAsync(Application.Current!.Windows[0].Page!);
+
+  public async Task ImportArchiveAsync()
+    => await ImportAsync(Application.Current!.Windows[0].Page!);
 
   private async void OnChangeFolderIconContextMenuClicked(object sender, EventArgs e)
   {
@@ -289,6 +280,21 @@ public partial class WindowsFolderTreeView : ContentView
 
   private async Task ExportAsync(Page page)
   {
+#if WINDOWS
+    string? targetPath = await PickExportPathAsync();
+    if (targetPath == null) return;
+
+    using var session = _progressService.Begin("Exporting archive", delayMs: 0, priority: 1);
+    try
+    {
+      await _exportService.ExportBackupToFileAsync(targetPath);
+      _toastService.Show("Archive exported successfully.");
+    }
+    catch (Exception ex)
+    {
+      _toastService.Show($"Export failed: {ex.Message}");
+    }
+#else
     try
     {
       await _exportService.ExportBackupAsync();
@@ -298,7 +304,28 @@ public partial class WindowsFolderTreeView : ContentView
     {
       await page.DisplayAlert("Error", ex.Message, "OK");
     }
+#endif
   }
+
+#if WINDOWS
+  private static async Task<string?> PickExportPathAsync()
+  {
+    var picker = new global::Windows.Storage.Pickers.FileSavePicker
+    {
+      SuggestedFileName = DateTime.Now.ToString("yyyyMMddHHmmss"),
+      DefaultFileExtension = ".zip",
+    };
+    picker.FileTypeChoices.Add("Zip archive", new List<string> { ".zip" });
+
+    var mauiWindow = Application.Current?.Windows.FirstOrDefault();
+    if (mauiWindow?.Handler?.PlatformView is not Microsoft.UI.Xaml.Window win) return null;
+    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(win);
+    WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+    var file = await picker.PickSaveFileAsync();
+    return file?.Path;
+  }
+#endif
 
   private async Task ImportAsync(Page page)
   {

@@ -17,7 +17,8 @@
             </Grid.ColumnDefinitions>
 
             <controls:WindowsFolderTreeView x:Name="FolderTree" Grid.Column="0"
-                                             FolderSelected="OnFolderSelected" />
+                                             FolderSelected="OnFolderSelected"
+                                             MenuRequested="OnMenuRequested" />
 
             <BoxView Grid.Column="1" BackgroundColor="#C6C6C8" />
 
@@ -29,6 +30,13 @@
 
             <controls:WindowsNoteEditor x:Name="NoteEditor" Grid.Column="4" />
         </Grid>
+
+        <controls:WindowsSideMenu x:Name="SideMenu"
+                                   SyncToggleClicked="OnMenuSyncToggle"
+                                   SyncNowClicked="OnMenuSyncNow"
+                                   SyncSettingsClicked="OnMenuSyncSettings"
+                                   ExportClicked="OnMenuExport"
+                                   ImportClicked="OnMenuImport" />
 
         <shared:ToastOverlay x:Name="Toast" />
         <shared:ProgressOverlay x:Name="Progress" />

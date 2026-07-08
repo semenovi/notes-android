@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView x:Class="Notes.Views.Windows.Controls.WindowsSideMenu"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <ContentView.Resources>
+        <Style x:Key="SideMenuItem" TargetType="Grid">
+            <Setter Property="HeightRequest" Value="44" />
+            <Setter Property="Padding" Value="16,0" />
+            <Setter Property="ColumnSpacing" Value="16" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="VisualStateManager.VisualStateGroups">
+                <VisualStateGroupList>
+                    <VisualStateGroup x:Name="CommonStates">
+                        <VisualState x:Name="Normal">
+                            <VisualState.Setters>
+                                <Setter Property="BackgroundColor" Value="Transparent" />
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState x:Name="PointerOver">
+                            <VisualState.Setters>
+                                <Setter Property="BackgroundColor" Value="#F0F0F0" />
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateGroupList>
+            </Setter>
+        </Style>
+        <Style x:Key="SideMenuIcon" TargetType="Label">
+            <Setter Property="FontFamily" Value="MaterialIcons" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="TextColor" Value="#707579" />
+            <Setter Property="VerticalOptions" Value="Center" />
+        </Style>
+        <Style x:Key="SideMenuText" TargetType="Label">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="TextColor" Value="#1C1C1E" />
+            <Setter Property="VerticalOptions" Value="Center" />
+        </Style>
+    </ContentView.Resources>
+
+    <Grid x:Name="Root" IsVisible="False">
+        <BoxView x:Name="Scrim" BackgroundColor="Black" Opacity="0">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnScrimTapped" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
+        <Border x:Name="Panel" WidthRequest="280"
+                HorizontalOptions="Start" VerticalOptions="Fill"
+                BackgroundColor="White" StrokeThickness="0"
+                Padding="0">
+            <Border.Shadow>
+                <Shadow Brush="Black" Opacity="0.25" Radius="24" Offset="4,0" />
+            </Border.Shadow>
+            <VerticalStackLayout Spacing="0">
+
+                <!-- Header -->
+                <Grid Padding="16,0" HeightRequest="52" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Column="0" Text="&#xE5D2;" Style="{StaticResource SideMenuIcon}" TextColor="#1C1C1E" />
+                    <Label Grid.Column="1" Text="Notes" FontSize="17" FontAttributes="Bold"
+                           TextColor="#1C1C1E" VerticalOptions="Center" />
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnScrimTapped" />
+                    </Grid.GestureRecognizers>
+                </Grid>
+
+                <BoxView HeightRequest="1" BackgroundColor="#E5E5E5" />
+
+                <!-- Sync toggle -->
+                <Grid Style="{StaticResource SideMenuItem}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnSyncToggleTapped" />
+                    </Grid.GestureRecognizers>
+                    <Label Grid.Column="0" Text="&#xE627;" Style="{StaticResource SideMenuIcon}" />
+                    <Label Grid.Column="1" Text="Sync" Style="{StaticResource SideMenuText}" />
+                    <Label x:Name="SyncStateLabel" Grid.Column="2" Text="OFF"
+                           FontSize="12" FontAttributes="Bold" TextColor="#8E8E93"
+                           VerticalOptions="Center" />
+                </Grid>
+
+                <!-- Sync Now -->
+                <Grid Style="{StaticResource SideMenuItem}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnSyncNowTapped" />
+                    </Grid.GestureRecognizers>
+                    <Label Grid.Column="0" Text="&#xE5D5;" Style="{StaticResource SideMenuIcon}" />
+                    <Label Grid.Column="1" Text="Sync Now" Style="{StaticResource SideMenuText}" />
+                </Grid>
+
+                <!-- Sync Settings -->
+                <Grid Style="{StaticResource SideMenuItem}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnSyncSettingsTapped" />
+                    </Grid.GestureRecognizers>
+                    <Label Grid.Column="0" Text="&#xE8B8;" Style="{StaticResource SideMenuIcon}" />
+                    <Label Grid.Column="1" Text="Sync Settings..." Style="{StaticResource SideMenuText}" />
+                </Grid>
+
+                <BoxView HeightRequest="1" BackgroundColor="#E5E5E5" Margin="0,4" />
+
+                <!-- Export -->
+                <Grid Style="{StaticResource SideMenuItem}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnExportTapped" />
+                    </Grid.GestureRecognizers>
+                    <Label Grid.Column="0" Text="&#xE149;" Style="{StaticResource SideMenuIcon}" />
+                    <Label Grid.Column="1" Text="Export Archive" Style="{StaticResource SideMenuText}" />
+                </Grid>
+
+                <!-- Import -->
+                <Grid Style="{StaticResource SideMenuItem}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnImportTapped" />
+                    </Grid.GestureRecognizers>
+                    <Label Grid.Column="0" Text="&#xE169;" Style="{StaticResource SideMenuIcon}" />
+                    <Label Grid.Column="1" Text="Import Archive" Style="{StaticResource SideMenuText}" />
+                </Grid>
+
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+
+</ContentView>

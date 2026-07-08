@@ -2,29 +2,55 @@ namespace Notes.Services;
 
 public class ProgressNotificationService
 {
+    private readonly List<ProgressSession> _active = new();
     public ProgressSession? Current { get; private set; }
 
     public event Action<ProgressSession>? ShowRequested;
     public event Action<ProgressSession>? UpdateRequested;
     public event Action? HideRequested;
 
-    public ProgressSession Begin(string title, int delayMs = 2000)
-        => new(title, delayMs, this);
+    public ProgressSession Begin(string title, int delayMs = 2000, int priority = 0)
+        => new(title, delayMs, priority, this);
 
     internal void OnShow(ProgressSession s)
     {
-        Current = s;
-        MainThread.BeginInvokeOnMainThread(() => ShowRequested?.Invoke(s));
+        lock (_active)
+        {
+            if (!_active.Contains(s)) _active.Add(s);
+            Refresh();
+        }
     }
 
     internal void OnUpdate(ProgressSession s)
-        => MainThread.BeginInvokeOnMainThread(() => UpdateRequested?.Invoke(s));
+    {
+        if (Current != s) return;
+        MainThread.BeginInvokeOnMainThread(() => UpdateRequested?.Invoke(s));
+    }
 
     internal void OnHide(ProgressSession s)
     {
-        if (Current != s) return;
-        Current = null;
-        MainThread.BeginInvokeOnMainThread(() => HideRequested?.Invoke());
+        lock (_active)
+        {
+            _active.Remove(s);
+            Refresh();
+        }
+    }
+
+    // Called under lock. The highest-priority active session is displayed;
+    // a lower-priority one that finishes while hidden never touches the UI,
+    // and the previous session is restored when the top one ends.
+    private void Refresh()
+    {
+        ProgressSession? top = null;
+        foreach (var s in _active)
+            if (top == null || s.Priority >= top.Priority) top = s;
+
+        if (top == Current) return;
+        Current = top;
+        if (top == null)
+            MainThread.BeginInvokeOnMainThread(() => HideRequested?.Invoke());
+        else
+            MainThread.BeginInvokeOnMainThread(() => ShowRequested?.Invoke(top));
     }
 }
 
@@ -35,12 +61,14 @@ public sealed class ProgressSession : IDisposable
     private bool _shown, _done;
 
     public string Title { get; }
+    public int Priority { get; }
     public double Progress { get; private set; } = double.NaN;
     public string? Subtitle { get; private set; }
 
-    internal ProgressSession(string title, int delayMs, ProgressNotificationService svc)
+    internal ProgressSession(string title, int delayMs, int priority, ProgressNotificationService svc)
     {
         Title = title;
+        Priority = priority;
         _svc = svc;
         if (delayMs <= 0)
         {

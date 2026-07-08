@@ -47,4 +47,22 @@ public partial class MainWindow : ContentPage
   {
     NoteEditor.ClearEditor();
   }
+
+  private async void OnMenuRequested(object sender, EventArgs e)
+    => await SideMenu.ShowAsync();
+
+  private async void OnMenuSyncToggle(object sender, EventArgs e)
+    => await FolderTree.ToggleSyncAsync();
+
+  private async void OnMenuSyncNow(object sender, EventArgs e)
+    => await FolderTree.SyncNowAsync();
+
+  private async void OnMenuSyncSettings(object sender, EventArgs e)
+    => await FolderTree.ShowSyncSettingsAsync();
+
+  private async void OnMenuExport(object sender, EventArgs e)
+    => await FolderTree.ExportArchiveAsync();
+
+  private async void OnMenuImport(object sender, EventArgs e)
+    => await FolderTree.ImportArchiveAsync();
 }

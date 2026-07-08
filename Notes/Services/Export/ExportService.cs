@@ -23,10 +23,11 @@ public class ExportService
 
     try
     {
-      using (var archive = ZipFile.Open(tempPath, ZipArchiveMode.Create))
+      await Task.Run(() =>
       {
-        await AddFolderToArchiveAsync(archive, _storage.RootPath, "");
-      }
+        using var archive = ZipFile.Open(tempPath, ZipArchiveMode.Create);
+        AddFolderToArchive(archive, _storage.RootPath, "");
+      });
 
       return tempPath;
     }
@@ -39,7 +40,7 @@ public class ExportService
     }
   }
 
-  private async Task AddFolderToArchiveAsync(ZipArchive archive, string folderPath, string entryPath)
+  private void AddFolderToArchive(ZipArchive archive, string folderPath, string entryPath)
   {
     foreach (var file in Directory.GetFiles(folderPath))
     {
@@ -54,7 +55,30 @@ public class ExportService
       string dirName = new DirectoryInfo(dir).Name;
       string newEntryPath = string.IsNullOrEmpty(entryPath) ? dirName : Path.Combine(entryPath, dirName);
 
-      await AddFolderToArchiveAsync(archive, dir, newEntryPath);
+      AddFolderToArchive(archive, dir, newEntryPath);
+    }
+  }
+
+  // Writes the archive directly to a caller-chosen path (path is picked before
+  // any work starts). Zipping runs on a worker thread and streams straight to
+  // the destination file — no temp copy, no in-memory buffering.
+  public async Task ExportBackupToFileAsync(string targetPath)
+  {
+    try
+    {
+      await Task.Run(() =>
+      {
+        using var stream = File.Create(targetPath);
+        using var archive = new ZipArchive(stream, ZipArchiveMode.Create);
+        AddFolderToArchive(archive, _storage.RootPath, "");
+      });
+    }
+    catch (Exception ex)
+    {
+      if (File.Exists(targetPath))
+        File.Delete(targetPath);
+
+      throw new Exception($"Export failed: {ex.Message}", ex);
     }
   }
 
@@ -67,7 +91,7 @@ public class ExportService
       backupPath = await CreateBackupAsync();
       string fileName = Path.GetFileName(backupPath);
 
-      using var stream = new MemoryStream(await File.ReadAllBytesAsync(backupPath));
+      using var stream = File.OpenRead(backupPath);
       var result = await _fileSaver.SaveAsync(fileName, stream, CancellationToken.None);
 
       if (result.IsSuccessful)
