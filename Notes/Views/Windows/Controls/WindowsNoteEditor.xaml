@@ -100,6 +100,10 @@
                         BackgroundColor="Transparent" TextColor="#007AFF"
                         BorderWidth="0" Padding="6,2"
                         Clicked="OnAddImageClicked" />
+                <Button Text="Paste" FontSize="11"
+                        BackgroundColor="Transparent" TextColor="#007AFF"
+                        BorderWidth="0" Padding="6,2"
+                        Clicked="OnPasteImageClicked" />
             </StackLayout>
 
             <BoxView Grid.Row="3" HeightRequest="1" BackgroundColor="#E5E5EA" Margin="20,0" />
