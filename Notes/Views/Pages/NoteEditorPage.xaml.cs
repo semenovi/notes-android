@@ -13,6 +13,7 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
   private readonly NoteManager _noteManager;
   private readonly MediaManager _mediaManager;
   private readonly ProgressNotificationService _progressService;
+  private readonly ToastService _toastService;
 
   private Note _note;
   private string _noteId;
@@ -47,32 +48,14 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
   }
 
   public NoteEditorPage(NoteManager noteManager, MediaManager mediaManager,
-      ProgressNotificationService progressService)
+      ProgressNotificationService progressService, ToastService toastService)
   {
     InitializeComponent();
     _noteManager = noteManager;
     _mediaManager = mediaManager;
     _progressService = progressService;
+    _toastService = toastService;
     BindingContext = this;
-  }
-
-  protected override void OnAppearing()
-  {
-    base.OnAppearing();
-    _progressService.ShowRequested += PageProgress.ShowProgress;
-    _progressService.UpdateRequested += PageProgress.UpdateProgress;
-    _progressService.HideRequested += PageProgress.HideProgress;
-    if (_progressService.Current != null)
-      PageProgress.ShowProgress(_progressService.Current);
-  }
-
-  protected override void OnDisappearing()
-  {
-    base.OnDisappearing();
-    _progressService.ShowRequested -= PageProgress.ShowProgress;
-    _progressService.UpdateRequested -= PageProgress.UpdateProgress;
-    _progressService.HideRequested -= PageProgress.HideProgress;
-    PageProgress.Reset();
   }
 
   private async Task LoadNoteAsync()
@@ -98,7 +81,7 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     _note.Modified = DateTime.Now;
     await _noteManager.UpdateNoteAsync(_note);
 
-    await DisplayAlert("success", "note saved successfully", "ok");
+    _toastService.Show("note saved successfully");
   }
 
   private async void OnPreviewClicked(object sender, EventArgs e)
@@ -152,13 +135,13 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     }
     catch (Exception ex)
     {
-      await DisplayAlert("error", ex.Message, "ok");
+      _toastService.Show(ex.Message);
       return;
     }
 
     if (images.Count == 0)
     {
-      await DisplayAlert("paste image", "no image in the clipboard", "ok");
+      _toastService.Show("no image in the clipboard");
       return;
     }
 

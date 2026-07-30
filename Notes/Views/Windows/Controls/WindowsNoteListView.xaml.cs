@@ -12,6 +12,7 @@ public partial class WindowsNoteListView : ContentView
 {
   private readonly NoteManager _noteManager;
   private readonly MediaManager _mediaManager;
+  private readonly Services.ToastService _toastService;
   private string? _currentFolderId;
   private string? _selectedNoteId;
   private List<NoteViewModel> _allNotes = new();
@@ -28,6 +29,7 @@ public partial class WindowsNoteListView : ContentView
     var services = App.Current!.Handler!.MauiContext!.Services;
     _noteManager = services.GetService<NoteManager>()!;
     _mediaManager = services.GetService<MediaManager>()!;
+    _toastService = services.GetService<Services.ToastService>()!;
     NotesCollectionView.ItemsSource = Notes;
     services.GetService<ReactiveSyncService>()!.RemoteChangesApplied += OnRemoteChangesApplied;
   }
@@ -155,8 +157,7 @@ public partial class WindowsNoteListView : ContentView
   {
     if (string.IsNullOrEmpty(_currentFolderId))
     {
-      await Application.Current!.Windows[0].Page!.DisplayAlert(
-          "warning", "please select a folder", "ok");
+      _toastService.Show("please select a folder");
       return;
     }
 
@@ -218,6 +219,16 @@ public partial class WindowsNoteListView : ContentView
 
     if (isSelected)
       NoteSelected?.Invoke(this, vm.Note);
+  }
+
+  private async void OnNoteInfoContextMenuClicked(object sender, EventArgs e)
+  {
+    if (sender is not MenuFlyoutItem item || item.BindingContext is not NoteViewModel vm)
+      return;
+    var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+    if (page == null) return;
+
+    await page.DisplayAlert("note info", ItemInfoHelper.BuildNoteInfo(vm.Note), "ok");
   }
 
   private async void OnDeleteNoteContextMenuClicked(object sender, EventArgs e)

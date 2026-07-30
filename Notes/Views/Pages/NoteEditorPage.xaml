@@ -65,7 +65,5 @@
                     VerticalOptions="Fill"
                     AutoSize="TextChanges" />
         </ScrollView>
-
-        <shared:ProgressOverlay x:Name="PageProgress" Grid.RowSpan="2" />
     </Grid>
 </ContentPage>

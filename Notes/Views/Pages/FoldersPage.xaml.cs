@@ -49,23 +49,13 @@ public partial class FoldersPage : ContentPage
   {
     base.OnAppearing();
     _reactiveSync.RemoteChangesApplied += OnRemoteChangesApplied;
-    _progressService.ShowRequested += PageProgress.ShowProgress;
-    _progressService.UpdateRequested += PageProgress.UpdateProgress;
-    _progressService.HideRequested += PageProgress.HideProgress;
-    if (_progressService.Current != null)
-      PageProgress.ShowProgress(_progressService.Current);
     await Task.WhenAll(UpdateSyncToggleTextAsync(), LoadFoldersAsync());
-    _ = AutoSyncAsync();
   }
 
   protected override void OnDisappearing()
   {
     base.OnDisappearing();
     _reactiveSync.RemoteChangesApplied -= OnRemoteChangesApplied;
-    _progressService.ShowRequested -= PageProgress.ShowProgress;
-    _progressService.UpdateRequested -= PageProgress.UpdateProgress;
-    _progressService.HideRequested -= PageProgress.HideProgress;
-    PageProgress.Reset();
   }
 
   private async void OnRemoteChangesApplied() => await LoadFoldersAsync();
@@ -74,16 +64,6 @@ public partial class FoldersPage : ContentPage
   {
     var settings = await _syncSettingsService.LoadAsync();
     SyncToggleItem.Text = settings.Enabled ? "sync: on" : "sync: off";
-  }
-
-  private async Task AutoSyncAsync()
-  {
-    var settings = await _syncSettingsService.LoadAsync();
-    if (settings.Enabled)
-    {
-      await RunSyncAsync();
-      await LoadFoldersAsync();
-    }
   }
 
   private async Task LoadFoldersAsync()
@@ -145,7 +125,7 @@ public partial class FoldersPage : ContentPage
     var settings = await _syncSettingsService.LoadAsync();
     if (!settings.Enabled)
     {
-      await DisplayAlert("sync", "enable sync first", "ok");
+      _toastService.Show("enable sync first");
       return;
     }
     int applied = await RunSyncAsync();
@@ -178,10 +158,16 @@ public partial class FoldersPage : ContentPage
     settings.Enabled = true;
 
     await _syncSettingsService.SaveAsync(settings);
-    await DisplayAlert("sync settings", "settings saved", "ok");
+    _toastService.Show("settings saved");
 
+    // RestartAsync already runs an immediate sync in the background (see
+    // ReactiveSyncService.RunPeriodicSyncAsync) — a second RunSyncAsync() call here used
+    // to race it: both create their own "syncing" progress session, and the second one
+    // blocks on SyncManager's lock behind the first without ever reporting progress, yet
+    // still wins the notification (same priority, added later), freezing the UI on an
+    // indeterminate spinner for the whole real sync. LoadFoldersAsync() picks up the
+    // result once RemoteChangesApplied fires.
     await _reactiveSync.RestartAsync();
-    await RunSyncAsync();
     await LoadFoldersAsync();
   }
 
@@ -199,11 +185,11 @@ public partial class FoldersPage : ContentPage
     }
     catch (InvalidOperationException ex)
     {
-      await DisplayAlert("sync error", ex.Message, "ok");
+      _toastService.Show($"sync error: {ex.Message}");
     }
     catch (Exception ex)
     {
-      await DisplayAlert("sync error", ex.GetType().Name + ": " + ex.Message, "ok");
+      _toastService.Show($"sync error: {ex.GetType().Name}: {ex.Message}");
     }
     return -1;
   }
@@ -213,17 +199,24 @@ public partial class FoldersPage : ContentPage
     try
     {
       string result = await _exportService.ExportBackupAsync();
-      await DisplayAlert("success", "backup exported successfully", "ok");
+      _toastService.Show("backup exported successfully");
     }
     catch (Exception ex)
     {
-      await DisplayAlert("error", ex.Message, "ok");
+      _toastService.Show(ex.Message);
     }
   }
 
   private async void OnImportBackupClicked(object sender, EventArgs e)
   {
     await ImportBackupAsync();
+  }
+
+  private async void OnOverallInfoClicked(object sender, EventArgs e)
+  {
+    var folders = await _folderManager.GetAllFoldersAsync();
+    var notes = await _noteManager.GetAllNotesAsync();
+    await DisplayAlert("notes info", ItemInfoHelper.BuildOverallInfo(folders, notes), "ok");
   }
 
   private async void OnFolderTapped(object sender, TappedEventArgs e)
@@ -243,15 +236,15 @@ public partial class FoldersPage : ContentPage
   private async void OnExportLogsClicked(object sender, EventArgs e)
   {
     var log = DebugLogService.Current;
-    if (log == null) { await DisplayAlert("logs", "log service not initialized", "ok"); return; }
+    if (log == null) { _toastService.Show("log service not initialized"); return; }
     var text = log.GetLogsText();
-    if (string.IsNullOrEmpty(text)) { await DisplayAlert("logs", "no log entries yet", "ok"); return; }
+    if (string.IsNullOrEmpty(text)) { _toastService.Show("no log entries yet"); return; }
     var bytes = System.Text.Encoding.UTF8.GetBytes(text);
     using var stream = new MemoryStream(bytes);
     var fileName = $"notes_debug_{DateTime.Now:yyyyMMddHHmmss}.log";
     var result = await FileSaver.Default.SaveAsync(fileName, stream, CancellationToken.None);
     if (!result.IsSuccessful)
-      await DisplayAlert("error", result.Exception?.Message ?? "save failed", "ok");
+      _toastService.Show(result.Exception?.Message ?? "save failed");
   }
 
   private async Task ImportBackupAsync()
@@ -279,7 +272,7 @@ public partial class FoldersPage : ContentPage
       if (fileResult == null)
         return;
 
-      await DisplayAlert("information", "starting import process...", "ok");
+      _toastService.Show("starting import process...");
 
       string tempPath = Path.Combine(FileSystem.CacheDirectory, Path.GetFileName(fileResult.FullPath));
       using (var sourceStream = await fileResult.OpenReadAsync())
@@ -290,13 +283,13 @@ public partial class FoldersPage : ContentPage
 
       await _exportService.ImportBackupAsync(tempPath);
 
-      await DisplayAlert("success", "backup imported successfully. the app data has been replaced", "ok");
+      _toastService.Show("backup imported successfully. the app data has been replaced");
 
       await LoadFoldersAsync();
     }
     catch (Exception ex)
     {
-      await DisplayAlert("error", $"failed to import backup: {ex.Message}", "ok");
+      _toastService.Show($"failed to import backup: {ex.Message}");
     }
   }
 }

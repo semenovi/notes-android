@@ -14,6 +14,7 @@ public partial class WindowsSideMenu : ContentView
   public event EventHandler? SyncSettingsClicked;
   public event EventHandler? ExportClicked;
   public event EventHandler? ImportClicked;
+  public event EventHandler? InfoClicked;
 
   public WindowsSideMenu()
   {
@@ -69,4 +70,5 @@ public partial class WindowsSideMenu : ContentView
   private async void OnSyncSettingsTapped(object sender, EventArgs e) => await InvokeItemAsync(SyncSettingsClicked);
   private async void OnExportTapped(object sender, EventArgs e) => await InvokeItemAsync(ExportClicked);
   private async void OnImportTapped(object sender, EventArgs e) => await InvokeItemAsync(ImportClicked);
+  private async void OnInfoTapped(object sender, EventArgs e) => await InvokeItemAsync(InfoClicked);
 }

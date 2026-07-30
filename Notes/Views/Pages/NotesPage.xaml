@@ -13,6 +13,9 @@
         <ToolbarItem Text="rename folder"
                      Order="Secondary"
                      Clicked="OnRenameFolderClicked" />
+        <ToolbarItem Text="info"
+                     Order="Secondary"
+                     Clicked="OnFolderInfoClicked" />
         <ToolbarItem Text="delete folder"
                      Order="Secondary"
                      Clicked="OnDeleteFolderClicked" />
@@ -85,7 +88,5 @@
                 </LinearGradientBrush>
             </ContentView.Background>
         </ContentView>
-
-        <shared:ProgressOverlay x:Name="PageProgress" />
     </Grid>
 </ContentPage>

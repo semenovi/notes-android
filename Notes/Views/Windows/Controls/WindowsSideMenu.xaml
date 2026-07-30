@@ -142,6 +142,21 @@
                     <Label Grid.Column="1" Text="import archive" Style="{StaticResource SideMenuText}" />
                 </Grid>
 
+                <BoxView HeightRequest="1" BackgroundColor="#E5E5E5" Margin="0,4" />
+
+                <!-- Info -->
+                <Grid Style="{StaticResource SideMenuItem}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnInfoTapped" />
+                    </Grid.GestureRecognizers>
+                    <Label Grid.Column="0" Text="&#xE88E;" Style="{StaticResource SideMenuIcon}" />
+                    <Label Grid.Column="1" Text="info" Style="{StaticResource SideMenuText}" />
+                </Grid>
+
             </VerticalStackLayout>
         </Border>
     </Grid>

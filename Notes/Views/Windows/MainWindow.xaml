@@ -36,7 +36,8 @@
                                    SyncNowClicked="OnMenuSyncNow"
                                    SyncSettingsClicked="OnMenuSyncSettings"
                                    ExportClicked="OnMenuExport"
-                                   ImportClicked="OnMenuImport" />
+                                   ImportClicked="OnMenuImport"
+                                   InfoClicked="OnMenuInfo" />
 
         <shared:ToastOverlay x:Name="Toast" />
         <shared:ProgressOverlay x:Name="Progress" />

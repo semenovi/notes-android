@@ -406,6 +406,12 @@ public partial class NoteViewPage : ContentPage
     OnPropertyChanged(nameof(Title));
   }
 
+  private async void OnNoteInfoClicked(object sender, EventArgs e)
+  {
+    if (_note == null) return;
+    await DisplayAlert("note info", ItemInfoHelper.BuildNoteInfo(_note), "ok");
+  }
+
   private async void OnDeleteNoteClicked(object sender, EventArgs e)
   {
     bool confirm = await DisplayAlert("confirm delete", $"are you sure you want to delete note '{Title}'?", "yes", "no");
@@ -441,12 +447,6 @@ public partial class NoteViewPage : ContentPage
     global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = OnSwipeEnd;
     global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = () => _ = SpringBackAsync();
 #endif
-    _progressService.ShowRequested += PageProgress.ShowProgress;
-    _progressService.UpdateRequested += PageProgress.UpdateProgress;
-    _progressService.HideRequested += PageProgress.HideProgress;
-    if (_progressService.Current != null)
-      PageProgress.ShowProgress(_progressService.Current);
-
     if (_note != null)
       RenderNoteContentAsync().ConfigureAwait(false);
   }
@@ -461,9 +461,5 @@ public partial class NoteViewPage : ContentPage
     Notes.Platforms.Android.SwipeBackGesture.OnEnd = null;
     Notes.Platforms.Android.SwipeBackGesture.OnCancel = null;
 #endif
-    _progressService.ShowRequested -= PageProgress.ShowProgress;
-    _progressService.UpdateRequested -= PageProgress.UpdateProgress;
-    _progressService.HideRequested -= PageProgress.HideProgress;
-    PageProgress.Reset();
   }
 }

@@ -48,6 +48,8 @@
                                     <MenuFlyoutSeparator />
                                     <MenuFlyoutItem Text="rename" Clicked="OnRenameNoteContextMenuClicked" />
                                     <MenuFlyoutSeparator />
+                                    <MenuFlyoutItem Text="info" Clicked="OnNoteInfoContextMenuClicked" />
+                                    <MenuFlyoutSeparator />
                                     <MenuFlyoutItem Text="delete" Clicked="OnDeleteNoteContextMenuClicked" />
                                 </MenuFlyout>
                             </FlyoutBase.ContextFlyout>

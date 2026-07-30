@@ -22,6 +22,9 @@
         <ToolbarItem Text="import backup"
                      Order="Secondary"
                      Clicked="OnImportBackupClicked" />
+        <ToolbarItem Text="info"
+                     Order="Secondary"
+                     Clicked="OnOverallInfoClicked" />
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="*">
@@ -59,7 +62,5 @@
                 HorizontalOptions="End"
                 Margin="0,0,20,20"
                 Clicked="OnAddFolderClicked" />
-
-        <shared:ProgressOverlay x:Name="PageProgress" />
     </Grid>
 </ContentPage>

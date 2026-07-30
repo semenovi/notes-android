@@ -1,6 +1,5 @@
 using Notes.Helpers;
 using Notes.Models;
-using Notes.Services;
 using Notes.Services.Notes;
 using Notes.Services.Sync;
 using System.Collections.ObjectModel;
@@ -15,7 +14,6 @@ public partial class NotesPage : ContentPage
   private readonly NoteManager _noteManager;
   private readonly FolderManager _folderManager;
   private readonly ReactiveSyncService _reactiveSync;
-  private readonly ProgressNotificationService _progressService;
   public ObservableCollection<Note> Notes { get; } = new ObservableCollection<Note>();
   private CancellationTokenSource? _loadCts;
   private bool _isSwipingBack;
@@ -50,13 +48,12 @@ public partial class NotesPage : ContentPage
   }
 
   public NotesPage(NoteManager noteManager, FolderManager folderManager,
-      ReactiveSyncService reactiveSync, ProgressNotificationService progressService)
+      ReactiveSyncService reactiveSync)
   {
     InitializeComponent();
     _noteManager = noteManager;
     _folderManager = folderManager;
     _reactiveSync = reactiveSync;
-    _progressService = progressService;
     NotesCollection.ItemsSource = Notes;
     BindingContext = this;
   }
@@ -74,11 +71,6 @@ public partial class NotesPage : ContentPage
     global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = () => _ = SpringBackAsync();
 #endif
     _reactiveSync.RemoteChangesApplied += OnRemoteChangesApplied;
-    _progressService.ShowRequested += PageProgress.ShowProgress;
-    _progressService.UpdateRequested += PageProgress.UpdateProgress;
-    _progressService.HideRequested += PageProgress.HideProgress;
-    if (_progressService.Current != null)
-      PageProgress.ShowProgress(_progressService.Current);
   }
 
   protected override void OnDisappearing()
@@ -92,10 +84,6 @@ public partial class NotesPage : ContentPage
     global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = null;
 #endif
     _reactiveSync.RemoteChangesApplied -= OnRemoteChangesApplied;
-    _progressService.ShowRequested -= PageProgress.ShowProgress;
-    _progressService.UpdateRequested -= PageProgress.UpdateProgress;
-    _progressService.HideRequested -= PageProgress.HideProgress;
-    PageProgress.Reset();
   }
 
   private async void OnRemoteChangesApplied() => await LoadNotesAsync();
@@ -362,6 +350,15 @@ public partial class NotesPage : ContentPage
     folder.Modified = DateTime.UtcNow;
     await _folderManager.UpdateFolderAsync(folder);
     FolderName = newName;
+  }
+
+  private async void OnFolderInfoClicked(object sender, EventArgs e)
+  {
+    var folder = await _folderManager.GetFolderAsync(FolderId);
+    if (folder == null) return;
+
+    var notes = await _noteManager.GetNotesAsync(FolderId);
+    await DisplayAlert("folder info", ItemInfoHelper.BuildFolderInfo(folder, notes), "ok");
   }
 
   private async void OnDeleteFolderClicked(object sender, EventArgs e)

@@ -39,6 +39,8 @@
                                     <MenuFlyoutSeparator />
                                     <MenuFlyoutItem Text="rename" Clicked="OnRenameFolderContextMenuClicked" />
                                     <MenuFlyoutSeparator />
+                                    <MenuFlyoutItem Text="info" Clicked="OnFolderInfoContextMenuClicked" />
+                                    <MenuFlyoutSeparator />
                                     <MenuFlyoutItem Text="delete" Clicked="OnDeleteFolderContextMenuClicked" />
                                 </MenuFlyout>
                             </FlyoutBase.ContextFlyout>

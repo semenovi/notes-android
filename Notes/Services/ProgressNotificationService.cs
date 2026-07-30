@@ -38,12 +38,19 @@ public class ProgressNotificationService
 
     // Called under lock. The highest-priority active session is displayed;
     // a lower-priority one that finishes while hidden never touches the UI,
-    // and the previous session is restored when the top one ends.
+    // and the previous session is restored when the top one ends. On a priority tie,
+    // the session already showing keeps winning (strict '>', not '>=') — otherwise a
+    // second session for the same operation (e.g. two overlapping sync triggers) that
+    // never gets to report real progress would keep bumping the one that's actually
+    // reporting, permanently freezing the UI on an indeterminate spinner.
     private void Refresh()
     {
         ProgressSession? top = null;
         foreach (var s in _active)
-            if (top == null || s.Priority >= top.Priority) top = s;
+            if (top == null || s.Priority > top.Priority) top = s;
+        if (Current != null && _active.Contains(Current) &&
+            (top == null || Current.Priority >= top.Priority))
+            top = Current;
 
         if (top == Current) return;
         Current = top;

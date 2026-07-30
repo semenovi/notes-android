@@ -34,7 +34,13 @@ public class ReactiveSyncService : IDisposable
   // Fires on the UI thread when remote changes are applied, so pages can refresh.
   public event Action? RemoteChangesApplied;
 
-  public bool IsRunning => _cts != null && !_cts.IsCancellationRequested;
+  // Set synchronously at the top of StartAsync, before the first await, so a
+  // near-simultaneous second caller (App.OnStart immediately followed by App.OnResume
+  // on cold launch) sees IsRunning=true right away instead of racing in during the
+  // settings-file read that precedes _cts being assigned.
+  private volatile bool _startPending;
+
+  public bool IsRunning => _startPending || (_cts != null && !_cts.IsCancellationRequested);
 
   private static readonly JsonSerializerOptions JsonOpts = new()
   {
@@ -68,22 +74,30 @@ public class ReactiveSyncService : IDisposable
 
   public async Task StartAsync()
   {
-    // Always stop first so settings changes take effect immediately.
-    await StopAsync();
+    _startPending = true;
+    try
+    {
+      // Always stop first so settings changes take effect immediately.
+      await StopAsync();
 
-    var settings = await _settingsService.LoadAsync();
-    if (!settings.Enabled
-        || string.IsNullOrEmpty(settings.ServerUrl)
-        || string.IsNullOrEmpty(settings.ApiToken))
-      return;
+      var settings = await _settingsService.LoadAsync();
+      if (!settings.Enabled
+          || string.IsNullOrEmpty(settings.ServerUrl)
+          || string.IsNullOrEmpty(settings.ApiToken))
+        return;
 
-    _deviceId = settings.DeviceId;
-    _syncKey = SyncCryptoHelper.DeriveKeyFromToken(settings.ApiToken);
-    _client = new SyncApiClient(settings.ServerUrl, settings.ApiToken);
-    _cts = new CancellationTokenSource();
-    DebugLogService.Current?.Log($"sync-start: url={settings.ServerUrl} device={_deviceId}");
-    _sseTask = RunSseLoopAsync(_cts.Token);
-    _periodicTask = RunPeriodicSyncAsync(_cts.Token);
+      _deviceId = settings.DeviceId;
+      _syncKey = SyncCryptoHelper.DeriveKeyFromToken(settings.ApiToken);
+      _client = new SyncApiClient(settings.ServerUrl, settings.ApiToken);
+      _cts = new CancellationTokenSource();
+      DebugLogService.Current?.Log($"sync-start: url={settings.ServerUrl} device={_deviceId}");
+      _sseTask = RunSseLoopAsync(_cts.Token);
+      _periodicTask = RunPeriodicSyncAsync(_cts.Token);
+    }
+    finally
+    {
+      _startPending = false;
+    }
   }
 
   public Task RestartAsync() => StartAsync();
