@@ -7,54 +7,54 @@
              Title="{Binding Title}">
 
     <Grid RowDefinitions="Auto,*">
-        <HorizontalStackLayout Grid.Row="0" Padding="10" Spacing="10">
+        <HorizontalStackLayout Grid.Row="0" Padding="10,6" Spacing="6">
             <Button Text="{x:Static helpers:MaterialIconCodes.Save}" 
                     FontFamily="MaterialIcons"
                     FontSize="22" 
-                    WidthRequest="50"
-                    HeightRequest="50"
+                    WidthRequest="44"
+                    HeightRequest="44"
                     Clicked="OnSaveClicked" />
 
             <Button Text="{x:Static helpers:MaterialIconCodes.Preview}" 
                     FontFamily="MaterialIcons"
                     FontSize="22" 
-                    WidthRequest="50"
-                    HeightRequest="50"
+                    WidthRequest="44"
+                    HeightRequest="44"
                     Clicked="OnPreviewClicked" />
 
             <Button Text="{x:Static helpers:MaterialIconCodes.Image}" 
                     FontFamily="MaterialIcons"
                     FontSize="22" 
-                    WidthRequest="50"
-                    HeightRequest="50"
+                    WidthRequest="44"
+                    HeightRequest="44"
                     Clicked="OnAddMediaClicked" />
 
             <Button Text="{x:Static helpers:MaterialIconCodes.ContentPaste}"
                     FontFamily="MaterialIcons"
                     FontSize="22"
-                    WidthRequest="50"
-                    HeightRequest="50"
+                    WidthRequest="44"
+                    HeightRequest="44"
                     Clicked="OnPasteImageClicked" />
 
             <Button Text="{x:Static helpers:MaterialIconCodes.FormatBold}"
                     FontFamily="MaterialIcons"
                     FontSize="22" 
-                    WidthRequest="50"
-                    HeightRequest="50"
+                    WidthRequest="44"
+                    HeightRequest="44"
                     Clicked="OnFormatBoldClicked" />
 
             <Button Text="{x:Static helpers:MaterialIconCodes.FormatItalic}" 
                     FontFamily="MaterialIcons"
                     FontSize="22" 
-                    WidthRequest="50"
-                    HeightRequest="50"
+                    WidthRequest="44"
+                    HeightRequest="44"
                     Clicked="OnFormatItalicClicked" />
 
             <Button Text="{x:Static helpers:MaterialIconCodes.FormatListBulleted}" 
                     FontFamily="MaterialIcons"
                     FontSize="22" 
-                    WidthRequest="50"
-                    HeightRequest="50"
+                    WidthRequest="44"
+                    HeightRequest="44"
                     Clicked="OnFormatListClicked" />
         </HorizontalStackLayout>
 
