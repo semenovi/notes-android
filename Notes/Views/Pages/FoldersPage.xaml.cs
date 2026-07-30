@@ -240,20 +240,6 @@ public partial class FoldersPage : ContentPage
     }
   }
 
-  private async Task DeleteFolderWithContentsAsync(Folder folder)
-  {
-    bool confirm = await DisplayAlert("delete folder",
-        $"delete \"{folder.Name}\" and all notes inside?", "delete", "cancel");
-    if (!confirm) return;
-
-    var notes = await _noteManager.GetNotesAsync(folder.Id);
-    foreach (var note in notes)
-      await _noteManager.DeleteNoteAsync(note.Id);
-
-    await _folderManager.DeleteFolderAsync(folder.Id);
-    Folders.Remove(folder);
-  }
-
   private async void OnExportLogsClicked(object sender, EventArgs e)
   {
     var log = DebugLogService.Current;
