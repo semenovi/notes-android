@@ -63,7 +63,7 @@ public partial class WindowsFolderTreeView : ContentView
   {
     var byId = Folders.ToDictionary(vm => vm.Folder.Id);
     var desired = new List<FolderViewModel>(folders.Count);
-    foreach (var folder in folders)
+    foreach (var folder in folders.OrderBy(f => f.Name, NaturalSortComparer.Instance))
     {
       if (byId.TryGetValue(folder.Id, out var vm))
         vm.Update(folder);
@@ -207,6 +207,7 @@ public partial class WindowsFolderTreeView : ContentView
     vm.Folder.Modified = DateTime.UtcNow;
     await _folderManager.UpdateFolderAsync(vm.Folder);
     vm.Update(vm.Folder);
+    ApplyFolders(Folders.Select(f => f.Folder).ToList());
     if (vm.IsSelected)
       FolderSelected?.Invoke(this, vm.Folder);
   }

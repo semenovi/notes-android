@@ -1,3 +1,4 @@
+using Notes.Helpers;
 using Notes.Models;
 using Notes.Services.Notes;
 using System.Collections.ObjectModel;
@@ -72,7 +73,7 @@ public partial class NoteListView : ContentView
     Notes.Clear();
     var notes = await _noteManager.GetNotesAsync(folderId);
 
-    foreach (var note in notes.OrderByDescending(n => n.Modified))
+    foreach (var note in notes.OrderBy(n => n.Title, NaturalSortComparer.Instance))
     {
       Notes.Add(new NoteViewModel(note));
     }
@@ -94,7 +95,10 @@ public partial class NoteListView : ContentView
     {
       var note = await _noteManager.CreateNoteAsync(noteTitle, _currentFolderId);
       var viewModel = new NoteViewModel(note);
-      Notes.Add(viewModel);
+      int insertAt = Notes.Count;
+      for (int i = 0; i < Notes.Count; i++)
+        if (NaturalSortComparer.Instance.Compare(Notes[i].Title, note.Title) > 0) { insertAt = i; break; }
+      Notes.Insert(insertAt, viewModel);
       SelectedNote = viewModel;
     }
   }
@@ -145,7 +149,10 @@ public partial class NoteListView : ContentView
     else
     {
       var newNoteVm = new NoteViewModel(note);
-      Notes.Add(newNoteVm);
+      int insertAt = Notes.Count;
+      for (int i = 0; i < Notes.Count; i++)
+        if (NaturalSortComparer.Instance.Compare(Notes[i].Title, note.Title) > 0) { insertAt = i; break; }
+      Notes.Insert(insertAt, newNoteVm);
 
       if (Notes.Count == 1)
         SelectedNote = newNoteVm;

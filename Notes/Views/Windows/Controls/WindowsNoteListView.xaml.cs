@@ -56,7 +56,7 @@ public partial class WindowsNoteListView : ContentView
     _loadCts = cts;
 
     var notes = await _noteManager.GetNotesAsync(folderId);
-    var sorted = notes.OrderByDescending(n => n.Modified).ToList();
+    var sorted = notes.OrderBy(n => n.Title, NaturalSortComparer.Instance).ToList();
 
     // Reuse view models of unchanged notes (same id + Modified) so their rows —
     // including already-resolved preview images — stay as-is. Only new or
@@ -205,13 +205,16 @@ public partial class WindowsNoteListView : ContentView
     vm.Note.Title = newTitle;
     await _noteManager.UpdateNoteAsync(vm.Note);
 
-    var idx = Notes.IndexOf(vm);
-    var allIdx = _allNotes.IndexOf(vm);
     var isSelected = vm.IsSelected;
     var updated = new NoteViewModel(vm.Note, vm.PreviewImages) { IsSelected = isSelected };
 
-    if (idx >= 0) Notes[idx] = updated;
-    if (allIdx >= 0) _allNotes[allIdx] = updated;
+    _allNotes.Remove(vm);
+    int allIdx = _allNotes.Count;
+    for (int i = 0; i < _allNotes.Count; i++)
+      if (NaturalSortComparer.Instance.Compare(_allNotes[i].Title, updated.Title) > 0) { allIdx = i; break; }
+    _allNotes.Insert(allIdx, updated);
+
+    ApplySearch(SearchEntry.Text);
 
     if (isSelected)
       NoteSelected?.Invoke(this, vm.Note);

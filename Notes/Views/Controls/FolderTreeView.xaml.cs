@@ -1,7 +1,9 @@
+using Notes.Helpers;
 using Notes.Models;
 using Notes.Services.Notes;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace Notes.Views.Controls;
@@ -71,7 +73,7 @@ public partial class FolderTreeView : ContentView
     Folders.Clear();
     var folders = await _folderManager.GetAllFoldersAsync();
 
-    foreach (var folder in folders)
+    foreach (var folder in folders.OrderBy(f => f.Name, NaturalSortComparer.Instance))
     {
       Folders.Add(new FolderViewModel(folder));
     }
@@ -88,7 +90,10 @@ public partial class FolderTreeView : ContentView
     {
       var folder = await _folderManager.CreateFolderAsync(folderName);
       var viewModel = new FolderViewModel(folder);
-      Folders.Add(viewModel);
+      int insertAt = Folders.Count;
+      for (int i = 0; i < Folders.Count; i++)
+        if (NaturalSortComparer.Instance.Compare(Folders[i].Name, folder.Name) > 0) { insertAt = i; break; }
+      Folders.Insert(insertAt, viewModel);
       SelectedFolder = viewModel;
     }
   }

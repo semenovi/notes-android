@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui.Storage;
+using Notes.Helpers;
 using Notes.Models;
 using Notes.Services;
 using Notes.Services.Export;
@@ -6,6 +7,7 @@ using Notes.Services.Notes;
 using Notes.Services.Sync;
 using Notes.Views.Controls;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace Notes.Views.Pages;
 
@@ -91,7 +93,8 @@ public partial class FoldersPage : ContentPage
     _loadCts = cts;
     var folders = await _folderManager.GetFoldersAsync(null);
     if (cts.IsCancellationRequested) return;
-    DiffUpdateFolders(folders);
+    var sorted = folders.OrderBy(f => f.Name, NaturalSortComparer.Instance).ToList();
+    DiffUpdateFolders(sorted);
   }
 
   private void DiffUpdateFolders(List<Folder> newFolders)
@@ -121,8 +124,8 @@ public partial class FoldersPage : ContentPage
 
     if (!string.IsNullOrWhiteSpace(folderName))
     {
-      var newFolder = await _folderManager.CreateFolderAsync(folderName);
-      Folders.Add(newFolder);
+      await _folderManager.CreateFolderAsync(folderName);
+      await LoadFoldersAsync();
     }
   }
 
