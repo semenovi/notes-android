@@ -13,6 +13,7 @@ public partial class WindowsNoteEditor : ContentView
   private readonly MediaManager _mediaManager;
   private readonly MarkdownProcessor _markdownProcessor;
   private readonly Services.ProgressNotificationService _progressService;
+  private readonly Services.ToastService _toastService;
 
   private Note? _currentNote;
   private readonly System.Timers.Timer _autoSaveTimer;
@@ -26,6 +27,7 @@ public partial class WindowsNoteEditor : ContentView
     _mediaManager = App.Current!.Handler!.MauiContext!.Services.GetService<MediaManager>()!;
     _markdownProcessor = App.Current!.Handler!.MauiContext!.Services.GetService<MarkdownProcessor>()!;
     _progressService = App.Current!.Handler!.MauiContext!.Services.GetService<Services.ProgressNotificationService>()!;
+    _toastService = App.Current!.Handler!.MauiContext!.Services.GetService<Services.ToastService>()!;
 
     _autoSaveTimer = new System.Timers.Timer(3000) { AutoReset = false };
     _autoSaveTimer.Elapsed += OnAutoSave;
@@ -208,8 +210,7 @@ public partial class WindowsNoteEditor : ContentView
     }
     catch (Exception ex)
     {
-      await Application.Current!.Windows[0].Page!.DisplayAlert("error",
-          $"failed to save: {ex.Message}", "ok");
+      _toastService.Show($"failed to save: {ex.Message}");
     }
   }
 
@@ -357,7 +358,7 @@ public partial class WindowsNoteEditor : ContentView
     }
     catch (Exception ex)
     {
-      await Application.Current!.Windows[0].Page!.DisplayAlert("error", ex.Message, "ok");
+      _toastService.Show(ex.Message);
     }
   }
 
@@ -374,8 +375,7 @@ public partial class WindowsNoteEditor : ContentView
       if (images.Count == 0)
       {
         if (showAlertIfEmpty)
-          await Application.Current!.Windows[0].Page!.DisplayAlert("paste image",
-              "no image in the clipboard", "ok");
+          _toastService.Show("no image in the clipboard");
         return;
       }
 
@@ -396,7 +396,7 @@ public partial class WindowsNoteEditor : ContentView
     }
     catch (Exception ex)
     {
-      await Application.Current!.Windows[0].Page!.DisplayAlert("error", ex.Message, "ok");
+      _toastService.Show(ex.Message);
     }
   }
 

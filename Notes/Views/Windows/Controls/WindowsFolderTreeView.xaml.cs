@@ -154,10 +154,9 @@ public partial class WindowsFolderTreeView : ContentView
 
   public async Task SyncNowAsync()
   {
-    var page = Application.Current!.Windows[0].Page!;
     var settings = await _syncSettingsService.LoadAsync();
     if (!settings.Enabled)
-      await page.DisplayAlert("sync", "please enable sync first", "ok");
+      _toastService.Show("please enable sync first");
     else
     {
       int applied = await RunSyncAsync();
@@ -177,6 +176,14 @@ public partial class WindowsFolderTreeView : ContentView
 
   public async Task ImportArchiveAsync()
     => await ImportAsync(Application.Current!.Windows[0].Page!);
+
+  public async Task ShowOverallInfoAsync()
+  {
+    var page = Application.Current!.Windows[0].Page!;
+    var folders = await _folderManager.GetAllFoldersAsync();
+    var notes = await _noteManager.GetAllNotesAsync();
+    await page.DisplayAlert("notes info", ItemInfoHelper.BuildOverallInfo(folders, notes), "ok");
+  }
 
   private async void OnChangeFolderIconContextMenuClicked(object sender, EventArgs e)
   {
@@ -210,6 +217,17 @@ public partial class WindowsFolderTreeView : ContentView
     ApplyFolders(Folders.Select(f => f.Folder).ToList());
     if (vm.IsSelected)
       FolderSelected?.Invoke(this, vm.Folder);
+  }
+
+  private async void OnFolderInfoContextMenuClicked(object sender, EventArgs e)
+  {
+    if (sender is not MenuFlyoutItem item || item.BindingContext is not FolderViewModel vm)
+      return;
+    var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+    if (page == null) return;
+
+    var notes = await _noteManager.GetNotesAsync(vm.Folder.Id);
+    await page.DisplayAlert("folder info", ItemInfoHelper.BuildFolderInfo(vm.Folder, notes), "ok");
   }
 
   private async void OnDeleteFolderContextMenuClicked(object sender, EventArgs e)
@@ -251,10 +269,16 @@ public partial class WindowsFolderTreeView : ContentView
     settings.Enabled = true;
 
     await _syncSettingsService.SaveAsync(settings);
-    await page.DisplayAlert("sync settings", "settings saved", "ok");
+    _toastService.Show("settings saved");
 
+    // RestartAsync already runs an immediate sync in the background (see
+    // ReactiveSyncService.RunPeriodicSyncAsync) — a second RunSyncAsync() call here used
+    // to race it: both create their own "syncing" progress session, and the second one
+    // blocks on SyncManager's lock behind the first without ever reporting progress, yet
+    // still wins the notification (same priority, added later), freezing the UI on an
+    // indeterminate spinner for the whole real sync. LoadFoldersAsync() picks up the
+    // result once RemoteChangesApplied fires.
     await _reactiveSync.RestartAsync();
-    await RunSyncAsync();
     await LoadFoldersAsync();
   }
 
@@ -272,15 +296,11 @@ public partial class WindowsFolderTreeView : ContentView
     }
     catch (InvalidOperationException ex)
     {
-      var page = Application.Current?.Windows.FirstOrDefault()?.Page;
-      if (page != null)
-        await page.DisplayAlert("sync error", ex.Message, "ok");
+      _toastService.Show($"sync error: {ex.Message}");
     }
     catch (Exception ex)
     {
-      var page = Application.Current?.Windows.FirstOrDefault()?.Page;
-      if (page != null)
-        await page.DisplayAlert("sync error", ex.GetType().Name + ": " + ex.Message, "ok");
+      _toastService.Show($"sync error: {ex.GetType().Name}: {ex.Message}");
     }
     return -1;
   }
@@ -305,11 +325,11 @@ public partial class WindowsFolderTreeView : ContentView
     try
     {
       await _exportService.ExportBackupAsync();
-      await page.DisplayAlert("done", "archive exported successfully", "ok");
+      _toastService.Show("archive exported successfully");
     }
     catch (Exception ex)
     {
-      await page.DisplayAlert("error", ex.Message, "ok");
+      _toastService.Show(ex.Message);
     }
 #endif
   }
@@ -362,11 +382,11 @@ public partial class WindowsFolderTreeView : ContentView
 
       await _exportService.ImportBackupAsync(tempPath);
       await LoadFoldersAsync();
-      await page.DisplayAlert("done", "archive imported successfully", "ok");
+      _toastService.Show("archive imported successfully");
     }
     catch (Exception ex)
     {
-      await page.DisplayAlert("error", $"failed to import: {ex.Message}", "ok");
+      _toastService.Show($"failed to import: {ex.Message}");
     }
   }
 }

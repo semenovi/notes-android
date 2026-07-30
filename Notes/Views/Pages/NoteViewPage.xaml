@@ -17,6 +17,9 @@
         <ToolbarItem Text="rename note"
                      Order="Secondary"
                      Clicked="OnRenameNoteClicked" />
+        <ToolbarItem Text="info"
+                     Order="Secondary"
+                     Clicked="OnNoteInfoClicked" />
         <ToolbarItem Text="delete note"
                      Order="Secondary"
                      Clicked="OnDeleteNoteClicked" />
@@ -44,7 +47,5 @@
                 </LinearGradientBrush>
             </ContentView.Background>
         </ContentView>
-
-        <shared:ProgressOverlay x:Name="PageProgress" />
     </Grid>
 </ContentPage>

@@ -65,4 +65,7 @@ public partial class MainWindow : ContentPage
 
   private async void OnMenuImport(object sender, EventArgs e)
     => await FolderTree.ImportArchiveAsync();
+
+  private async void OnMenuInfo(object sender, EventArgs e)
+    => await FolderTree.ShowOverallInfoAsync();
 }

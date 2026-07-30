@@ -98,6 +98,11 @@ public class NoteManager
     return await _repository.GetNotesAsync(folderId);
   }
 
+  public async Task<List<Note>> GetAllNotesAsync()
+  {
+    return await _repository.GetAllNotesAsync();
+  }
+
   public async Task<List<Note>> SearchNotesAsync(string query)
   {
     return await _repository.SearchNotesAsync(query);
