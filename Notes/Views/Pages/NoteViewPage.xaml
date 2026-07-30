@@ -8,13 +8,13 @@
              Title="{Binding Title}">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Edit"
+        <ToolbarItem Text="edit"
                      Order="Secondary"
                      Clicked="OnEditClicked" />
-        <ToolbarItem Text="Change Icon"
+        <ToolbarItem Text="change icon"
                      Order="Secondary"
                      Clicked="OnChangeIconClicked" />
-        <ToolbarItem Text="Delete Note"
+        <ToolbarItem Text="delete note"
                      Order="Secondary"
                      Clicked="OnDeleteNoteClicked" />
     </ContentPage.ToolbarItems>

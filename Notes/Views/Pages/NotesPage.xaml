@@ -7,13 +7,13 @@
              Title="{Binding FolderName}">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Change Folder Icon"
+        <ToolbarItem Text="change folder icon"
                      Order="Secondary"
                      Clicked="OnChangeFolderIconClicked" />
-        <ToolbarItem Text="Rename Folder"
+        <ToolbarItem Text="rename folder"
                      Order="Secondary"
                      Clicked="OnRenameFolderClicked" />
-        <ToolbarItem Text="Delete Folder"
+        <ToolbarItem Text="delete folder"
                      Order="Secondary"
                      Clicked="OnDeleteFolderClicked" />
     </ContentPage.ToolbarItems>
@@ -26,8 +26,8 @@
                           SelectionMode="None">
                 <CollectionView.EmptyView>
                     <StackLayout HorizontalOptions="Center" VerticalOptions="Center">
-                        <Label Text="No notes yet" FontSize="18" HorizontalOptions="Center" TextColor="Gray" />
-                        <Label Text="Create your first note" FontSize="14" HorizontalOptions="Center" TextColor="Gray" />
+                        <Label Text="no notes yet" FontSize="18" HorizontalOptions="Center" TextColor="Gray" />
+                        <Label Text="create your first note" FontSize="14" HorizontalOptions="Center" TextColor="Gray" />
                     </StackLayout>
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
@@ -35,11 +35,11 @@
                         <Grid Padding="20,10" ColumnDefinitions="Auto,*">
                             <FlyoutBase.ContextFlyout>
                                 <MenuFlyout>
-                                    <MenuFlyoutItem Text="Change Icon" Clicked="OnChangeNoteIconMenuClicked" />
+                                    <MenuFlyoutItem Text="change icon" Clicked="OnChangeNoteIconMenuClicked" />
                                     <MenuFlyoutSeparator />
-                                    <MenuFlyoutItem Text="Rename" Clicked="OnRenameNoteMenuClicked" />
+                                    <MenuFlyoutItem Text="rename" Clicked="OnRenameNoteMenuClicked" />
                                     <MenuFlyoutSeparator />
-                                    <MenuFlyoutItem Text="Delete" Clicked="OnDeleteNoteMenuClicked" />
+                                    <MenuFlyoutItem Text="delete" Clicked="OnDeleteNoteMenuClicked" />
                                 </MenuFlyout>
                             </FlyoutBase.ContextFlyout>
                             <Grid.GestureRecognizers>

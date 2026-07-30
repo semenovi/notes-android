@@ -73,7 +73,7 @@ public partial class NoteViewPage : ContentPage
     NoteContentWebView.Source = new HtmlWebViewSource { Html = BuildFullHtml(html) };
     await navTask;
 
-    using var session = _progressService.Begin("Loading note");
+    using var session = _progressService.Begin("loading note");
     await _markdownProcessor.InjectImagesIntoWebViewAsync(content, NoteContentWebView,
         (loaded, total) => session.Report((double)loaded / total,
             total - loaded > 0 ? $"{total - loaded} images left" : null));
@@ -398,7 +398,7 @@ public partial class NoteViewPage : ContentPage
 
   private async void OnDeleteNoteClicked(object sender, EventArgs e)
   {
-    bool confirm = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete note '{Title}'?", "Yes", "No");
+    bool confirm = await DisplayAlert("confirm delete", $"are you sure you want to delete note '{Title}'?", "yes", "no");
     if (confirm)
     {
       await _noteManager.DeleteNoteAsync(_note.Id);

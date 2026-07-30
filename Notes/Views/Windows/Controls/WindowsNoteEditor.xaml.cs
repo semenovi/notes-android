@@ -156,7 +156,7 @@ public partial class WindowsNoteEditor : ContentView
     EditMode.IsVisible = false;
     ViewMode.IsVisible = true;
 
-    using var session = _progressService.Begin("Loading note");
+    using var session = _progressService.Begin("loading note");
     await UpdatePreviewAsync(session);
   }
 
@@ -208,8 +208,8 @@ public partial class WindowsNoteEditor : ContentView
     }
     catch (Exception ex)
     {
-      await Application.Current!.Windows[0].Page!.DisplayAlert("Error",
-          $"Failed to save: {ex.Message}", "OK");
+      await Application.Current!.Windows[0].Page!.DisplayAlert("error",
+          $"failed to save: {ex.Message}", "ok");
     }
   }
 
@@ -334,13 +334,13 @@ public partial class WindowsNoteEditor : ContentView
       var results = await FilePicker.PickMultipleAsync(new PickOptions
       {
         FileTypes = FilePickerFileType.Images,
-        PickerTitle = "Select images"
+        PickerTitle = "select images"
       });
       if (results == null || !results.Any()) return;
 
       var fileList = results.ToList();
       int total = fileList.Count;
-      using var session = _progressService.Begin("Adding images", delayMs: 0);
+      using var session = _progressService.Begin("adding images", delayMs: 0);
 
       var parts = new List<string>();
       for (int i = 0; i < fileList.Count; i++)
@@ -357,7 +357,7 @@ public partial class WindowsNoteEditor : ContentView
     }
     catch (Exception ex)
     {
-      await Application.Current!.Windows[0].Page!.DisplayAlert("Error", ex.Message, "OK");
+      await Application.Current!.Windows[0].Page!.DisplayAlert("error", ex.Message, "ok");
     }
   }
 
@@ -374,13 +374,13 @@ public partial class WindowsNoteEditor : ContentView
       if (images.Count == 0)
       {
         if (showAlertIfEmpty)
-          await Application.Current!.Windows[0].Page!.DisplayAlert("Paste image",
-              "No image in the clipboard", "OK");
+          await Application.Current!.Windows[0].Page!.DisplayAlert("paste image",
+              "no image in the clipboard", "ok");
         return;
       }
 
       int total = images.Count;
-      using var session = _progressService.Begin("Adding images", delayMs: 0);
+      using var session = _progressService.Begin("adding images", delayMs: 0);
 
       var parts = new List<string>();
       for (int i = 0; i < images.Count; i++)
@@ -396,7 +396,7 @@ public partial class WindowsNoteEditor : ContentView
     }
     catch (Exception ex)
     {
-      await Application.Current!.Windows[0].Page!.DisplayAlert("Error", ex.Message, "OK");
+      await Application.Current!.Windows[0].Page!.DisplayAlert("error", ex.Message, "ok");
     }
   }
 

@@ -7,7 +7,7 @@
 
         <!-- Empty state -->
         <Label x:Name="EmptyStateLabel"
-               Text="Select a note or create a new one"
+               Text="select a note or create a new one"
                FontSize="16" TextColor="#8E8E93"
                HorizontalOptions="Center" VerticalOptions="Center"
                IsVisible="True" />
@@ -59,11 +59,11 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <Entry x:Name="TitleEntry" Grid.Column="0"
-                       Placeholder="Title" PlaceholderColor="#C7C7CC"
+                       Placeholder="title" PlaceholderColor="#C7C7CC"
                        FontSize="22" FontAttributes="Bold" TextColor="#1C1C1E"
                        BackgroundColor="Transparent"
                        TextChanged="OnTitleChanged" />
-                <Button Grid.Column="1" Text="Save"
+                <Button Grid.Column="1" Text="save"
                         BackgroundColor="Transparent" TextColor="#007AFF"
                         FontSize="13" FontAttributes="Bold"
                         BorderWidth="0" Padding="8,4"
@@ -96,11 +96,11 @@
                         BorderWidth="0" Padding="6,2" WidthRequest="32" HeightRequest="30"
                         Clicked="OnHeaderClicked" />
                 <BoxView BackgroundColor="#E5E5EA" WidthRequest="1" Margin="6,4" />
-                <Button Text="Img" FontSize="11"
+                <Button Text="img" FontSize="11"
                         BackgroundColor="Transparent" TextColor="#007AFF"
                         BorderWidth="0" Padding="6,2"
                         Clicked="OnAddImageClicked" />
-                <Button Text="Paste" FontSize="11"
+                <Button Text="paste" FontSize="11"
                         BackgroundColor="Transparent" TextColor="#007AFF"
                         BorderWidth="0" Padding="6,2"
                         Clicked="OnPasteImageClicked" />

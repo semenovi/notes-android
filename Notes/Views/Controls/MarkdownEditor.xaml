@@ -4,9 +4,9 @@
              x:Class="Notes.Views.Controls.MarkdownEditor">
     <Grid RowDefinitions="Auto,*">
         <HorizontalStackLayout Grid.Row="0" Margin="10" Spacing="10">
-            <Button Text="Save" Clicked="OnSaveClicked" />
-            <Button Text="Preview" Clicked="OnPreviewClicked" />
-            <Button Text="Add Media" Clicked="OnAddMediaClicked" />
+            <Button Text="save" Clicked="OnSaveClicked" />
+            <Button Text="preview" Clicked="OnPreviewClicked" />
+            <Button Text="add media" Clicked="OnAddMediaClicked" />
         </HorizontalStackLayout>
 
         <ScrollView Grid.Row="1" Margin="10">

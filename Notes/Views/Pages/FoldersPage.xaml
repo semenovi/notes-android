@@ -4,22 +4,22 @@
              xmlns:helpers="clr-namespace:Notes.Helpers"
              xmlns:shared="clr-namespace:Notes.Views.Controls"
              x:Class="Notes.Views.Pages.FoldersPage"
-             Title="Folders">
+             Title="folders">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Sync: OFF"
+        <ToolbarItem Text="sync: off"
                      x:Name="SyncToggleItem"
                      Order="Secondary"
                      Clicked="OnSyncToggleClicked" />
-        <ToolbarItem Text="Sync Now"
+        <ToolbarItem Text="sync now"
                      Order="Secondary"
                      Clicked="OnSyncNowClicked" />
-        <ToolbarItem Text="Sync Settings..."
+        <ToolbarItem Text="sync settings..."
                      Order="Secondary"
                      Clicked="OnSyncSettingsClicked" />
-        <ToolbarItem Text="Export Backup"
+        <ToolbarItem Text="export backup"
                      Order="Secondary"
                      Clicked="OnExportBackupClicked" />
-        <ToolbarItem Text="Import Backup"
+        <ToolbarItem Text="import backup"
                      Order="Secondary"
                      Clicked="OnImportBackupClicked" />
     </ContentPage.ToolbarItems>

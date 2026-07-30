@@ -11,6 +11,6 @@ public partial class MainPage : ContentPage
 
   private void OnButtonClicked(object sender, EventArgs e)
   {
-    DisplayAlert("Message", "You clicked the button!", "OK");
+    DisplayAlert("message", "you clicked the button!", "ok");
   }
 }

@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:helpers="clr-namespace:Notes.Helpers"
              x:Class="Notes.Views.Pages.MarkdownPreviewPage"
-             Title="Preview">
+             Title="preview">
     <Grid>
         <WebView x:Name="PreviewWebView" />
         <Button Text="{x:Static helpers:MaterialIconCodes.Close}"

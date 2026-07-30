@@ -99,11 +99,11 @@ public class ExportService
         return result.FilePath;
       }
 
-      throw new Exception("Backup not saved. Operation was cancelled.");
+      throw new Exception("backup not saved. operation was cancelled");
     }
     catch (Exception ex)
     {
-      throw new Exception($"Export failed: {ex.Message}", ex);
+      throw new Exception($"export failed: {ex.Message}", ex);
     }
     finally
     {

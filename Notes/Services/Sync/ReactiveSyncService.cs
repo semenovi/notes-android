@@ -109,7 +109,7 @@ public class ReactiveSyncService : IDisposable
     // StopAsync mid-queue) are recovered without waiting for the first 5-minute tick.
     if (!ct.IsCancellationRequested)
     {
-      using var session = _progressService.Begin("Syncing");
+      using var session = _progressService.Begin("syncing");
       try
       {
         DebugLogService.Current?.Log("initial-sync-start");
@@ -125,7 +125,7 @@ public class ReactiveSyncService : IDisposable
     using var timer = new PeriodicTimer(PeriodicInterval);
     while (await timer.WaitForNextTickAsync(ct))
     {
-      using var session = _progressService.Begin("Syncing");
+      using var session = _progressService.Begin("syncing");
       try
       {
         DebugLogService.Current?.Log("periodic-sync-start");
@@ -380,13 +380,13 @@ public class ReactiveSyncService : IDisposable
     if (notes > 0) received.Add($"{notes} {(notes == 1 ? "note" : "notes")}");
     if (folders > 0) received.Add($"{folders} {(folders == 1 ? "folder" : "folders")}");
     if (received.Count > 0)
-      parts.Add("Received: " + string.Join(", ", received));
+      parts.Add("received: " + string.Join(", ", received));
 
     var deleted = new List<string>();
     if (deletedNotes > 0) deleted.Add($"{deletedNotes} {(deletedNotes == 1 ? "note" : "notes")}");
     if (deletedFolders > 0) deleted.Add($"{deletedFolders} {(deletedFolders == 1 ? "folder" : "folders")}");
     if (deleted.Count > 0)
-      parts.Add("Deleted: " + string.Join(", ", deleted));
+      parts.Add("deleted: " + string.Join(", ", deleted));
 
     return string.Join(" · ", parts);
   }

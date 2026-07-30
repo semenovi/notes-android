@@ -4,8 +4,8 @@
              x:Class="Notes.Views.Controls.NoteListView">
     <Grid RowDefinitions="Auto,*">
         <HorizontalStackLayout Grid.Row="0" Spacing="10" Margin="10">
-            <Button Text="Add Note" Clicked="OnAddNoteClicked" />
-            <Button Text="Delete" Clicked="OnDeleteNoteClicked" IsEnabled="{Binding IsDeleteEnabled}" />
+            <Button Text="add note" Clicked="OnAddNoteClicked" />
+            <Button Text="delete" Clicked="OnDeleteNoteClicked" IsEnabled="{Binding IsDeleteEnabled}" />
         </HorizontalStackLayout>
 
         <CollectionView Grid.Row="1" 

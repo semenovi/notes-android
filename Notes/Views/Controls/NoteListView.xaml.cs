@@ -88,7 +88,7 @@ public partial class NoteListView : ContentView
     if (string.IsNullOrEmpty(_currentFolderId))
       return;
 
-    string noteTitle = await Application.Current.MainPage.DisplayPromptAsync("New Note", "Enter note title:");
+    string noteTitle = await Application.Current.MainPage.DisplayPromptAsync("new note", "enter note title:");
 
     if (!string.IsNullOrEmpty(noteTitle))
     {
@@ -104,8 +104,8 @@ public partial class NoteListView : ContentView
     if (SelectedNote == null)
       return;
 
-    bool confirm = await Application.Current.MainPage.DisplayAlert("Confirm Delete",
-        $"Are you sure you want to delete note '{SelectedNote.Title}'?", "Yes", "No");
+    bool confirm = await Application.Current.MainPage.DisplayAlert("confirm delete",
+        $"are you sure you want to delete note '{SelectedNote.Title}'?", "yes", "no");
 
     if (confirm)
     {
