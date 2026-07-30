@@ -337,50 +337,6 @@ public partial class NotesPage : ContentPage
     }
   }
 
-  private async void OnChangeNoteIconMenuClicked(object sender, EventArgs e)
-  {
-    if (sender is MenuFlyoutItem item && item.BindingContext is Note note)
-      await ChangeNoteIconAsync(note);
-  }
-
-  private async void OnRenameNoteMenuClicked(object sender, EventArgs e)
-  {
-    if (sender is MenuFlyoutItem item && item.BindingContext is Note note)
-      await RenameNoteAsync(note);
-  }
-
-  private async void OnDeleteNoteMenuClicked(object sender, EventArgs e)
-  {
-    if (sender is MenuFlyoutItem item && item.BindingContext is Note note)
-      await DeleteNoteAsync(note);
-  }
-
-  private async Task ChangeNoteIconAsync(Note note)
-  {
-    var icon = await IconSet.PickAsync(this);
-    if (icon == null) return;
-    note.Icon = icon;
-    await _noteManager.UpdateNoteAsync(note);
-    await LoadNotesAsync();
-  }
-
-  private async Task RenameNoteAsync(Note note)
-  {
-    var newTitle = await DisplayPromptAsync("rename note", "new name:", initialValue: note.Title);
-    if (string.IsNullOrWhiteSpace(newTitle) || newTitle == note.Title) return;
-    note.Title = newTitle;
-    await _noteManager.UpdateNoteAsync(note);
-    await LoadNotesAsync();
-  }
-
-  private async Task DeleteNoteAsync(Note note)
-  {
-    bool confirm = await DisplayAlert("delete note", $"delete \"{note.Title}\"?", "delete", "cancel");
-    if (!confirm) return;
-    await _noteManager.DeleteNoteAsync(note.Id);
-    Notes.Remove(note);
-  }
-
   private async void OnChangeFolderIconClicked(object sender, EventArgs e)
   {
     var folder = await _folderManager.GetFolderAsync(FolderId);

@@ -396,6 +396,16 @@ public partial class NoteViewPage : ContentPage
     await _noteManager.UpdateNoteAsync(_note);
   }
 
+  private async void OnRenameNoteClicked(object sender, EventArgs e)
+  {
+    if (_note == null) return;
+    var newTitle = await DisplayPromptAsync("rename note", "new name:", initialValue: _note.Title);
+    if (string.IsNullOrWhiteSpace(newTitle) || newTitle == _note.Title) return;
+    _note.Title = newTitle;
+    await _noteManager.UpdateNoteAsync(_note);
+    OnPropertyChanged(nameof(Title));
+  }
+
   private async void OnDeleteNoteClicked(object sender, EventArgs e)
   {
     bool confirm = await DisplayAlert("confirm delete", $"are you sure you want to delete note '{Title}'?", "yes", "no");

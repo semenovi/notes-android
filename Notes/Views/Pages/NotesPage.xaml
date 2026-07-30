@@ -33,15 +33,6 @@
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Grid Padding="20,10" ColumnDefinitions="Auto,*">
-                            <FlyoutBase.ContextFlyout>
-                                <MenuFlyout>
-                                    <MenuFlyoutItem Text="change icon" Clicked="OnChangeNoteIconMenuClicked" />
-                                    <MenuFlyoutSeparator />
-                                    <MenuFlyoutItem Text="rename" Clicked="OnRenameNoteMenuClicked" />
-                                    <MenuFlyoutSeparator />
-                                    <MenuFlyoutItem Text="delete" Clicked="OnDeleteNoteMenuClicked" />
-                                </MenuFlyout>
-                            </FlyoutBase.ContextFlyout>
                             <Grid.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnNoteTapped" />
                             </Grid.GestureRecognizers>

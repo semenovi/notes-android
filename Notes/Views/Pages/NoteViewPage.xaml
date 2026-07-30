@@ -14,6 +14,9 @@
         <ToolbarItem Text="change icon"
                      Order="Secondary"
                      Clicked="OnChangeIconClicked" />
+        <ToolbarItem Text="rename note"
+                     Order="Secondary"
+                     Clicked="OnRenameNoteClicked" />
         <ToolbarItem Text="delete note"
                      Order="Secondary"
                      Clicked="OnDeleteNoteClicked" />
