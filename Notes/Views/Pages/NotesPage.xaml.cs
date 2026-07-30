@@ -109,7 +109,7 @@ public partial class NotesPage : ContentPage
     _loadCts = cts;
     var notes = await _noteManager.GetNotesAsync(FolderId);
     if (cts.IsCancellationRequested) return;
-    var sorted = notes.OrderByDescending(n => n.Modified).ToList();
+    var sorted = notes.OrderBy(n => n.Title, NaturalSortComparer.Instance).ToList();
     if (IsNotesCollectionUnchanged(sorted)) return;
     Notes.Clear();
     foreach (var note in sorted)
@@ -131,7 +131,10 @@ public partial class NotesPage : ContentPage
     if (!string.IsNullOrWhiteSpace(noteTitle))
     {
       var newNote = await _noteManager.CreateNoteAsync(noteTitle, FolderId);
-      Notes.Add(newNote);
+      int insertAt = Notes.Count;
+      for (int i = 0; i < Notes.Count; i++)
+        if (NaturalSortComparer.Instance.Compare(Notes[i].Title, newNote.Title) > 0) { insertAt = i; break; }
+      Notes.Insert(insertAt, newNote);
 
       await NavigateToNoteEditor(newNote);
     }
