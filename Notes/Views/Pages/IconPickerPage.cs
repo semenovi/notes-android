@@ -4401,15 +4401,15 @@ public class IconPickerPage : ContentPage
 
     public IconPickerPage()
     {
-        Title = "Choose Icon";
+        Title = "choose icon";
 
-        var cancelItem = new ToolbarItem { Text = "Cancel" };
+        var cancelItem = new ToolbarItem { Text = "cancel" };
         cancelItem.Clicked += async (_, _) => await Navigation.PopModalAsync();
         ToolbarItems.Add(cancelItem);
 
         var search = new SearchBar
         {
-            Placeholder = "Search icons...",
+            Placeholder = "search icons...",
             Margin = new Thickness(8, 8, 8, 0),
         };
         search.TextChanged += OnSearchChanged;

@@ -35,11 +35,11 @@
                                 StrokeShape="RoundRectangle 6">
                             <FlyoutBase.ContextFlyout>
                                 <MenuFlyout>
-                                    <MenuFlyoutItem Text="Change Icon" Clicked="OnChangeFolderIconContextMenuClicked" />
+                                    <MenuFlyoutItem Text="change icon" Clicked="OnChangeFolderIconContextMenuClicked" />
                                     <MenuFlyoutSeparator />
-                                    <MenuFlyoutItem Text="Rename" Clicked="OnRenameFolderContextMenuClicked" />
+                                    <MenuFlyoutItem Text="rename" Clicked="OnRenameFolderContextMenuClicked" />
                                     <MenuFlyoutSeparator />
-                                    <MenuFlyoutItem Text="Delete" Clicked="OnDeleteFolderContextMenuClicked" />
+                                    <MenuFlyoutItem Text="delete" Clicked="OnDeleteFolderContextMenuClicked" />
                                 </MenuFlyout>
                             </FlyoutBase.ContextFlyout>
                             <StackLayout Orientation="Horizontal" Padding="10,8" Spacing="8">
@@ -54,7 +54,7 @@
         </CollectionView>
 
         <!-- New Folder -->
-        <Button Grid.Row="2" Text="+ New Folder"
+        <Button Grid.Row="2" Text="+ new folder"
                 BackgroundColor="Transparent" TextColor="#007AFF" FontSize="13"
                 BorderWidth="0" HorizontalOptions="Start" Margin="12,0"
                 Clicked="OnNewFolderButtonClicked" />

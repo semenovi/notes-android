@@ -18,13 +18,14 @@ public partial class FoldersPage : ContentPage
   private readonly SyncSettingsService _syncSettingsService;
   private readonly ReactiveSyncService _reactiveSync;
   private readonly ProgressNotificationService _progressService;
+  private readonly ToastService _toastService;
   public ObservableCollection<Folder> Folders { get; } = new ObservableCollection<Folder>();
   private CancellationTokenSource? _loadCts;
 
   public FoldersPage(FolderManager folderManager, NoteManager noteManager,
       ExportService exportService, SyncManager syncManager,
       SyncSettingsService syncSettingsService, ReactiveSyncService reactiveSync,
-      ProgressNotificationService progressService)
+      ProgressNotificationService progressService, ToastService toastService)
   {
     InitializeComponent();
     _folderManager = folderManager;
@@ -34,9 +35,10 @@ public partial class FoldersPage : ContentPage
     _syncSettingsService = syncSettingsService;
     _reactiveSync = reactiveSync;
     _progressService = progressService;
+    _toastService = toastService;
     FoldersCollection.ItemsSource = Folders;
 
-    var exportLogsItem = new ToolbarItem { Text = "Export Logs", Order = ToolbarItemOrder.Secondary };
+    var exportLogsItem = new ToolbarItem { Text = "export logs", Order = ToolbarItemOrder.Secondary };
     exportLogsItem.Clicked += OnExportLogsClicked;
     ToolbarItems.Add(exportLogsItem);
   }
@@ -69,7 +71,7 @@ public partial class FoldersPage : ContentPage
   private async Task UpdateSyncToggleTextAsync()
   {
     var settings = await _syncSettingsService.LoadAsync();
-    SyncToggleItem.Text = settings.Enabled ? "Sync: ON" : "Sync: OFF";
+    SyncToggleItem.Text = settings.Enabled ? "sync: on" : "sync: off";
   }
 
   private async Task AutoSyncAsync()
@@ -115,7 +117,7 @@ public partial class FoldersPage : ContentPage
 
   private async void OnAddFolderClicked(object sender, EventArgs e)
   {
-    string folderName = await DisplayPromptAsync("New Folder", "Enter folder name:", initialValue: "");
+    string folderName = await DisplayPromptAsync("new folder", "enter folder name:", initialValue: "");
 
     if (!string.IsNullOrWhiteSpace(folderName))
     {
@@ -129,7 +131,7 @@ public partial class FoldersPage : ContentPage
     var settings = await _syncSettingsService.LoadAsync();
     settings.Enabled = !settings.Enabled;
     await _syncSettingsService.SaveAsync(settings);
-    SyncToggleItem.Text = settings.Enabled ? "Sync: ON" : "Sync: OFF";
+    SyncToggleItem.Text = settings.Enabled ? "sync: on" : "sync: off";
 
     if (settings.Enabled && string.IsNullOrEmpty(settings.ServerUrl))
       await ShowSyncSettingsDialogAsync();
@@ -140,11 +142,15 @@ public partial class FoldersPage : ContentPage
     var settings = await _syncSettingsService.LoadAsync();
     if (!settings.Enabled)
     {
-      await DisplayAlert("Sync", "Enable sync first.", "OK");
+      await DisplayAlert("sync", "enable sync first", "ok");
       return;
     }
-    await RunSyncAsync();
+    int applied = await RunSyncAsync();
     await LoadFoldersAsync();
+    if (applied >= 0)
+      _toastService.Show(applied > 0
+          ? $"sync complete: {applied} {(applied == 1 ? "change" : "changes")} applied"
+          : "sync complete, no changes");
   }
 
   private async void OnSyncSettingsClicked(object sender, EventArgs e)
@@ -156,11 +162,11 @@ public partial class FoldersPage : ContentPage
   {
     var settings = await _syncSettingsService.LoadAsync();
 
-    string? url = await DisplayPromptAsync("Sync Settings", "Server URL:",
+    string? url = await DisplayPromptAsync("sync settings", "server url:",
         initialValue: settings.ServerUrl, placeholder: "http://46.148.142.210:8080");
     if (url == null) return;
 
-    string? token = await DisplayPromptAsync("Sync Settings", "API Token (from /api/sync/setup on server):",
+    string? token = await DisplayPromptAsync("sync settings", "api token (from /api/sync/setup on server):",
         initialValue: settings.ApiToken, placeholder: "paste token here");
     if (token == null) return;
 
@@ -169,19 +175,20 @@ public partial class FoldersPage : ContentPage
     settings.Enabled = true;
 
     await _syncSettingsService.SaveAsync(settings);
-    await DisplayAlert("Sync Settings", "Settings saved.", "OK");
+    await DisplayAlert("sync settings", "settings saved", "ok");
 
     await _reactiveSync.RestartAsync();
     await RunSyncAsync();
     await LoadFoldersAsync();
   }
 
-  private async Task RunSyncAsync()
+  // Returns the number of remote changes applied, or -1 if the sync failed.
+  private async Task<int> RunSyncAsync()
   {
-    using var session = _progressService.Begin("Syncing");
+    using var session = _progressService.Begin("syncing");
     try
     {
-      await Task.Run(() => _syncManager.SynchronizeAsync(new Notes.Models.SyncProfile
+      return await Task.Run(() => _syncManager.SynchronizeAsync(new Notes.Models.SyncProfile
       {
         Name = "Network",
         Protocol = Notes.Models.SyncProtocolType.Network,
@@ -189,12 +196,13 @@ public partial class FoldersPage : ContentPage
     }
     catch (InvalidOperationException ex)
     {
-      await DisplayAlert("Sync Error", ex.Message, "OK");
+      await DisplayAlert("sync error", ex.Message, "ok");
     }
     catch (Exception ex)
     {
-      await DisplayAlert("Sync Error", ex.GetType().Name + ": " + ex.Message, "OK");
+      await DisplayAlert("sync error", ex.GetType().Name + ": " + ex.Message, "ok");
     }
+    return -1;
   }
 
   private async void OnExportBackupClicked(object sender, EventArgs e)
@@ -202,11 +210,11 @@ public partial class FoldersPage : ContentPage
     try
     {
       string result = await _exportService.ExportBackupAsync();
-      await DisplayAlert("Success", "Backup exported successfully.", "OK");
+      await DisplayAlert("success", "backup exported successfully", "ok");
     }
     catch (Exception ex)
     {
-      await DisplayAlert("Error", ex.Message, "OK");
+      await DisplayAlert("error", ex.Message, "ok");
     }
   }
 
@@ -231,8 +239,8 @@ public partial class FoldersPage : ContentPage
 
   private async Task DeleteFolderWithContentsAsync(Folder folder)
   {
-    bool confirm = await DisplayAlert("Delete Folder",
-        $"Delete \"{folder.Name}\" and all notes inside?", "Delete", "Cancel");
+    bool confirm = await DisplayAlert("delete folder",
+        $"delete \"{folder.Name}\" and all notes inside?", "delete", "cancel");
     if (!confirm) return;
 
     var notes = await _noteManager.GetNotesAsync(folder.Id);
@@ -246,21 +254,21 @@ public partial class FoldersPage : ContentPage
   private async void OnExportLogsClicked(object sender, EventArgs e)
   {
     var log = DebugLogService.Current;
-    if (log == null) { await DisplayAlert("Logs", "Log service not initialized.", "OK"); return; }
+    if (log == null) { await DisplayAlert("logs", "log service not initialized", "ok"); return; }
     var text = log.GetLogsText();
-    if (string.IsNullOrEmpty(text)) { await DisplayAlert("Logs", "No log entries yet.", "OK"); return; }
+    if (string.IsNullOrEmpty(text)) { await DisplayAlert("logs", "no log entries yet", "ok"); return; }
     var bytes = System.Text.Encoding.UTF8.GetBytes(text);
     using var stream = new MemoryStream(bytes);
     var fileName = $"notes_debug_{DateTime.Now:yyyyMMddHHmmss}.log";
     var result = await FileSaver.Default.SaveAsync(fileName, stream, CancellationToken.None);
     if (!result.IsSuccessful)
-      await DisplayAlert("Error", result.Exception?.Message ?? "Save failed", "OK");
+      await DisplayAlert("error", result.Exception?.Message ?? "save failed", "ok");
   }
 
   private async Task ImportBackupAsync()
   {
-    bool confirmImport = await DisplayAlert("Confirmation",
-        "Import will replace all existing data. Continue?", "Yes", "No");
+    bool confirmImport = await DisplayAlert("confirmation",
+        "import will replace all existing data. continue?", "yes", "no");
 
     if (!confirmImport)
       return;
@@ -276,13 +284,13 @@ public partial class FoldersPage : ContentPage
           { DevicePlatform.WinUI, new[] { ".zip" } },
           { DevicePlatform.macOS, new[] { "zip" } }
         }),
-        PickerTitle = "Select backup file"
+        PickerTitle = "select backup file"
       });
 
       if (fileResult == null)
         return;
 
-      await DisplayAlert("Information", "Starting import process...", "OK");
+      await DisplayAlert("information", "starting import process...", "ok");
 
       string tempPath = Path.Combine(FileSystem.CacheDirectory, Path.GetFileName(fileResult.FullPath));
       using (var sourceStream = await fileResult.OpenReadAsync())
@@ -293,13 +301,13 @@ public partial class FoldersPage : ContentPage
 
       await _exportService.ImportBackupAsync(tempPath);
 
-      await DisplayAlert("Success", "Backup imported successfully. The app data has been replaced.", "OK");
+      await DisplayAlert("success", "backup imported successfully. the app data has been replaced", "ok");
 
       await LoadFoldersAsync();
     }
     catch (Exception ex)
     {
-      await DisplayAlert("Error", $"Failed to import backup: {ex.Message}", "OK");
+      await DisplayAlert("error", $"failed to import backup: {ex.Message}", "ok");
     }
   }
 }

@@ -52,7 +52,7 @@ public partial class WindowsSideMenu : ContentView
 
   private void UpdateSyncState(bool enabled)
   {
-    SyncStateLabel.Text = enabled ? "ON" : "OFF";
+    SyncStateLabel.Text = enabled ? "on" : "off";
     SyncStateLabel.TextColor = enabled ? Color.FromArgb("#34C759") : Color.FromArgb("#8E8E93");
   }
 

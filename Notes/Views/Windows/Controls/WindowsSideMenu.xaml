@@ -62,7 +62,7 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <Label Grid.Column="0" Text="&#xE5D2;" Style="{StaticResource SideMenuIcon}" TextColor="#1C1C1E" />
-                    <Label Grid.Column="1" Text="Notes" FontSize="17" FontAttributes="Bold"
+                    <Label Grid.Column="1" Text="notes" FontSize="17" FontAttributes="Bold"
                            TextColor="#1C1C1E" VerticalOptions="Center" />
                     <Grid.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnScrimTapped" />
@@ -82,8 +82,8 @@
                         <TapGestureRecognizer Tapped="OnSyncToggleTapped" />
                     </Grid.GestureRecognizers>
                     <Label Grid.Column="0" Text="&#xE627;" Style="{StaticResource SideMenuIcon}" />
-                    <Label Grid.Column="1" Text="Sync" Style="{StaticResource SideMenuText}" />
-                    <Label x:Name="SyncStateLabel" Grid.Column="2" Text="OFF"
+                    <Label Grid.Column="1" Text="sync" Style="{StaticResource SideMenuText}" />
+                    <Label x:Name="SyncStateLabel" Grid.Column="2" Text="off"
                            FontSize="12" FontAttributes="Bold" TextColor="#8E8E93"
                            VerticalOptions="Center" />
                 </Grid>
@@ -98,7 +98,7 @@
                         <TapGestureRecognizer Tapped="OnSyncNowTapped" />
                     </Grid.GestureRecognizers>
                     <Label Grid.Column="0" Text="&#xE5D5;" Style="{StaticResource SideMenuIcon}" />
-                    <Label Grid.Column="1" Text="Sync Now" Style="{StaticResource SideMenuText}" />
+                    <Label Grid.Column="1" Text="sync now" Style="{StaticResource SideMenuText}" />
                 </Grid>
 
                 <!-- Sync Settings -->
@@ -111,7 +111,7 @@
                         <TapGestureRecognizer Tapped="OnSyncSettingsTapped" />
                     </Grid.GestureRecognizers>
                     <Label Grid.Column="0" Text="&#xE8B8;" Style="{StaticResource SideMenuIcon}" />
-                    <Label Grid.Column="1" Text="Sync Settings..." Style="{StaticResource SideMenuText}" />
+                    <Label Grid.Column="1" Text="sync settings..." Style="{StaticResource SideMenuText}" />
                 </Grid>
 
                 <BoxView HeightRequest="1" BackgroundColor="#E5E5E5" Margin="0,4" />
@@ -126,7 +126,7 @@
                         <TapGestureRecognizer Tapped="OnExportTapped" />
                     </Grid.GestureRecognizers>
                     <Label Grid.Column="0" Text="&#xE149;" Style="{StaticResource SideMenuIcon}" />
-                    <Label Grid.Column="1" Text="Export Archive" Style="{StaticResource SideMenuText}" />
+                    <Label Grid.Column="1" Text="export archive" Style="{StaticResource SideMenuText}" />
                 </Grid>
 
                 <!-- Import -->
@@ -139,7 +139,7 @@
                         <TapGestureRecognizer Tapped="OnImportTapped" />
                     </Grid.GestureRecognizers>
                     <Label Grid.Column="0" Text="&#xE169;" Style="{StaticResource SideMenuIcon}" />
-                    <Label Grid.Column="1" Text="Import Archive" Style="{StaticResource SideMenuText}" />
+                    <Label Grid.Column="1" Text="import archive" Style="{StaticResource SideMenuText}" />
                 </Grid>
 
             </VerticalStackLayout>

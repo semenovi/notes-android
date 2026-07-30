@@ -88,7 +88,7 @@ public partial class App : Application
     var window = base.CreateWindow(activationState);
 
 #if WINDOWS
-        window.Title = "Notes";
+        window.Title = "notes";
         window.MinimumWidth = 800;
         window.MinimumHeight = 600;
         window.Width = 1200;

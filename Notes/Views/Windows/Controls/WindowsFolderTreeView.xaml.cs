@@ -129,7 +129,7 @@ public partial class WindowsFolderTreeView : ContentView
   private async void OnNewFolderButtonClicked(object sender, EventArgs e)
   {
     var page = Application.Current!.Windows[0].Page!;
-    var name = await page.DisplayPromptAsync("New Folder", "Folder name:");
+    var name = await page.DisplayPromptAsync("new folder", "folder name:");
     if (!string.IsNullOrWhiteSpace(name))
     {
       await _folderManager.CreateFolderAsync(name);
@@ -157,11 +157,15 @@ public partial class WindowsFolderTreeView : ContentView
     var page = Application.Current!.Windows[0].Page!;
     var settings = await _syncSettingsService.LoadAsync();
     if (!settings.Enabled)
-      await page.DisplayAlert("Sync", "Please enable sync first.", "OK");
+      await page.DisplayAlert("sync", "please enable sync first", "ok");
     else
     {
-      await RunSyncAsync();
+      int applied = await RunSyncAsync();
       await LoadFoldersAsync();
+      if (applied >= 0)
+        _toastService.Show(applied > 0
+            ? $"sync complete: {applied} {(applied == 1 ? "change" : "changes")} applied"
+            : "sync complete, no changes");
     }
   }
 
@@ -196,7 +200,7 @@ public partial class WindowsFolderTreeView : ContentView
     var page = Application.Current?.Windows.FirstOrDefault()?.Page;
     if (page == null) return;
 
-    var newName = await page.DisplayPromptAsync("Rename Folder", "New name:", initialValue: vm.Name);
+    var newName = await page.DisplayPromptAsync("rename folder", "new name:", initialValue: vm.Name);
     if (string.IsNullOrWhiteSpace(newName) || newName == vm.Name) return;
 
     vm.Folder.Name = newName;
@@ -214,8 +218,8 @@ public partial class WindowsFolderTreeView : ContentView
     var page = Application.Current?.Windows.FirstOrDefault()?.Page;
     if (page == null) return;
 
-    bool confirm = await page.DisplayAlert("Delete Folder",
-        $"Delete \"{vm.Name}\" and all notes inside?", "Delete", "Cancel");
+    bool confirm = await page.DisplayAlert("delete folder",
+        $"delete \"{vm.Name}\" and all notes inside?", "delete", "cancel");
     if (!confirm) return;
 
     var folderId = vm.Folder.Id;
@@ -232,12 +236,12 @@ public partial class WindowsFolderTreeView : ContentView
   {
     var settings = await _syncSettingsService.LoadAsync();
 
-    string? url = await page.DisplayPromptAsync("Sync Settings", "Server URL:",
+    string? url = await page.DisplayPromptAsync("sync settings", "server url:",
         initialValue: settings.ServerUrl, placeholder: "http://46.148.142.210:8080");
     if (url == null) return;
 
-    string? token = await page.DisplayPromptAsync("Sync Settings",
-        "API token (from /api/sync/setup on the server):",
+    string? token = await page.DisplayPromptAsync("sync settings",
+        "api token (from /api/sync/setup on the server):",
         initialValue: settings.ApiToken, placeholder: "paste token here");
     if (token == null) return;
 
@@ -246,36 +250,38 @@ public partial class WindowsFolderTreeView : ContentView
     settings.Enabled = true;
 
     await _syncSettingsService.SaveAsync(settings);
-    await page.DisplayAlert("Sync Settings", "Settings saved.", "OK");
+    await page.DisplayAlert("sync settings", "settings saved", "ok");
 
     await _reactiveSync.RestartAsync();
     await RunSyncAsync();
     await LoadFoldersAsync();
   }
 
-  private async Task RunSyncAsync()
+  // Returns the number of remote changes applied, or -1 if the sync failed.
+  private async Task<int> RunSyncAsync()
   {
-    using var session = _progressService.Begin("Syncing");
+    using var session = _progressService.Begin("syncing");
     try
     {
-      await _syncManager.SynchronizeAsync(new SyncProfile
+      return await _syncManager.SynchronizeAsync(new SyncProfile
       {
         Name = "Network",
         Protocol = SyncProtocolType.Network,
-      });
+      }, session.Report);
     }
     catch (InvalidOperationException ex)
     {
       var page = Application.Current?.Windows.FirstOrDefault()?.Page;
       if (page != null)
-        await page.DisplayAlert("Sync Error", ex.Message, "OK");
+        await page.DisplayAlert("sync error", ex.Message, "ok");
     }
     catch (Exception ex)
     {
       var page = Application.Current?.Windows.FirstOrDefault()?.Page;
       if (page != null)
-        await page.DisplayAlert("Sync Error", ex.GetType().Name + ": " + ex.Message, "OK");
+        await page.DisplayAlert("sync error", ex.GetType().Name + ": " + ex.Message, "ok");
     }
+    return -1;
   }
 
   private async Task ExportAsync(Page page)
@@ -284,25 +290,25 @@ public partial class WindowsFolderTreeView : ContentView
     string? targetPath = await PickExportPathAsync();
     if (targetPath == null) return;
 
-    using var session = _progressService.Begin("Exporting archive", delayMs: 0, priority: 1);
+    using var session = _progressService.Begin("exporting archive", delayMs: 0, priority: 1);
     try
     {
       await _exportService.ExportBackupToFileAsync(targetPath);
-      _toastService.Show("Archive exported successfully.");
+      _toastService.Show("archive exported successfully");
     }
     catch (Exception ex)
     {
-      _toastService.Show($"Export failed: {ex.Message}");
+      _toastService.Show($"export failed: {ex.Message}");
     }
 #else
     try
     {
       await _exportService.ExportBackupAsync();
-      await page.DisplayAlert("Done", "Archive exported successfully.", "OK");
+      await page.DisplayAlert("done", "archive exported successfully", "ok");
     }
     catch (Exception ex)
     {
-      await page.DisplayAlert("Error", ex.Message, "OK");
+      await page.DisplayAlert("error", ex.Message, "ok");
     }
 #endif
   }
@@ -315,7 +321,7 @@ public partial class WindowsFolderTreeView : ContentView
       SuggestedFileName = DateTime.Now.ToString("yyyyMMddHHmmss"),
       DefaultFileExtension = ".zip",
     };
-    picker.FileTypeChoices.Add("Zip archive", new List<string> { ".zip" });
+    picker.FileTypeChoices.Add("zip archive", new List<string> { ".zip" });
 
     var mauiWindow = Application.Current?.Windows.FirstOrDefault();
     if (mauiWindow?.Handler?.PlatformView is not Microsoft.UI.Xaml.Window win) return null;
@@ -329,8 +335,8 @@ public partial class WindowsFolderTreeView : ContentView
 
   private async Task ImportAsync(Page page)
   {
-    bool confirm = await page.DisplayAlert("Confirmation",
-        "Import will replace all existing data. Continue?", "Yes", "Cancel");
+    bool confirm = await page.DisplayAlert("confirmation",
+        "import will replace all existing data. continue?", "yes", "cancel");
     if (!confirm) return;
 
     try
@@ -341,7 +347,7 @@ public partial class WindowsFolderTreeView : ContentView
         {
           { DevicePlatform.WinUI, new[] { ".zip" } }
         }),
-        PickerTitle = "Select backup file"
+        PickerTitle = "select backup file"
       });
 
       if (fileResult == null) return;
@@ -355,11 +361,11 @@ public partial class WindowsFolderTreeView : ContentView
 
       await _exportService.ImportBackupAsync(tempPath);
       await LoadFoldersAsync();
-      await page.DisplayAlert("Done", "Archive imported successfully.", "OK");
+      await page.DisplayAlert("done", "archive imported successfully", "ok");
     }
     catch (Exception ex)
     {
-      await page.DisplayAlert("Error", $"Failed to import: {ex.Message}", "OK");
+      await page.DisplayAlert("error", $"failed to import: {ex.Message}", "ok");
     }
   }
 }

@@ -126,7 +126,7 @@ public partial class NotesPage : ContentPage
 
   private async void OnAddNoteClicked(object sender, EventArgs e)
   {
-    string noteTitle = await DisplayPromptAsync("New Note", "Enter note title:", initialValue: "");
+    string noteTitle = await DisplayPromptAsync("new note", "enter note title:", initialValue: "");
 
     if (!string.IsNullOrWhiteSpace(noteTitle))
     {
@@ -363,7 +363,7 @@ public partial class NotesPage : ContentPage
 
   private async Task RenameNoteAsync(Note note)
   {
-    var newTitle = await DisplayPromptAsync("Rename Note", "New name:", initialValue: note.Title);
+    var newTitle = await DisplayPromptAsync("rename note", "new name:", initialValue: note.Title);
     if (string.IsNullOrWhiteSpace(newTitle) || newTitle == note.Title) return;
     note.Title = newTitle;
     await _noteManager.UpdateNoteAsync(note);
@@ -372,7 +372,7 @@ public partial class NotesPage : ContentPage
 
   private async Task DeleteNoteAsync(Note note)
   {
-    bool confirm = await DisplayAlert("Delete Note", $"Delete \"{note.Title}\"?", "Delete", "Cancel");
+    bool confirm = await DisplayAlert("delete note", $"delete \"{note.Title}\"?", "delete", "cancel");
     if (!confirm) return;
     await _noteManager.DeleteNoteAsync(note.Id);
     Notes.Remove(note);
@@ -396,7 +396,7 @@ public partial class NotesPage : ContentPage
     var folder = await _folderManager.GetFolderAsync(FolderId);
     if (folder == null) return;
 
-    var newName = await DisplayPromptAsync("Rename Folder", "New name:", initialValue: folder.Name);
+    var newName = await DisplayPromptAsync("rename folder", "new name:", initialValue: folder.Name);
     if (string.IsNullOrWhiteSpace(newName) || newName == folder.Name) return;
 
     folder.Name = newName;
@@ -407,8 +407,8 @@ public partial class NotesPage : ContentPage
 
   private async void OnDeleteFolderClicked(object sender, EventArgs e)
   {
-    bool confirm = await DisplayAlert("Delete Folder",
-        $"Delete \"{FolderName}\" and all notes inside?", "Delete", "Cancel");
+    bool confirm = await DisplayAlert("delete folder",
+        $"delete \"{FolderName}\" and all notes inside?", "delete", "cancel");
     if (!confirm) return;
 
     var notes = await _noteManager.GetNotesAsync(FolderId);

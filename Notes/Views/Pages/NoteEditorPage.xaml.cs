@@ -80,7 +80,7 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     if (string.IsNullOrEmpty(NoteId))
       return;
 
-    using var session = _progressService.Begin("Loading note");
+    using var session = _progressService.Begin("loading note");
     _note = await _noteManager.GetNoteAsync(NoteId);
     if (_note != null)
     {
@@ -98,7 +98,7 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     _note.Modified = DateTime.Now;
     await _noteManager.UpdateNoteAsync(_note);
 
-    await DisplayAlert("Success", "Note saved successfully", "OK");
+    await DisplayAlert("success", "note saved successfully", "ok");
   }
 
   private async void OnPreviewClicked(object sender, EventArgs e)
@@ -115,7 +115,7 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     var fileResults = await FilePicker.PickMultipleAsync(new PickOptions
     {
       FileTypes = FilePickerFileType.Images,
-      PickerTitle = "Select images"
+      PickerTitle = "select images"
     });
 
     if (fileResults == null || !fileResults.Any())
@@ -123,7 +123,7 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
 
     var fileList = fileResults.ToList();
     int total = fileList.Count;
-    using var session = _progressService.Begin("Adding images", delayMs: 0);
+    using var session = _progressService.Begin("adding images", delayMs: 0);
 
     var parts = new List<string>();
     for (int i = 0; i < fileList.Count; i++)
@@ -152,18 +152,18 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     }
     catch (Exception ex)
     {
-      await DisplayAlert("Error", ex.Message, "OK");
+      await DisplayAlert("error", ex.Message, "ok");
       return;
     }
 
     if (images.Count == 0)
     {
-      await DisplayAlert("Paste image", "No image in the clipboard", "OK");
+      await DisplayAlert("paste image", "no image in the clipboard", "ok");
       return;
     }
 
     int total = images.Count;
-    using var session = _progressService.Begin("Adding images", delayMs: 0);
+    using var session = _progressService.Begin("adding images", delayMs: 0);
 
     var parts = new List<string>();
     for (int i = 0; i < images.Count; i++)

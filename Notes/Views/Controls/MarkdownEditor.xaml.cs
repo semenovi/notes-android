@@ -68,7 +68,7 @@ public partial class MarkdownEditor : ContentView, INotifyPropertyChanged
     var fileResults = await FilePicker.PickMultipleAsync(new PickOptions
     {
       FileTypes = FilePickerFileType.Images,
-      PickerTitle = "Select images"
+      PickerTitle = "select images"
     });
 
     if (fileResults == null || !fileResults.Any())

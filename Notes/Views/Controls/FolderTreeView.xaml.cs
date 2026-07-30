@@ -82,7 +82,7 @@ public partial class FolderTreeView : ContentView
 
   private async void OnAddFolderClicked(object sender, EventArgs e)
   {
-    string folderName = await Application.Current.MainPage.DisplayPromptAsync("New Folder", "Enter folder name:");
+    string folderName = await Application.Current.MainPage.DisplayPromptAsync("new folder", "enter folder name:");
 
     if (!string.IsNullOrEmpty(folderName))
     {
@@ -97,8 +97,8 @@ public partial class FolderTreeView : ContentView
   {
     if (SelectedFolder == null) return;
 
-    bool confirm = await Application.Current.MainPage.DisplayAlert("Delete Folder",
-        $"Delete \"{SelectedFolder.Name}\" and all notes inside?", "Delete", "Cancel");
+    bool confirm = await Application.Current.MainPage.DisplayAlert("delete folder",
+        $"delete \"{SelectedFolder.Name}\" and all notes inside?", "delete", "cancel");
     if (!confirm) return;
 
     var folderId = SelectedFolder.Folder.Id;

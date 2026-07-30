@@ -4,8 +4,8 @@
              x:Class="Notes.Views.Controls.FolderTreeView">
     <Grid RowDefinitions="Auto,*">
         <HorizontalStackLayout Grid.Row="0" Spacing="10" Margin="10">
-            <Button Text="Add Folder" Clicked="OnAddFolderClicked" />
-            <Button Text="Delete" Clicked="OnDeleteFolderClicked" IsEnabled="{Binding IsDeleteEnabled}" />
+            <Button Text="add folder" Clicked="OnAddFolderClicked" />
+            <Button Text="delete" Clicked="OnDeleteFolderClicked" IsEnabled="{Binding IsDeleteEnabled}" />
         </HorizontalStackLayout>
 
         <CollectionView Grid.Row="1" 

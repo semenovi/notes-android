@@ -85,7 +85,7 @@ public class NetworkSyncAdapter : ISyncAdapter
 
     ManifestResponse? manifestResp = await _apiClient.PostManifestAsync(manifestRequest);
     if (manifestResp == null)
-      throw new InvalidOperationException("Server did not respond to the manifest request. Check the URL and token.");
+      throw new InvalidOperationException("server did not respond to the manifest request. check the url and token");
 
     foreach (var id in tombstoneNotes.Keys) await _noteRepo.ClearTombstoneAsync(id);
     foreach (var id in tombstoneFolders.Keys) await _folderRepo.ClearTombstoneAsync(id);
@@ -102,7 +102,7 @@ public class NetworkSyncAdapter : ISyncAdapter
         manifestResp.ToDownload.Folders,
         new List<string>());
     if (pull == null)
-      throw new InvalidOperationException("Server did not respond to the data pull request.");
+      throw new InvalidOperationException("server did not respond to the data pull request");
 
     var changes = new List<SyncChange>();
 
@@ -145,7 +145,7 @@ public class NetworkSyncAdapter : ISyncAdapter
     var mediaToDownload = manifestResp.ToDownload.Media;
     int totalDl = mediaToDownload.Count;
     if (totalDl > 0)
-      onProgress?.Invoke(0.0, totalDl > 1 ? $"Downloading media 1 of {totalDl}" : "Downloading media");
+      onProgress?.Invoke(0.0, totalDl > 1 ? $"downloading media 1 of {totalDl}" : "downloading media");
     for (int dlIdx = 0; dlIdx < totalDl; dlIdx++)
     {
       var mediaId = mediaToDownload[dlIdx];
@@ -178,7 +178,7 @@ public class NetworkSyncAdapter : ISyncAdapter
         DebugLogService.Current?.Log($"pull-media-err: id={mediaId} {ex.GetType().Name}: {ex.Message}");
       }
       onProgress?.Invoke((double)(dlIdx + 1) / totalDl,
-          totalDl > 1 ? $"Downloading media {dlIdx + 1} of {totalDl}" : "Downloading media");
+          totalDl > 1 ? $"downloading media {dlIdx + 1} of {totalDl}" : "downloading media");
     }
 
     foreach (var id in manifestResp.ToDeleteLocal.Notes)
@@ -240,7 +240,7 @@ public class NetworkSyncAdapter : ISyncAdapter
         && _toUploadMedia.Contains(c.Id)).ToList();
     int totalUl = mediaToUpload.Count;
     if (totalUl > 0)
-      onProgress?.Invoke(0.0, totalUl > 1 ? $"Uploading media 1 of {totalUl}" : "Uploading media");
+      onProgress?.Invoke(0.0, totalUl > 1 ? $"uploading media 1 of {totalUl}" : "uploading media");
     for (int ulIdx = 0; ulIdx < totalUl; ulIdx++)
     {
       var c = mediaToUpload[ulIdx];
@@ -262,7 +262,7 @@ public class NetworkSyncAdapter : ISyncAdapter
         int captured = ulIdx;
         await _apiClient.PushChunkedAsync(syncItem, "media", _settings?.DeviceId,
             (sent, total) => onProgress?.Invoke((captured + (double)sent / total) / totalUl,
-                totalUl > 1 ? $"Uploading media {captured + 1} of {totalUl}" : null));
+                totalUl > 1 ? $"uploading media {captured + 1} of {totalUl}" : null));
         DebugLogService.Current?.Log($"full-sync-media-done: id={syncItem.Id}");
       }
       catch (Exception ex)
