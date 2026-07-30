@@ -4,7 +4,7 @@ using Android.Views;
 
 namespace Notes;
 
-[Activity(Theme = "@style/Maui.SplashTheme", MainLauncher = true, LaunchMode = LaunchMode.SingleTop, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
+[Activity(Theme = "@style/Maui.SplashTheme", MainLauncher = true, LaunchMode = LaunchMode.SingleTop, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density, WindowSoftInputMode = SoftInput.AdjustResize)]
 public class MainActivity : MauiAppCompatActivity
 {
     private float _downX, _downY;
@@ -12,6 +12,18 @@ public class MainActivity : MauiAppCompatActivity
     private bool _confirmed;
 
     private const float ThresholdPx = 16f;
+
+    /// <summary>
+    /// the manifest value is overridden at runtime (the window ends up in pan mode, which
+    /// scrolls the whole window to reveal the caret and drags the shell bar and the editor
+    /// toolbar off screen), so re-assert resize once maui is up. resizing keeps the content
+    /// above the keyboard, which lets the editor reveal the caret on its own.
+    /// </summary>
+    protected override void OnResume()
+    {
+        base.OnResume();
+        Window?.SetSoftInputMode(SoftInput.AdjustResize);
+    }
 
     public override bool DispatchTouchEvent(MotionEvent? e)
     {
