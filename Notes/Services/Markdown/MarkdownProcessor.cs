@@ -173,6 +173,24 @@ public class MarkdownProcessor
   {
     var processedText = markdown.Replace("\r\n", "\n").Replace("\r", "\n");
 
+    // Fenced code blocks are pulled out before any other rule runs, so bold/italic/list/
+    // paragraph regexes below (which operate per-line) can't reach into their contents
+    // and split them into extra <p> lines.
+    var codeBlocks = new List<string>();
+    processedText = System.Text.RegularExpressions.Regex.Replace(
+        processedText,
+        @"^```([^\n`]*)\n([\s\S]*?)^```$",
+        m =>
+        {
+            var lang = m.Groups[1].Value.Trim();
+            var code = m.Groups[2].Value.TrimEnd('\n');
+            var langClass = string.IsNullOrEmpty(lang) ? "" : $" class=\"language-{lang}\"";
+            codeBlocks.Add($"<pre><code{langClass}>{code}</code></pre>");
+            return $"CODEBLOCK{codeBlocks.Count - 1}";
+        },
+        System.Text.RegularExpressions.RegexOptions.Multiline
+    );
+
     // Task lines must be consumed before the generic "- " list rule below.
     // data-task-index maps back to the Nth TaskLineRegex match in the source
     // markdown — TaskListMarkdown.Toggle relies on that ordering.
@@ -238,69 +256,32 @@ public class MarkdownProcessor
         "<a href=\"$2\">$1</a>"
     );
 
+    // List items are tagged with their source type first, then grouped into
+    // <ul>/<ol> in a single pass below. Grouping pairwise (old approach) couldn't
+    // merge runs longer than two items: .NET regex matches don't overlap, so each
+    // merge consumed the next item's opening <li>, leaving it for a fresh <ul>/<ol>.
     processedText = System.Text.RegularExpressions.Regex.Replace(
         processedText,
         @"^- (.+)$",
-        "<ul><li>$1</li></ul>",
-        System.Text.RegularExpressions.RegexOptions.Multiline
-    );
-
-    processedText = processedText.Replace("<ul><li>", "<li>");
-    processedText = processedText.Replace("</li></ul>", "</li>");
-    processedText = System.Text.RegularExpressions.Regex.Replace(
-        processedText,
-        @"<li>(.+?)</li>\s*<li>",
-        "<li>$1</li><li>"
-    );
-    processedText = System.Text.RegularExpressions.Regex.Replace(
-        processedText,
-        @"^<li>",
-        "<ul><li>",
-        System.Text.RegularExpressions.RegexOptions.Multiline
-    );
-    processedText = System.Text.RegularExpressions.Regex.Replace(
-        processedText,
-        @"</li>$",
-        "</li></ul>",
+        "<li data-list=\"ul\">$1</li>",
         System.Text.RegularExpressions.RegexOptions.Multiline
     );
 
     processedText = System.Text.RegularExpressions.Regex.Replace(
         processedText,
         @"^(\d+)\. (.+)$",
-        "<ol><li>$2</li></ol>",
-        System.Text.RegularExpressions.RegexOptions.Multiline
-    );
-
-    processedText = processedText.Replace("<ol><li>", "<li>");
-    processedText = processedText.Replace("</li></ol>", "</li>");
-    processedText = System.Text.RegularExpressions.Regex.Replace(
-        processedText,
-        @"<li>(.+?)</li>\s*<li>",
-        "<li>$1</li><li>"
-    );
-    processedText = System.Text.RegularExpressions.Regex.Replace(
-        processedText,
-        @"^<li>",
-        "<ol><li>",
-        System.Text.RegularExpressions.RegexOptions.Multiline
-    );
-    processedText = System.Text.RegularExpressions.Regex.Replace(
-        processedText,
-        @"</li>$",
-        "</li></ol>",
+        "<li data-list=\"ol\">$2</li>",
         System.Text.RegularExpressions.RegexOptions.Multiline
     );
 
     processedText = System.Text.RegularExpressions.Regex.Replace(
         processedText,
-        @"^```([^\n`]*)\n([\s\S]*?)^```$",
+        @"^<li data-list=""(ul|ol)"">.*</li>$(?:\n^<li data-list=""\1"">.*</li>$)*",
         m =>
         {
-            var lang = m.Groups[1].Value.Trim();
-            var code = m.Groups[2].Value.TrimEnd('\n');
-            var langClass = string.IsNullOrEmpty(lang) ? "" : $" class=\"language-{lang}\"";
-            return $"<pre><code{langClass}>{code}</code></pre>";
+            var tag = m.Groups[1].Value;
+            var items = m.Value.Replace($" data-list=\"{tag}\"", "");
+            return $"<{tag}>{items}</{tag}>";
         },
         System.Text.RegularExpressions.RegexOptions.Multiline
     );
@@ -317,6 +298,11 @@ public class MarkdownProcessor
         "<p>$1</p>",
         System.Text.RegularExpressions.RegexOptions.Multiline
     );
+
+    for (int i = 0; i < codeBlocks.Count; i++)
+    {
+      processedText = processedText.Replace($"CODEBLOCK{i}", codeBlocks[i]);
+    }
 
     processedText = processedText.Replace("<p><h", "<h");
     processedText = processedText.Replace("</h1></p>", "</h1>");
