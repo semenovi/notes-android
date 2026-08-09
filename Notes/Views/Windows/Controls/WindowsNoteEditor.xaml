@@ -108,13 +108,11 @@
 
             <BoxView Grid.Row="3" HeightRequest="1" BackgroundColor="#E5E5EA" Margin="20,0" />
 
-            <ScrollView Grid.Row="4">
-                <Editor x:Name="ContentEditor"
-                        FontSize="15" TextColor="#1C1C1E"
-                        BackgroundColor="Transparent"
-                        Margin="20,12" AutoSize="TextChanges"
-                        TextChanged="OnContentChanged" />
-            </ScrollView>
+            <Editor x:Name="ContentEditor" Grid.Row="4"
+                    FontSize="15" TextColor="#1C1C1E"
+                    BackgroundColor="Transparent"
+                    Margin="20,12"
+                    TextChanged="OnContentChanged" />
         </Grid>
 
     </Grid>
