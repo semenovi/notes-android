@@ -101,23 +101,22 @@ public partial class WindowsNoteEditor : ContentView
 
   private void OnNativePaste(object sender, Microsoft.UI.Xaml.Controls.TextControlPasteEventArgs e)
   {
-    global::Windows.ApplicationModel.DataTransfer.DataPackageView content;
     try
     {
-      content = global::Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
+      var content = global::Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
+
+      // Text keeps the default paste; only an image-bearing clipboard without text is intercepted.
+      if (content.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.Text)) return;
+      if (!content.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.Bitmap) &&
+          !content.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems)) return;
+
+      e.Handled = true;
+      _ = PasteImagesFromClipboardAsync(showAlertIfEmpty: false);
     }
     catch
     {
-      return;
+      // Clipboard API is flaky (CLIPBRD_E_CANT_OPEN etc.) — fall back to default text paste.
     }
-
-    // Text keeps the default paste; only an image-bearing clipboard without text is intercepted.
-    if (content.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.Text)) return;
-    if (!content.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.Bitmap) &&
-        !content.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems)) return;
-
-    e.Handled = true;
-    _ = PasteImagesFromClipboardAsync(showAlertIfEmpty: false);
   }
 
   private async Task ToggleTaskAsync(int taskIndex, bool isChecked)
