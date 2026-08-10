@@ -39,9 +39,70 @@ public class MarkdownProcessor
     }
 
     processed = await ProcessMediaLinksAsync(processed);
+    string preRenderText = processed;
     processed = ProcessBasicMarkdown(processed);
+    processed = TagSourceLines(preRenderText, processed);
 
     return processed;
+  }
+
+  // stamps each rendered block with the source markdown line it came from
+  // (data-src-line), so the WebView preview's scroll position can be mapped to the
+  // corresponding line in the plain-text editor. Relies on ProcessBasicMarkdown
+  // emitting exactly one block element per non-blank source line (fenced code blocks
+  // being the one exception, collapsed into a single <pre>)
+  private static readonly System.Text.RegularExpressions.Regex BlockTagRegex = new(
+      @"<(?:p|h1|h2|h3|li|pre|hr|div class=""task-item"")>",
+      System.Text.RegularExpressions.RegexOptions.Compiled);
+
+  private static string TagSourceLines(string sourceText, string html)
+  {
+    var lineNumbers = ComputeBlockSourceLines(sourceText);
+    if (lineNumbers.Count == 0)
+      return html;
+
+    int index = 0;
+    return BlockTagRegex.Replace(html, m =>
+    {
+      if (index >= lineNumbers.Count)
+        return m.Value;
+
+      int line = lineNumbers[index++];
+      int insertAt = m.Value.IndexOf('>');
+      return m.Value.Insert(insertAt, $" data-src-line=\"{line}\"");
+    });
+  }
+
+  private static List<int> ComputeBlockSourceLines(string sourceText)
+  {
+    var normalized = sourceText.Replace("\r\n", "\n").Replace("\r", "\n");
+    var lines = normalized.Split('\n');
+    var result = new List<int>();
+
+    for (int i = 0; i < lines.Length; i++)
+    {
+      if (lines[i].Length == 0)
+        continue;
+
+      if (System.Text.RegularExpressions.Regex.IsMatch(lines[i], @"^```[^\n`]*$"))
+      {
+        int close = -1;
+        for (int j = i + 1; j < lines.Length; j++)
+        {
+          if (lines[j] == "```") { close = j; break; }
+        }
+        if (close >= 0)
+        {
+          result.Add(i);
+          i = close;
+          continue;
+        }
+      }
+
+      result.Add(i);
+    }
+
+    return result;
   }
 
   public Task<string> ProcessMediaLinksAsync(string markdown)

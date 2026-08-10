@@ -58,7 +58,7 @@
                     Clicked="OnFormatListClicked" />
         </HorizontalStackLayout>
 
-        <ScrollView Grid.Row="1" Margin="10">
+        <ScrollView x:Name="EditorScrollView" Grid.Row="1" Margin="10">
             <Editor x:Name="ContentEditor"
                     Text="{Binding Content}"
                     FontFamily="Monospace"

@@ -3,6 +3,7 @@ using Notes.Models;
 using Notes.Services.Markdown;
 using Notes.Services.Notes;
 using Notes.Views.Pages;
+using System.Reactive.Linq;
 using System.Timers;
 
 namespace Notes.Views.Windows.Controls;
@@ -172,9 +173,12 @@ public partial class WindowsNoteEditor : ContentView
     EmptyStateLabel.IsVisible = true;
   }
 
-  private void OnEditClicked(object sender, EventArgs e)
+  private async void OnEditClicked(object sender, EventArgs e)
   {
     if (_currentNote == null) return;
+
+    int scrollLine = await EditorScrollSync.GetVisibleSourceLineAsync(ContentPreview);
+
     _isEditMode = true;
 
     TitleEntry.Text = _currentNote.Title;
@@ -184,14 +188,139 @@ public partial class WindowsNoteEditor : ContentView
     ViewMode.IsVisible = false;
     EditMode.IsVisible = true;
 
-    ContentEditor.Focus();
+    ApplyEditorScrollLine(scrollLine, _currentNote.Content ?? "");
   }
+
+#if WINDOWS
+  // mirrors the WebView preview's top alignment instead of the native TextBox's own
+  // "bring caret into view", which centers rather than top-aligns. The target offset is
+  // computed from the editor's own line count/extent rather than reusing the WebView's
+  // pixel fraction - the two renderers lay the same content out at very different
+  // heights (markdown blocks/images vs. uniform monospace lines).
+  //
+  // Caret placement lives here too rather than being set eagerly in OnEditClicked:
+  // setting SelectionStart before the TextBox's template/text view is actually ready
+  // was silently dropped (same readiness race the ScrollViewer had), leaving the caret
+  // wherever `Text = ...` had put it internally (its end). That stale caret only
+  // resurfaced later - e.g. on losing focus when Save was clicked - as a delayed
+  // "bring into view" jump to the bottom, which is what was reported as random drift.
+  private void ApplyEditorScrollLine(int line, string content)
+  {
+    GetAttachedTextBoxOnce()
+        .SelectMany(textBox => GetScrollViewerOnce(textBox).Select(sv => (textBox, sv)))
+        .Subscribe(t =>
+        {
+          t.textBox.DispatcherQueue.TryEnqueue(() =>
+          {
+            int caret = EditorScrollSync.GetCharOffsetForLine(content, line);
+            t.textBox.SelectionStart = caret;
+            t.textBox.SelectionLength = 0;
+            t.textBox.Focus(Microsoft.UI.Xaml.FocusState.Programmatic);
+
+            // line's position is a fraction of the *content* height (ExtentHeight), not
+            // of the scrollable *range* (ScrollableHeight = ExtentHeight - ViewportHeight)
+            // - using the range there was systematically off by about a viewport's worth
+            // of lines
+            int totalLines = EditorScrollSync.GetLineCount(content);
+            double target = Math.Min(t.sv.ScrollableHeight,
+                (double)line / Math.Max(1, totalLines) * t.sv.ExtentHeight);
+            t.sv.ChangeView(null, target, null, true);
+            System.Diagnostics.Debug.WriteLine(
+                $"[ScrollSync] applied line={line} caret={caret} target={target:F1} " +
+                $"extentHeight={t.sv.ExtentHeight:F1} verticalOffsetAfterCall={t.sv.VerticalOffset:F1}");
+          });
+        });
+  }
+
+  // yields the native TextBox once ContentEditor's handler exists, whether that's
+  // already true right now (subsequent edits) or happens later (first ever edit)
+  private IObservable<Microsoft.UI.Xaml.Controls.TextBox> GetAttachedTextBoxOnce()
+  {
+    if (ContentEditor.Handler?.PlatformView is Microsoft.UI.Xaml.Controls.TextBox existing)
+      return Observable.Return(existing);
+
+    return Observable.FromEventPattern<EventHandler, EventArgs>(
+            h => ContentEditor.HandlerChanged += h,
+            h => ContentEditor.HandlerChanged -= h)
+        .Select(_ => ContentEditor.Handler?.PlatformView as Microsoft.UI.Xaml.Controls.TextBox)
+        .Where(tb => tb != null)
+        .Take(1)!;
+  }
+
+  // TextBox.IsLoaded/Loaded fire before its internal ScrollViewer is actually reachable
+  // via VisualTreeHelper (confirmed via logging: FindScrollViewer returned null right
+  // after Loaded, but found it moments later) - LayoutUpdated fires on every subsequent
+  // layout pass, so react to that instead until the ScrollViewer shows up
+  private static IObservable<Microsoft.UI.Xaml.Controls.ScrollViewer> GetScrollViewerOnce(
+      Microsoft.UI.Xaml.Controls.TextBox textBox)
+  {
+    var immediate = FindScrollViewer(textBox);
+    if (immediate != null)
+      return Observable.Return(immediate);
+
+    return Observable.FromEventPattern<EventHandler<object>, object>(
+            h => textBox.LayoutUpdated += h,
+            h => textBox.LayoutUpdated -= h)
+        .Select(_ => FindScrollViewer(textBox))
+        .Where(sv => sv != null)
+        .Take(1)!;
+  }
+
+  // fraction of the editor's own scrollable range converted to a source line via its
+  // own line count, so it can be handed to the WebView in the same currency it uses
+  // (data-src-line) instead of a pixel fraction that doesn't transfer between the two
+  // very differently laid-out renderers
+  private int CaptureEditorScrollLine()
+  {
+    if (ContentEditor.Handler?.PlatformView is not Microsoft.UI.Xaml.Controls.TextBox textBox)
+      return 0;
+
+    var scrollViewer = FindScrollViewer(textBox);
+    if (scrollViewer == null || scrollViewer.ExtentHeight <= 0)
+      return 0;
+
+    // mirrors ApplyEditorScrollLine: position is a fraction of the *content* height
+    // (ExtentHeight), not of the scrollable *range* (ScrollableHeight)
+    // ContentEditor.Text (MAUI level), not textBox.Text (native): the native TextBox's
+    // Text can lag behind what was just assigned/edited, which was silently producing a
+    // near-zero line count and wildly wrong targets
+    int totalLines = EditorScrollSync.GetLineCount(ContentEditor.Text);
+    int line = (int)Math.Round(scrollViewer.VerticalOffset / scrollViewer.ExtentHeight * totalLines);
+    System.Diagnostics.Debug.WriteLine(
+        $"[ScrollSync] capture verticalOffset={scrollViewer.VerticalOffset:F1} " +
+        $"extentHeight={scrollViewer.ExtentHeight:F1} line={line}");
+    return line;
+  }
+
+  private static Microsoft.UI.Xaml.Controls.ScrollViewer? FindScrollViewer(Microsoft.UI.Xaml.DependencyObject root)
+  {
+    int count = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(root);
+    for (int i = 0; i < count; i++)
+    {
+      var child = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(root, i);
+      if (child is Microsoft.UI.Xaml.Controls.ScrollViewer scrollViewer)
+        return scrollViewer;
+
+      var nested = FindScrollViewer(child);
+      if (nested != null)
+        return nested;
+    }
+    return null;
+  }
+#else
+  private void ApplyEditorScrollLine(int line, string content) { }
+  private int CaptureEditorScrollLine() => 0;
+#endif
 
   private async void OnSaveClicked(object sender, EventArgs e)
   {
     _autoSaveTimer.Stop();
+
+    int scrollLine = CaptureEditorScrollLine();
+
     await SaveNoteAsync();
     await UpdatePreviewAsync();
+    await EditorScrollSync.ScrollToSourceLineAsync(ContentPreview, scrollLine);
 
     _isEditMode = false;
     EditMode.IsVisible = false;

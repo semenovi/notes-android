@@ -77,6 +77,11 @@ public partial class NoteViewPage : ContentPage
     await _markdownProcessor.InjectImagesIntoWebViewAsync(content, NoteContentWebView,
         (loaded, total) => session.Report((double)loaded / total,
             total - loaded > 0 ? $"{total - loaded} images left" : null));
+
+    // applied only after images finish loading: images resize as they land, and doing
+    // this earlier races the WebView's own scroll-anchoring
+    if (EditorScrollSync.TryTakeReturnLine(_note.Id, out int returnLine))
+      await EditorScrollSync.ScrollToSourceLineAsync(NoteContentWebView, returnLine);
   }
 
   private static async Task WaitForNavigationAsync(WebView webView)
@@ -427,9 +432,12 @@ public partial class NoteViewPage : ContentPage
     if (_note == null)
       return;
 
+    int scrollLine = await EditorScrollSync.GetVisibleSourceLineAsync(NoteContentWebView);
+
     var navigationParameter = new Dictionary<string, object>
         {
-            { "NoteId", _note.Id }
+            { "NoteId", _note.Id },
+            { "ScrollLine", scrollLine.ToString(System.Globalization.CultureInfo.InvariantCulture) }
         };
 
     await Shell.Current.GoToAsync(nameof(NoteEditorPage), navigationParameter);
