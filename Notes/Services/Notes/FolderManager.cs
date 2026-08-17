@@ -67,4 +67,27 @@ public class FolderManager
     FolderChanged?.Invoke(folderId, EntityChangeKind.Updated);
     return true;
   }
+
+  // All folders nested anywhere under folderId, at any depth. Guards against a
+  // parent cycle (two folders reparented into each other by conflicting syncs
+  // from different devices) sending Collect into infinite recursion.
+  public async Task<List<Folder>> GetDescendantFoldersAsync(string folderId)
+  {
+    var all = await _repository.GetAllFoldersAsync();
+    var result = new List<Folder>();
+    var visited = new HashSet<string> { folderId };
+
+    void Collect(string parentId)
+    {
+      foreach (var f in all.Where(f => f.ParentId == parentId))
+      {
+        if (!visited.Add(f.Id)) continue;
+        result.Add(f);
+        Collect(f.Id);
+      }
+    }
+
+    Collect(folderId);
+    return result;
+  }
 }

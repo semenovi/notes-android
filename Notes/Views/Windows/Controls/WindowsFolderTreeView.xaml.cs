@@ -25,6 +25,7 @@ public partial class WindowsFolderTreeView : ContentView
   private readonly Services.ToastService _toastService;
   private Folder? _selectedFolder;
   private CancellationTokenSource? _loadCts;
+  private List<Folder> _allFolders = new();
 
   public WindowsFolderTreeView()
   {
@@ -54,6 +55,7 @@ public partial class WindowsFolderTreeView : ContentView
     _loadCts = cts;
     var folders = await _folderManager.GetAllFoldersAsync();
     if (cts.IsCancellationRequested) return;
+    _allFolders = folders;
     ApplyFolders(folders);
   }
 
@@ -62,15 +64,7 @@ public partial class WindowsFolderTreeView : ContentView
   private void ApplyFolders(List<Folder> folders)
   {
     var byId = Folders.ToDictionary(vm => vm.Folder.Id);
-    var desired = new List<FolderViewModel>(folders.Count);
-    foreach (var folder in folders.OrderBy(f => f.Name, NaturalSortComparer.Instance))
-    {
-      if (byId.TryGetValue(folder.Id, out var vm))
-        vm.Update(folder);
-      else
-        vm = new FolderViewModel(folder);
-      desired.Add(vm);
-    }
+    var desired = BuildVisibleTree(folders, byId);
     CollectionMerge.MergeInto(Folders, desired);
 
     var selected = _selectedFolder == null
@@ -92,6 +86,48 @@ public partial class WindowsFolderTreeView : ContentView
     {
       _selectedFolder = null;
     }
+  }
+
+  // Depth-first flatten: each folder is followed immediately by its own children
+  // (recursively), skipping the subtree of any collapsed folder. Reuses existing
+  // view models via byId so IsExpanded/IsSelected survive a refresh.
+  private static List<FolderViewModel> BuildVisibleTree(List<Folder> folders, Dictionary<string, FolderViewModel> byId)
+  {
+    var childrenByParent = folders
+        .GroupBy(f => f.ParentId ?? string.Empty)
+        .ToDictionary(g => g.Key, g => g.OrderBy(f => f.Name, NaturalSortComparer.Instance).ToList());
+
+    var result = new List<FolderViewModel>();
+
+    void Walk(string parentKey, int depth)
+    {
+      if (!childrenByParent.TryGetValue(parentKey, out var children)) return;
+      foreach (var folder in children)
+      {
+        if (!byId.TryGetValue(folder.Id, out var vm))
+          vm = new FolderViewModel(folder);
+        else
+          vm.Update(folder);
+
+        vm.Depth = depth;
+        vm.HasChildren = childrenByParent.ContainsKey(folder.Id);
+        result.Add(vm);
+
+        if (vm.HasChildren && vm.IsExpanded)
+          Walk(folder.Id, depth + 1);
+      }
+    }
+
+    Walk(string.Empty, 0);
+    return result;
+  }
+
+  private void OnDisclosureTapped(object sender, EventArgs e)
+  {
+    if (sender is not Label label || label.BindingContext is not FolderViewModel vm) return;
+    if (!vm.HasChildren) return;
+    vm.IsExpanded = !vm.IsExpanded;
+    ApplyFolders(_allFolders);
   }
 
   public async Task SyncIfEnabledAsync()
@@ -200,6 +236,20 @@ public partial class WindowsFolderTreeView : ContentView
     vm.Update(vm.Folder);
   }
 
+  private async void OnNewSubfolderContextMenuClicked(object sender, EventArgs e)
+  {
+    if (sender is not MenuFlyoutItem item || item.BindingContext is not FolderViewModel vm) return;
+    var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+    if (page == null) return;
+
+    var name = await page.DisplayPromptAsync("new folder", "folder name:");
+    if (string.IsNullOrWhiteSpace(name)) return;
+
+    await _folderManager.CreateFolderAsync(name, vm.Folder.Id);
+    vm.IsExpanded = true;
+    await LoadFoldersAsync();
+  }
+
   private async void OnRenameFolderContextMenuClicked(object sender, EventArgs e)
   {
     if (sender is not MenuFlyoutItem item || item.BindingContext is not FolderViewModel vm)
@@ -214,7 +264,10 @@ public partial class WindowsFolderTreeView : ContentView
     vm.Folder.Modified = DateTime.UtcNow;
     await _folderManager.UpdateFolderAsync(vm.Folder);
     vm.Update(vm.Folder);
-    ApplyFolders(Folders.Select(f => f.Folder).ToList());
+    // Folders now only holds the visible (non-collapsed) subset — rebuild from
+    // _allFolders instead, or a rename while some branch is collapsed would
+    // silently drop the hidden folders from the tree until the next full reload.
+    ApplyFolders(_allFolders);
     if (vm.IsSelected)
       FolderSelected?.Invoke(this, vm.Folder);
   }
@@ -237,17 +290,26 @@ public partial class WindowsFolderTreeView : ContentView
     var page = Application.Current?.Windows.FirstOrDefault()?.Page;
     if (page == null) return;
 
-    bool confirm = await page.DisplayAlert("delete folder",
-        $"delete \"{vm.Name}\" and all notes inside?", "delete", "cancel");
+    var folderId = vm.Folder.Id;
+    var descendants = await _folderManager.GetDescendantFoldersAsync(folderId);
+    string warning = descendants.Count > 0
+        ? $"delete \"{vm.Name}\", its {descendants.Count} {(descendants.Count == 1 ? "subfolder" : "subfolders")} and all notes inside?"
+        : $"delete \"{vm.Name}\" and all notes inside?";
+    bool confirm = await page.DisplayAlert("delete folder", warning, "delete", "cancel");
     if (!confirm) return;
 
-    var folderId = vm.Folder.Id;
-    var notes = await _noteManager.GetNotesAsync(folderId);
-    foreach (var note in notes)
-      await _noteManager.DeleteNoteAsync(note.Id);
+    foreach (var id in descendants.Select(f => f.Id).Append(folderId))
+    {
+      var notes = await _noteManager.GetNotesAsync(id);
+      foreach (var note in notes)
+        await _noteManager.DeleteNoteAsync(note.Id);
+    }
+    foreach (var descendant in descendants)
+      await _folderManager.DeleteFolderAsync(descendant.Id);
 
     await _folderManager.DeleteFolderAsync(folderId);
-    if (_selectedFolder?.Id == folderId) _selectedFolder = null;
+    if (_selectedFolder?.Id == folderId || descendants.Any(d => d.Id == _selectedFolder?.Id))
+      _selectedFolder = null;
     await LoadFoldersAsync();
   }
 
@@ -404,6 +466,63 @@ public class FolderViewModel : INotifyPropertyChanged
     Folder = folder;
     OnPropertyChanged(nameof(Name));
     OnPropertyChanged(nameof(Icon));
+  }
+
+  private int _depth;
+  public int Depth
+  {
+    get => _depth;
+    set
+    {
+      if (_depth != value)
+      {
+        _depth = value;
+        OnPropertyChanged();
+        OnPropertyChanged(nameof(IndentWidth));
+      }
+    }
+  }
+
+  public double IndentWidth => Depth * 16;
+
+  private bool _hasChildren;
+  public bool HasChildren
+  {
+    get => _hasChildren;
+    set
+    {
+      if (_hasChildren != value)
+      {
+        _hasChildren = value;
+        OnPropertyChanged();
+        OnPropertyChanged(nameof(DisclosureGlyph));
+      }
+    }
+  }
+
+  // Defaults to expanded so a freshly created subfolder is visible right away.
+  private bool _isExpanded = true;
+  public bool IsExpanded
+  {
+    get => _isExpanded;
+    set
+    {
+      if (_isExpanded != value)
+      {
+        _isExpanded = value;
+        OnPropertyChanged();
+        OnPropertyChanged(nameof(DisclosureGlyph));
+      }
+    }
+  }
+
+  public string DisclosureGlyph
+  {
+    get
+    {
+      if (!HasChildren) return "";
+      return IsExpanded ? "▾" : "▸";
+    }
   }
 
   private bool _isSelected;

@@ -14,7 +14,7 @@ public partial class NotesPage : ContentPage
   private readonly NoteManager _noteManager;
   private readonly FolderManager _folderManager;
   private readonly ReactiveSyncService _reactiveSync;
-  public ObservableCollection<Note> Notes { get; } = new ObservableCollection<Note>();
+  public ObservableCollection<object> Items { get; } = new ObservableCollection<object>();
   private CancellationTokenSource? _loadCts;
   private bool _isSwipingBack;
 #if ANDROID
@@ -32,7 +32,7 @@ public partial class NotesPage : ContentPage
     set
     {
       _folderId = value;
-      LoadNotesAsync().ConfigureAwait(false);
+      LoadItemsAsync().ConfigureAwait(false);
     }
   }
 
@@ -54,7 +54,7 @@ public partial class NotesPage : ContentPage
     _noteManager = noteManager;
     _folderManager = folderManager;
     _reactiveSync = reactiveSync;
-    NotesCollection.ItemsSource = Notes;
+    NotesCollection.ItemsSource = Items;
     BindingContext = this;
   }
 
@@ -86,31 +86,69 @@ public partial class NotesPage : ContentPage
     _reactiveSync.RemoteChangesApplied -= OnRemoteChangesApplied;
   }
 
-  private async void OnRemoteChangesApplied() => await LoadNotesAsync();
+  private async void OnRemoteChangesApplied() => await LoadItemsAsync();
 
-  private async Task LoadNotesAsync()
+  private async Task LoadItemsAsync()
   {
     if (string.IsNullOrEmpty(FolderId))
       return;
     _loadCts?.Cancel();
     var cts = new CancellationTokenSource();
     _loadCts = cts;
+    var folders = await _folderManager.GetFoldersAsync(FolderId);
     var notes = await _noteManager.GetNotesAsync(FolderId);
     if (cts.IsCancellationRequested) return;
-    var sorted = notes.OrderBy(n => n.Title, NaturalSortComparer.Instance).ToList();
-    if (IsNotesCollectionUnchanged(sorted)) return;
-    Notes.Clear();
-    foreach (var note in sorted)
-      Notes.Add(note);
+    var combined = folders.OrderBy(f => f.Name, NaturalSortComparer.Instance).Cast<object>()
+        .Concat(notes.OrderBy(n => n.Title, NaturalSortComparer.Instance).Cast<object>())
+        .ToList();
+    DiffUpdateItems(combined);
   }
 
-  private bool IsNotesCollectionUnchanged(List<Note> sorted)
+  // Merges newItems (already in folders-then-notes, name-sorted order) into Items:
+  // unchanged entries keep their spot, changed ones are replaced in place, new
+  // ones are inserted at their sorted position instead of just appended.
+  private void DiffUpdateItems(List<object> newItems)
   {
-    if (sorted.Count != Notes.Count) return false;
-    for (int i = 0; i < sorted.Count; i++)
-      if (sorted[i].Id != Notes[i].Id || sorted[i].Modified != Notes[i].Modified) return false;
-    return true;
+    var newIds = newItems.Select(GetId).ToHashSet();
+
+    for (int i = Items.Count - 1; i >= 0; i--)
+      if (!newIds.Contains(GetId(Items[i])))
+        Items.RemoveAt(i);
+
+    for (int i = 0; i < newItems.Count; i++)
+    {
+      var newItem = newItems[i];
+      string id = GetId(newItem);
+
+      int idx = -1;
+      for (int j = i; j < Items.Count; j++)
+        if (GetId(Items[j]) == id) { idx = j; break; }
+
+      if (idx < 0)
+        Items.Insert(i, newItem);
+      else
+      {
+        if (GetModified(Items[idx]) != GetModified(newItem))
+          Items[idx] = newItem;
+        if (idx != i)
+          Items.Move(idx, i);
+      }
+    }
   }
+
+  private static string GetId(object item) => item switch
+  {
+    Folder f => f.Id,
+    Note n => n.Id,
+    _ => string.Empty
+  };
+
+  private static DateTime GetModified(object item) => item switch
+  {
+    Folder f => f.Modified,
+    Note n => n.Modified,
+    _ => default
+  };
 
   private async void OnAddNoteClicked(object sender, EventArgs e)
   {
@@ -119,12 +157,33 @@ public partial class NotesPage : ContentPage
     if (!string.IsNullOrWhiteSpace(noteTitle))
     {
       var newNote = await _noteManager.CreateNoteAsync(noteTitle, FolderId);
-      int insertAt = Notes.Count;
-      for (int i = 0; i < Notes.Count; i++)
-        if (NaturalSortComparer.Instance.Compare(Notes[i].Title, newNote.Title) > 0) { insertAt = i; break; }
-      Notes.Insert(insertAt, newNote);
-
+      await LoadItemsAsync();
       await NavigateToNoteEditor(newNote);
+    }
+  }
+
+  private async void OnAddSubfolderClicked(object sender, EventArgs e)
+  {
+    string folderName = await DisplayPromptAsync("new folder", "enter folder name:", initialValue: "");
+
+    if (!string.IsNullOrWhiteSpace(folderName))
+    {
+      await _folderManager.CreateFolderAsync(folderName, FolderId);
+      await LoadItemsAsync();
+    }
+  }
+
+  private async void OnFolderItemTapped(object sender, TappedEventArgs e)
+  {
+    if (sender is View view && view.BindingContext is Folder folder)
+    {
+      await view.ScaleTo(0.96, 80);
+      await view.ScaleTo(1.0, 80);
+      await Shell.Current.GoToAsync(nameof(NotesPage), new Dictionary<string, object>
+      {
+        { "FolderId", folder.Id },
+        { "FolderName", folder.Name }
+      });
     }
   }
 
@@ -363,13 +422,21 @@ public partial class NotesPage : ContentPage
 
   private async void OnDeleteFolderClicked(object sender, EventArgs e)
   {
-    bool confirm = await DisplayAlert("delete folder",
-        $"delete \"{FolderName}\" and all notes inside?", "delete", "cancel");
+    var descendants = await _folderManager.GetDescendantFoldersAsync(FolderId);
+    string warning = descendants.Count > 0
+        ? $"delete \"{FolderName}\", its {descendants.Count} {(descendants.Count == 1 ? "subfolder" : "subfolders")} and all notes inside?"
+        : $"delete \"{FolderName}\" and all notes inside?";
+    bool confirm = await DisplayAlert("delete folder", warning, "delete", "cancel");
     if (!confirm) return;
 
-    var notes = await _noteManager.GetNotesAsync(FolderId);
-    foreach (var note in notes)
-      await _noteManager.DeleteNoteAsync(note.Id);
+    foreach (var folderId in descendants.Select(f => f.Id).Append(FolderId))
+    {
+      var notes = await _noteManager.GetNotesAsync(folderId);
+      foreach (var note in notes)
+        await _noteManager.DeleteNoteAsync(note.Id);
+    }
+    foreach (var descendant in descendants)
+      await _folderManager.DeleteFolderAsync(descendant.Id);
 
     await _folderManager.DeleteFolderAsync(FolderId);
     await Shell.Current.GoToAsync("..");
@@ -394,4 +461,13 @@ public partial class NotesPage : ContentPage
 
     await Shell.Current.GoToAsync(nameof(NoteEditorPage), navigationParameter);
   }
+}
+
+public class NotesPageItemTemplateSelector : DataTemplateSelector
+{
+  public DataTemplate FolderTemplate { get; set; }
+  public DataTemplate NoteTemplate { get; set; }
+
+  protected override DataTemplate OnSelectTemplate(object item, BindableObject container)
+    => item is Folder ? FolderTemplate : NoteTemplate;
 }
