@@ -20,6 +20,7 @@ public class ReactiveSyncService : IDisposable
   private readonly SyncManager _syncManager;
   private readonly ToastService _toastService;
   private readonly ProgressNotificationService _progressService;
+  private readonly MediaDownloadCoordinator _mediaDownloadCoordinator;
 
   private SyncApiClient? _client;
   private byte[]? _syncKey;
@@ -55,7 +56,7 @@ public class ReactiveSyncService : IDisposable
   public ReactiveSyncService(NoteManager noteManager, FolderManager folderManager,
       MediaManager mediaManager, NoteRepository noteRepo, FolderRepository folderRepo,
       SyncSettingsService settingsService, SyncManager syncManager, ToastService toastService,
-      ProgressNotificationService progressService)
+      ProgressNotificationService progressService, MediaDownloadCoordinator mediaDownloadCoordinator)
   {
     _noteManager = noteManager;
     _folderManager = folderManager;
@@ -66,6 +67,7 @@ public class ReactiveSyncService : IDisposable
     _syncManager = syncManager;
     _toastService = toastService;
     _progressService = progressService;
+    _mediaDownloadCoordinator = mediaDownloadCoordinator;
 
     _noteManager.NoteChanged += OnNoteChanged;
     _folderManager.FolderChanged += OnFolderChanged;
@@ -91,6 +93,8 @@ public class ReactiveSyncService : IDisposable
       _client = new SyncApiClient(settings.ServerUrl, settings.ApiToken);
       _cts = new CancellationTokenSource();
       DebugLogService.Current?.Log($"sync-start: url={settings.ServerUrl} device={_deviceId}");
+      _mediaDownloadCoordinator.Configure(settings.ServerUrl, settings.ApiToken);
+      _mediaDownloadCoordinator.Start();
       _sseTask = RunSseLoopAsync(_cts.Token);
       _periodicTask = RunPeriodicSyncAsync(_cts.Token);
     }
@@ -108,6 +112,7 @@ public class ReactiveSyncService : IDisposable
     var running = new[] { _sseTask, _periodicTask }.Where(t => t != null).Cast<Task>().ToArray();
     if (running.Length > 0)
       await Task.WhenAny(Task.WhenAll(running), Task.Delay(3000));
+    _mediaDownloadCoordinator.Stop();
     _client?.Dispose();
     _client = null;
     _cts = null;
@@ -411,6 +416,7 @@ public class ReactiveSyncService : IDisposable
     _folderManager.FolderChanged -= OnFolderChanged;
     _mediaManager.MediaAdded -= OnMediaAdded;
     _cts?.Cancel();
+    _mediaDownloadCoordinator.Stop();
     _client?.Dispose();
   }
 }

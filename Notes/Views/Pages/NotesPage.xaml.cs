@@ -15,6 +15,7 @@ public partial class NotesPage : ContentPage
   private readonly FolderManager _folderManager;
   private readonly ReactiveSyncService _reactiveSync;
   private readonly Services.ToastService _toastService;
+  private readonly Services.Sync.MediaDownloadCoordinator _mediaDownloadCoordinator;
   public ObservableCollection<object> Items { get; } = new ObservableCollection<object>();
   private CancellationTokenSource? _loadCts;
   private bool _isSwipingBack;
@@ -107,13 +108,15 @@ public partial class NotesPage : ContentPage
   }
 
   public NotesPage(NoteManager noteManager, FolderManager folderManager,
-      ReactiveSyncService reactiveSync, Services.ToastService toastService)
+      ReactiveSyncService reactiveSync, Services.ToastService toastService,
+      Services.Sync.MediaDownloadCoordinator mediaDownloadCoordinator)
   {
     InitializeComponent();
     _noteManager = noteManager;
     _folderManager = folderManager;
     _reactiveSync = reactiveSync;
     _toastService = toastService;
+    _mediaDownloadCoordinator = mediaDownloadCoordinator;
     Items.CollectionChanged += (_, _) => IsEmpty = Items.Count == 0;
     BindingContext = this;
   }
@@ -157,6 +160,7 @@ public partial class NotesPage : ContentPage
     _draggedRowOrigin = null;
 #endif
     _reactiveSync.RemoteChangesApplied -= OnRemoteChangesApplied;
+    _mediaDownloadCoordinator.ClearFolderFocus();
   }
 
   private async void OnRemoteChangesApplied() => await LoadItemsAsync();
@@ -173,6 +177,7 @@ public partial class NotesPage : ContentPage
     var notes = await _noteManager.GetNotesAsync(FolderId);
     if (cts.IsCancellationRequested) return;
     _currentParentId = currentFolder?.ParentId;
+    _mediaDownloadCoordinator.SetFolderFocus(notes.SelectMany(n => NoteManager.ExtractMediaIds(n.Content ?? "")));
     var combined = folders.OrderBy(f => f.Name, NaturalSortComparer.Instance).Cast<object>()
         .Concat(notes.OrderBy(n => n.Title, NaturalSortComparer.Instance).Cast<object>())
         .ToList();

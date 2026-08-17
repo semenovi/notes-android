@@ -45,6 +45,7 @@ public static class MauiProgram
     builder.Services.AddSingleton<FolderManager>();
     builder.Services.AddSingleton<MediaManager>();
 
+    builder.Services.AddSingleton<MediaDownloadCoordinator>();
     builder.Services.AddSingleton<MarkdownProcessor>();
     builder.Services.AddSingleton<SyntaxExtensionManager>();
 

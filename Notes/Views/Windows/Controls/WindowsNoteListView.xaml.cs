@@ -13,6 +13,7 @@ public partial class WindowsNoteListView : ContentView
   private readonly NoteManager _noteManager;
   private readonly MediaManager _mediaManager;
   private readonly Services.ToastService _toastService;
+  private readonly Services.Sync.MediaDownloadCoordinator _mediaDownloadCoordinator;
   private string? _currentFolderId;
   private string? _selectedNoteId;
   private List<NoteViewModel> _allNotes = new();
@@ -30,8 +31,35 @@ public partial class WindowsNoteListView : ContentView
     _noteManager = services.GetService<NoteManager>()!;
     _mediaManager = services.GetService<MediaManager>()!;
     _toastService = services.GetService<Services.ToastService>()!;
+    _mediaDownloadCoordinator = services.GetService<Services.Sync.MediaDownloadCoordinator>()!;
     NotesCollectionView.ItemsSource = Notes;
     services.GetService<ReactiveSyncService>()!.RemoteChangesApplied += OnRemoteChangesApplied;
+    _mediaDownloadCoordinator.MediaAvailable += OnMediaAvailable;
+  }
+
+  // A thumbnail's media may finish downloading in the background while the folder is
+  // still open — refresh just the note(s) that were waiting on it, without touching
+  // rows whose content hasn't changed (that's what LoadNotesAsync's diffing is for).
+  private void OnMediaAvailable(string mediaId)
+  {
+    if (string.IsNullOrEmpty(_currentFolderId)) return;
+    var affected = _allNotes.Where(vm => vm.PendingMediaIds.Contains(mediaId)).ToList();
+    if (affected.Count == 0) return;
+    MainThread.BeginInvokeOnMainThread(async () =>
+    {
+      foreach (var vm in affected)
+        await RefreshNotePreviewAsync(vm);
+    });
+  }
+
+  private async Task RefreshNotePreviewAsync(NoteViewModel vm)
+  {
+    var (images, pending) = await ResolvePreviewImagesAsync(vm.Note.Content);
+    var updated = new NoteViewModel(vm.Note, images, pending) { IsSelected = vm.IsSelected };
+    int idx = _allNotes.IndexOf(vm);
+    if (idx >= 0) _allNotes[idx] = updated;
+    int shownIdx = Notes.IndexOf(vm);
+    if (shownIdx >= 0) Notes[shownIdx] = updated;
   }
 
   private async void OnRemoteChangesApplied()
@@ -59,6 +87,7 @@ public partial class WindowsNoteListView : ContentView
 
     var notes = await _noteManager.GetNotesAsync(folderId);
     var sorted = notes.OrderBy(n => n.Title, NaturalSortComparer.Instance).ToList();
+    _mediaDownloadCoordinator.SetFolderFocus(sorted.SelectMany(n => NoteManager.ExtractMediaIds(n.Content ?? "")));
 
     // Reuse view models of unchanged notes (same id + Modified) so their rows —
     // including already-resolved preview images — stay as-is. Only new or
@@ -83,7 +112,7 @@ public partial class WindowsNoteListView : ContentView
     if (cts.IsCancellationRequested) return;
 
     for (int i = 0; i < toResolve.Count; i++)
-      viewModels[toResolve[i].Index] = new NoteViewModel(toResolve[i].Note, resolved[i]);
+      viewModels[toResolve[i].Index] = new NoteViewModel(toResolve[i].Note, resolved[i].Images, resolved[i].Pending);
 
     _allNotes = viewModels.Cast<NoteViewModel>().ToList();
 
@@ -100,29 +129,38 @@ public partial class WindowsNoteListView : ContentView
   private static readonly System.Text.RegularExpressions.Regex MediaRefRegex =
       new(@"!\[[^\]]*\]\(media:([^)]+)\)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
-  private async Task<IReadOnlyList<ImageSource>> ResolvePreviewImagesAsync(string? content)
+  private async Task<(IReadOnlyList<ImageSource> Images, IReadOnlyList<string> Pending)> ResolvePreviewImagesAsync(string? content)
   {
-    if (string.IsNullOrEmpty(content)) return Array.Empty<ImageSource>();
+    if (string.IsNullOrEmpty(content)) return (Array.Empty<ImageSource>(), Array.Empty<string>());
 
     var result = new List<ImageSource>();
+    var pending = new List<string>();
     var matches = MediaRefRegex.Matches(content);
 
     foreach (System.Text.RegularExpressions.Match m in matches.Cast<System.Text.RegularExpressions.Match>().Take(4))
     {
+      var mediaId = m.Groups[1].Value;
       try
       {
-        var item = await _mediaManager.GetMediaAsync(m.Groups[1].Value);
+        var item = await _mediaManager.GetMediaAsync(mediaId);
         if (item != null)
         {
           var absPath = Path.Combine(FileSystem.AppDataDirectory, "Notes", item.StoragePath);
           if (File.Exists(absPath))
+          {
             result.Add(ImageSource.FromFile(absPath));
+            continue;
+          }
         }
+        // Not local yet — nudge it up the background queue and remember to refresh
+        // this note's row once MediaAvailable fires for it.
+        pending.Add(mediaId);
+        _ = _mediaDownloadCoordinator.EnsureAvailableAsync(mediaId);
       }
       catch { /* skip unresolvable images */ }
     }
 
-    return result;
+    return (result, pending);
   }
 
   private void ApplySearch(string? query)
@@ -188,7 +226,7 @@ public partial class WindowsNoteListView : ContentView
     var idx = Notes.IndexOf(vm);
     var allIdx = _allNotes.IndexOf(vm);
     var isSelected = vm.IsSelected;
-    var updated = new NoteViewModel(vm.Note, vm.PreviewImages) { IsSelected = isSelected };
+    var updated = new NoteViewModel(vm.Note, vm.PreviewImages, vm.PendingMediaIds) { IsSelected = isSelected };
     if (idx >= 0) Notes[idx] = updated;
     if (allIdx >= 0) _allNotes[allIdx] = updated;
   }
@@ -207,7 +245,7 @@ public partial class WindowsNoteListView : ContentView
     await _noteManager.UpdateNoteAsync(vm.Note);
 
     var isSelected = vm.IsSelected;
-    var updated = new NoteViewModel(vm.Note, vm.PreviewImages) { IsSelected = isSelected };
+    var updated = new NoteViewModel(vm.Note, vm.PreviewImages, vm.PendingMediaIds) { IsSelected = isSelected };
 
     _allNotes.Remove(vm);
     int allIdx = _allNotes.Count;
@@ -264,7 +302,7 @@ public partial class WindowsNoteListView : ContentView
     if (existing != null)
     {
       var index = Notes.IndexOf(existing);
-      Notes[index] = new NoteViewModel(updatedNote, existing.PreviewImages)
+      Notes[index] = new NoteViewModel(updatedNote, existing.PreviewImages, existing.PendingMediaIds)
       {
         IsSelected = existing.IsSelected
       };
@@ -283,6 +321,11 @@ public class NoteViewModel : INotifyPropertyChanged
   private string? _preview;
   public IReadOnlyList<ImageSource> PreviewImages { get; }
 
+  // Media ids referenced by this note that weren't local when the preview was last
+  // resolved — used to know whether a MediaDownloadCoordinator.MediaAvailable event
+  // should trigger re-resolving this row's thumbnails.
+  public IReadOnlyList<string> PendingMediaIds { get; }
+
   private bool _isSelected;
   public bool IsSelected
   {
@@ -290,10 +333,11 @@ public class NoteViewModel : INotifyPropertyChanged
     set { if (_isSelected != value) { _isSelected = value; OnPropertyChanged(); } }
   }
 
-  public NoteViewModel(Note note, IReadOnlyList<ImageSource>? images = null)
+  public NoteViewModel(Note note, IReadOnlyList<ImageSource>? images = null, IReadOnlyList<string>? pendingMediaIds = null)
   {
     Note = note;
     PreviewImages = images ?? Array.Empty<ImageSource>();
+    PendingMediaIds = pendingMediaIds ?? Array.Empty<string>();
   }
 
   private static readonly System.Text.RegularExpressions.Regex CodeBlockRx = new(@"```[\s\S]*?```", System.Text.RegularExpressions.RegexOptions.Compiled);
