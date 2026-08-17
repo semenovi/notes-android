@@ -247,7 +247,7 @@ public class MarkdownProcessor
             var code = m.Groups[2].Value.TrimEnd('\n');
             var langClass = string.IsNullOrEmpty(lang) ? "" : $" class=\"language-{lang}\"";
             codeBlocks.Add($"<pre><code{langClass}>{code}</code></pre>");
-            return $"CODEBLOCK{codeBlocks.Count - 1}";
+            return $"CODEBLOCK{codeBlocks.Count - 1}";
         },
         System.Text.RegularExpressions.RegexOptions.Multiline
     );
@@ -362,7 +362,7 @@ public class MarkdownProcessor
 
     for (int i = 0; i < codeBlocks.Count; i++)
     {
-      processedText = processedText.Replace($"CODEBLOCK{i}", codeBlocks[i]);
+      processedText = processedText.Replace($"CODEBLOCK{i}", codeBlocks[i]);
     }
 
     processedText = processedText.Replace("<p><h", "<h");
