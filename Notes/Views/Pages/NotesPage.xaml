@@ -3,10 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:helpers="clr-namespace:Notes.Helpers"
              xmlns:shared="clr-namespace:Notes.Views.Controls"
+             xmlns:local="clr-namespace:Notes.Views.Pages"
              x:Class="Notes.Views.Pages.NotesPage"
              Title="{Binding FolderName}">
 
     <ContentPage.ToolbarItems>
+        <ToolbarItem Text="new subfolder"
+                     Order="Secondary"
+                     Clicked="OnAddSubfolderClicked" />
         <ToolbarItem Text="change folder icon"
                      Order="Secondary"
                      Clicked="OnChangeFolderIconClicked" />
@@ -21,41 +25,65 @@
                      Clicked="OnDeleteFolderClicked" />
     </ContentPage.ToolbarItems>
 
+    <ContentPage.Resources>
+        <DataTemplate x:Key="FolderRowTemplate">
+            <Grid Padding="20,10" ColumnDefinitions="Auto,*">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnFolderItemTapped" />
+                </Grid.GestureRecognizers>
+                <Label Grid.Column="0"
+                       Text="{Binding Icon}"
+                       Style="{StaticResource MaterialIconLabel}"
+                       FontSize="24"
+                       VerticalOptions="Center" />
+                <Label Grid.Column="1"
+                       Text="{Binding Name}"
+                       FontSize="16"
+                       VerticalOptions="Center"
+                       Margin="12,0,0,0" />
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="NoteRowTemplate">
+            <Grid Padding="20,10" ColumnDefinitions="Auto,*">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnNoteTapped" />
+                </Grid.GestureRecognizers>
+                <Label Grid.Column="0"
+                       Text="{Binding Icon}"
+                       Style="{StaticResource MaterialIconLabel}"
+                       FontSize="24"
+                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                       VerticalOptions="Center" />
+                <StackLayout Grid.Column="1" Margin="12,0,0,0" VerticalOptions="Center">
+                    <Label Text="{Binding Title}"
+                           FontSize="18"
+                           FontAttributes="Bold" />
+                    <Label Text="{Binding Modified, StringFormat='{0:g}'}"
+                           FontSize="12"
+                           TextColor="Gray" />
+                </StackLayout>
+            </Grid>
+        </DataTemplate>
+
+        <local:NotesPageItemTemplateSelector x:Key="ItemTemplateSelector"
+                                              FolderTemplate="{StaticResource FolderRowTemplate}"
+                                              NoteTemplate="{StaticResource NoteRowTemplate}" />
+    </ContentPage.Resources>
+
     <Grid IsClippedToBounds="False">
         <!-- Current screen — опaque, slides right on swipe -->
         <Grid x:Name="RootGrid"
               BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
             <CollectionView x:Name="NotesCollection"
-                          SelectionMode="None">
+                          SelectionMode="None"
+                          ItemTemplate="{StaticResource ItemTemplateSelector}">
                 <CollectionView.EmptyView>
                     <StackLayout HorizontalOptions="Center" VerticalOptions="Center">
-                        <Label Text="no notes yet" FontSize="18" HorizontalOptions="Center" TextColor="Gray" />
-                        <Label Text="create your first note" FontSize="14" HorizontalOptions="Center" TextColor="Gray" />
+                        <Label Text="this folder is empty" FontSize="18" HorizontalOptions="Center" TextColor="Gray" />
+                        <Label Text="add a note or subfolder" FontSize="14" HorizontalOptions="Center" TextColor="Gray" />
                     </StackLayout>
                 </CollectionView.EmptyView>
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Padding="20,10" ColumnDefinitions="Auto,*">
-                            <Grid.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnNoteTapped" />
-                            </Grid.GestureRecognizers>
-                            <Label Grid.Column="0"
-                                   Text="{Binding Icon}"
-                                   Style="{StaticResource MaterialIconLabel}"
-                                   FontSize="24"
-                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                                   VerticalOptions="Center" />
-                            <StackLayout Grid.Column="1" Margin="12,0,0,0" VerticalOptions="Center">
-                                <Label Text="{Binding Title}"
-                                       FontSize="18"
-                                       FontAttributes="Bold" />
-                                <Label Text="{Binding Modified, StringFormat='{0:g}'}"
-                                       FontSize="12"
-                                       TextColor="Gray" />
-                            </StackLayout>
-                        </Grid>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
             </CollectionView>
 
             <Button x:Name="AddNoteButton"

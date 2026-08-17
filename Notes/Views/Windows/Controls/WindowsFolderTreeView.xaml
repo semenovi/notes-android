@@ -35,6 +35,8 @@
                                 StrokeShape="RoundRectangle 6">
                             <FlyoutBase.ContextFlyout>
                                 <MenuFlyout>
+                                    <MenuFlyoutItem Text="new subfolder" Clicked="OnNewSubfolderContextMenuClicked" />
+                                    <MenuFlyoutSeparator />
                                     <MenuFlyoutItem Text="change icon" Clicked="OnChangeFolderIconContextMenuClicked" />
                                     <MenuFlyoutSeparator />
                                     <MenuFlyoutItem Text="rename" Clicked="OnRenameFolderContextMenuClicked" />
@@ -44,7 +46,16 @@
                                     <MenuFlyoutItem Text="delete" Clicked="OnDeleteFolderContextMenuClicked" />
                                 </MenuFlyout>
                             </FlyoutBase.ContextFlyout>
-                            <StackLayout Orientation="Horizontal" Padding="10,8" Spacing="8">
+                            <StackLayout Orientation="Horizontal" Padding="10,8" Spacing="6">
+                                <BoxView WidthRequest="{Binding IndentWidth}" HeightRequest="1"
+                                         Color="Transparent" InputTransparent="True" />
+                                <Label Text="{Binding DisclosureGlyph}" WidthRequest="14" FontSize="10"
+                                       TextColor="#8E8E93" VerticalOptions="Center"
+                                       HorizontalTextAlignment="Center">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnDisclosureTapped" />
+                                    </Label.GestureRecognizers>
+                                </Label>
                                 <Label Text="{Binding Icon}" Style="{StaticResource MaterialIconLabel}" FontSize="14" VerticalOptions="Center" />
                                 <Label Text="{Binding Name}" FontSize="13" TextColor="#1C1C1E"
                                        VerticalOptions="Center" />
