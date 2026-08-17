@@ -13,6 +13,7 @@ public partial class NoteViewPage : ContentPage
   private readonly MarkdownProcessor _markdownProcessor;
   private readonly ProgressNotificationService _progressService;
   private readonly MediaManager _mediaManager;
+  private readonly Services.Sync.MediaDownloadCoordinator _mediaDownloadCoordinator;
   private Note _note;
   private string _noteId;
   private bool _isSwipingBack;
@@ -37,13 +38,15 @@ public partial class NoteViewPage : ContentPage
   public string Title => _note?.Title ?? "Note";
 
   public NoteViewPage(NoteManager noteManager, MarkdownProcessor markdownProcessor,
-      ProgressNotificationService progressService, MediaManager mediaManager)
+      ProgressNotificationService progressService, MediaManager mediaManager,
+      Services.Sync.MediaDownloadCoordinator mediaDownloadCoordinator)
   {
     InitializeComponent();
     _noteManager = noteManager;
     _markdownProcessor = markdownProcessor;
     _progressService = progressService;
     _mediaManager = mediaManager;
+    _mediaDownloadCoordinator = mediaDownloadCoordinator;
     BindingContext = this;
     NoteContentWebView.Navigating += OnWebViewNavigating;
   }
@@ -57,6 +60,7 @@ public partial class NoteViewPage : ContentPage
     if (_note != null)
     {
       OnPropertyChanged(nameof(Title));
+      _mediaDownloadCoordinator.SetNoteFocus(NoteManager.ExtractMediaIds(_note.Content ?? ""));
       await RenderNoteContentAsync();
     }
   }
@@ -456,12 +460,16 @@ public partial class NoteViewPage : ContentPage
     global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = () => _ = SpringBackAsync();
 #endif
     if (_note != null)
+    {
+      _mediaDownloadCoordinator.SetNoteFocus(NoteManager.ExtractMediaIds(_note.Content ?? ""));
       RenderNoteContentAsync().ConfigureAwait(false);
+    }
   }
 
   protected override void OnDisappearing()
   {
     base.OnDisappearing();
+    _mediaDownloadCoordinator.ClearNoteFocus();
 #if ANDROID
     if (!_isSwipingBack)
       HidePreviousPage();

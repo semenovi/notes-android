@@ -5,13 +5,22 @@ namespace Notes.Services.Markdown;
 
 public class MarkdownProcessor
 {
+  // Bounds how long a single missing image can hold up note rendering before falling
+  // back to a blank placeholder — the fetch itself keeps running and the image resolves
+  // next time the note is opened (or immediately, if InjectImagesIntoWebViewAsync is
+  // still in progress and reaches it again via a later call).
+  private static readonly TimeSpan OnDemandFetchTimeout = TimeSpan.FromSeconds(20);
+
   private readonly List<ISyntaxExtension> _extensions = new List<ISyntaxExtension>();
   private readonly Services.Notes.MediaManager _mediaManager;
+  private readonly Services.Sync.MediaDownloadCoordinator _mediaDownloadCoordinator;
   private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _dataUriCache = new();
 
-  public MarkdownProcessor(Services.Notes.MediaManager mediaManager)
+  public MarkdownProcessor(Services.Notes.MediaManager mediaManager,
+      Services.Sync.MediaDownloadCoordinator mediaDownloadCoordinator)
   {
     _mediaManager = mediaManager;
+    _mediaDownloadCoordinator = mediaDownloadCoordinator;
     _mediaManager.MediaAdded += id => _dataUriCache.TryRemove(id, out _);
     _mediaManager.MediaDeleted += id => _dataUriCache.TryRemove(id, out _);
   }
@@ -137,8 +146,17 @@ public class MarkdownProcessor
       var id = mediaIds[i];
       try
       {
+        // Metadata and content arrive together from the server, so a media item that
+        // hasn't been fetched yet has neither — GetMediaAsync alone can't tell "still
+        // downloading" apart from "doesn't exist". Ask the coordinator first; it no-ops
+        // if the content is already local.
         var item = await _mediaManager.GetMediaAsync(id);
-        if (item == null) continue;
+        if (item == null)
+        {
+          if (!await EnsureLocalAsync(id)) continue;
+          item = await _mediaManager.GetMediaAsync(id);
+          if (item == null) continue;
+        }
         string dataUri = await GetMediaDataUriAsync(id, item);
         if (string.IsNullOrEmpty(dataUri)) continue;
         string js = $"(function(){{var e=document.getElementById('media-{id}');if(e)e.src='{dataUri}';}})();";
@@ -149,10 +167,19 @@ public class MarkdownProcessor
     }
   }
 
+  // Waits up to OnDemandFetchTimeout for the coordinator to fetch mediaId if it isn't
+  // local yet. Returns immediately (true) if it's already there.
+  private async Task<bool> EnsureLocalAsync(string mediaId)
+  {
+    using var cts = new CancellationTokenSource(OnDemandFetchTimeout);
+    return await _mediaDownloadCoordinator.EnsureAvailableAsync(mediaId, cts.Token);
+  }
+
   public async Task<string> GetFullResDataUriAsync(string mediaId)
   {
     try
     {
+      await EnsureLocalAsync(mediaId);
       var item = await _mediaManager.GetMediaAsync(mediaId);
       if (item == null) return "";
       string fileType = item.FileType?.ToLowerInvariant() ?? "png";
@@ -179,6 +206,7 @@ public class MarkdownProcessor
 
     try
     {
+      await EnsureLocalAsync(mediaId);
       mediaItem ??= await _mediaManager.GetMediaAsync(mediaId);
       string fileType = mediaItem?.FileType?.ToLowerInvariant() ?? "png";
 

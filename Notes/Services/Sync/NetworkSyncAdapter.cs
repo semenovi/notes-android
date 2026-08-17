@@ -20,6 +20,7 @@ public class NetworkSyncAdapter : ISyncAdapter
   private readonly FolderRepository _folderRepo;
   private readonly MediaStorage _mediaStorage;
   private readonly SyncSettingsService _settingsService;
+  private readonly MediaDownloadCoordinator _mediaDownloadCoordinator;
 
   public SyncProtocolType ProtocolType => SyncProtocolType.Network;
   public bool IsConnected { get; private set; }
@@ -32,12 +33,14 @@ public class NetworkSyncAdapter : ISyncAdapter
   private List<string> _toUploadMedia = new();
 
   public NetworkSyncAdapter(NoteRepository noteRepo, FolderRepository folderRepo,
-      MediaStorage mediaStorage, SyncSettingsService settingsService)
+      MediaStorage mediaStorage, SyncSettingsService settingsService,
+      MediaDownloadCoordinator mediaDownloadCoordinator)
   {
     _noteRepo = noteRepo;
     _folderRepo = folderRepo;
     _mediaStorage = mediaStorage;
     _settingsService = settingsService;
+    _mediaDownloadCoordinator = mediaDownloadCoordinator;
   }
 
   public async Task<bool> ConnectAsync(SyncProfile profile)
@@ -140,46 +143,11 @@ public class NetworkSyncAdapter : ISyncAdapter
       catch { /* skip undecryptable item — will be overwritten on push */ }
     }
 
-    // Media items are pulled one by one and saved immediately to avoid loading all images
-    // into memory at once, which causes OOM crashes on Android with large photo libraries.
-    var mediaToDownload = manifestResp.ToDownload.Media;
-    int totalDl = mediaToDownload.Count;
-    if (totalDl > 0)
-      onProgress?.Invoke(0.0, totalDl > 1 ? $"downloading media 1 of {totalDl}" : "downloading media");
-    for (int dlIdx = 0; dlIdx < totalDl; dlIdx++)
-    {
-      var mediaId = mediaToDownload[dlIdx];
-      try
-      {
-        PullResponse? mediaPull = await _apiClient.PullChangesAsync(
-            new List<string>(), new List<string>(), new List<string> { mediaId });
-        if (mediaPull?.Media == null) continue;
-        foreach (var item in mediaPull.Media)
-        {
-          try
-          {
-            byte[] dec = SyncCryptoHelper.AesDecrypt(Convert.FromBase64String(item.EncryptedData), _syncKey);
-            var payload = JsonSerializer.Deserialize<MediaSyncPayload>(Encoding.UTF8.GetString(dec), JsonOpts);
-            if (payload?.Metadata == null || string.IsNullOrEmpty(payload.ContentBase64)) continue;
-            var existing = await _mediaStorage.GetMediaAsync(payload.Metadata.Id);
-            if (existing != null) continue;
-            byte[] content = Convert.FromBase64String(payload.ContentBase64);
-            await _mediaStorage.SaveMediaFromSyncAsync(payload.Metadata, content);
-            DebugLogService.Current?.Log($"pull-media-done: id={mediaId}");
-          }
-          catch (Exception ex)
-          {
-            DebugLogService.Current?.Log($"pull-media-item-err: id={mediaId} {ex.GetType().Name}: {ex.Message}");
-          }
-        }
-      }
-      catch (Exception ex)
-      {
-        DebugLogService.Current?.Log($"pull-media-err: id={mediaId} {ex.GetType().Name}: {ex.Message}");
-      }
-      onProgress?.Invoke((double)(dlIdx + 1) / totalDl,
-          totalDl > 1 ? $"downloading media {dlIdx + 1} of {totalDl}" : "downloading media");
-    }
+    // Media content is not fetched here — it would block notes/folders (already pulled
+    // above) from reaching the local DB and the UI until every media item finished
+    // downloading. Instead, hand the missing ids off to the coordinator, which fetches
+    // them in the background, prioritized by whatever note/folder is currently open.
+    _mediaDownloadCoordinator.EnqueueBackground(manifestResp.ToDownload.Media);
 
     foreach (var id in manifestResp.ToDeleteLocal.Notes)
       changes.Add(new SyncChange { Id = id, EntityType = SyncEntityType.Note, ChangeType = SyncChangeType.Delete, Timestamp = DateTime.UtcNow });

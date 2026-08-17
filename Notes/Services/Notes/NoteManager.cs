@@ -72,7 +72,7 @@ public class NoteManager
     return true;
   }
 
-  private static List<string> ExtractMediaIds(string content) =>
+  public static List<string> ExtractMediaIds(string content) =>
       MediaRefRegex.Matches(content).Select(m => m.Groups[1].Value).Distinct().ToList();
 
   private async Task CleanupOrphanMediaAsync(IEnumerable<string> candidateIds)

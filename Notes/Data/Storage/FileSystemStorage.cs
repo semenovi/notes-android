@@ -31,6 +31,19 @@ public class FileSystemStorage
     await File.WriteAllBytesAsync(fullPath, data);
   }
 
+  public bool FileExists(string path)
+  {
+    string fullPath = Path.Combine(_rootPath, path);
+    return File.Exists(fullPath);
+  }
+
+  public long GetFileSize(string path)
+  {
+    string fullPath = Path.Combine(_rootPath, path);
+    var info = new FileInfo(fullPath);
+    return info.Exists ? info.Length : 0;
+  }
+
   public async Task<bool> DeleteFileAsync(string path)
   {
     string fullPath = Path.Combine(_rootPath, path);
