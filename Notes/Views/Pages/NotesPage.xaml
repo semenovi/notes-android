@@ -74,17 +74,54 @@
     <Grid IsClippedToBounds="False">
         <!-- Current screen — опaque, slides right on swipe -->
         <Grid x:Name="RootGrid"
+              IsClippedToBounds="False"
               BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
-            <CollectionView x:Name="NotesCollection"
-                          SelectionMode="None"
-                          ItemTemplate="{StaticResource ItemTemplateSelector}">
-                <CollectionView.EmptyView>
-                    <StackLayout HorizontalOptions="Center" VerticalOptions="Center">
+            <!-- BindableLayout instead of CollectionView: drag-and-drop here is driven
+                 by our own touch tracking (see MainActivity/DragReorderGesture), which
+                 hit-tests directly against ItemsStack.Children — a real, enumerable view
+                 tree. CollectionView virtualizes/recycles rows, which doesn't give that.
+                 Folder/note counts here are small, so skipping virtualization costs
+                 nothing in practice. -->
+            <ScrollView>
+                <Grid RowDefinitions="Auto,Auto">
+                    <VerticalStackLayout x:Name="ItemsStack"
+                                         Grid.Row="0"
+                                         BindableLayout.ItemsSource="{Binding Items}"
+                                         BindableLayout.ItemTemplateSelector="{StaticResource ItemTemplateSelector}" />
+
+                    <StackLayout Grid.Row="1"
+                                 IsVisible="{Binding IsEmpty}"
+                                 Margin="0,60,0,0"
+                                 HorizontalOptions="Center">
                         <Label Text="this folder is empty" FontSize="18" HorizontalOptions="Center" TextColor="Gray" />
                         <Label Text="add a note or subfolder" FontSize="14" HorizontalOptions="Center" TextColor="Gray" />
                     </StackLayout>
-                </CollectionView.EmptyView>
-            </CollectionView>
+                </Grid>
+            </ScrollView>
+
+            <!-- Drop target for "move up a level" while dragging a note/folder.
+                 Anchored to the bottom, not the top: folders always sort first in
+                 the list, so a top-anchored bar would sit right on top of them and
+                 block the most common drop target. Still overlaid in the same Grid
+                 cell (no row of its own), so showing/hiding it never shifts rows.
+                 Always present (not IsVisible-toggled) — shown/hidden purely via a
+                 slide+fade animation driven from IsDragActive in code-behind, so it
+                 arrives/leaves instead of popping in and out. -->
+            <Border x:Name="MoveUpZone"
+                    Opacity="0"
+                    TranslationY="30"
+                    InputTransparent="True"
+                    VerticalOptions="End"
+                    HeightRequest="56"
+                    StrokeThickness="0"
+                    BackgroundColor="{AppThemeBinding Light=#DCE9FF, Dark=#1E3A6E}"
+                    Padding="20,0">
+                <Label Text="&#9650; move up a level"
+                       FontSize="14"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center"
+                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+            </Border>
 
             <Button x:Name="AddNoteButton"
                     Text="{x:Static helpers:MaterialIconCodes.Add}"
@@ -98,6 +135,35 @@
                     HorizontalOptions="End"
                     Margin="0,0,20,20"
                     Clicked="OnAddNoteClicked" />
+
+            <!-- Stand-in for the native OS drag shadow, which we no longer trigger.
+                 Sized/styled to match FolderRowTemplate/NoteRowTemplate so it reads as
+                 "the row, picked up" rather than a smaller, unrelated chip. Positioned
+                 by hand (TranslationX/Y) from the raw touch coordinates MainActivity
+                 reports; never intercepts touches itself. -->
+            <Border x:Name="DragGhost"
+                    IsVisible="False"
+                    InputTransparent="True"
+                    Opacity="0"
+                    Scale="0.95"
+                    HorizontalOptions="Start"
+                    VerticalOptions="Start"
+                    WidthRequest="260"
+                    Padding="20,10"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 10"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
+                <HorizontalStackLayout Spacing="12">
+                    <Label x:Name="DragGhostIcon"
+                           Style="{StaticResource MaterialIconLabel}"
+                           FontSize="24"
+                           VerticalOptions="Center" />
+                    <Label x:Name="DragGhostLabel"
+                           FontSize="16"
+                           VerticalOptions="Center"
+                           LineBreakMode="TailTruncation" />
+                </HorizontalStackLayout>
+            </Border>
 
         </Grid>
 
