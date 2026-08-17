@@ -14,9 +14,13 @@ public partial class NotesPage : ContentPage
   private readonly NoteManager _noteManager;
   private readonly FolderManager _folderManager;
   private readonly ReactiveSyncService _reactiveSync;
+  private readonly Services.ToastService _toastService;
   public ObservableCollection<object> Items { get; } = new ObservableCollection<object>();
   private CancellationTokenSource? _loadCts;
   private bool _isSwipingBack;
+  // parent of the currently open folder — drop target for the "move up" zone.
+  // Null both before the first load and when the current folder is itself a root.
+  private string? _currentParentId;
 #if ANDROID
   private Android.Views.View? _prevPageView;
   private Android.Views.ViewGroup? _actualCurrentContainer;
@@ -47,14 +51,70 @@ public partial class NotesPage : ContentPage
     }
   }
 
+  private bool _isDragActive;
+  public bool IsDragActive
+  {
+    get => _isDragActive;
+    set
+    {
+      if (_isDragActive == value) return;
+      _isDragActive = value;
+      OnPropertyChanged();
+      AnimateMoveUpZone(value);
+      AnimateFab(!value);
+    }
+  }
+
+  private async void AnimateMoveUpZone(bool show)
+  {
+    MoveUpZone.InputTransparent = !show;
+    if (show)
+      await Task.WhenAll(
+          MoveUpZone.FadeTo(1, 160, Easing.CubicOut),
+          MoveUpZone.TranslateTo(0, 0, 160, Easing.CubicOut));
+    else
+      await Task.WhenAll(
+          MoveUpZone.FadeTo(0, 120, Easing.CubicIn),
+          MoveUpZone.TranslateTo(0, 30, 120, Easing.CubicIn));
+  }
+
+  // Hidden while dragging: it sits where the "move up" zone now lives, and it's
+  // not something you'd want to hit by accident mid-drag anyway. Animated rather
+  // than an IsVisible binding so it shrinks/fades away instead of popping.
+  private async void AnimateFab(bool show)
+  {
+    AddNoteButton.InputTransparent = !show;
+    if (show)
+      await Task.WhenAll(
+          AddNoteButton.FadeTo(1, 160, Easing.CubicOut),
+          AddNoteButton.ScaleTo(1, 160, Easing.CubicOut));
+    else
+      await Task.WhenAll(
+          AddNoteButton.FadeTo(0, 120, Easing.CubicIn),
+          AddNoteButton.ScaleTo(0.6, 120, Easing.CubicIn));
+  }
+
+  private bool _isEmpty = true;
+  public bool IsEmpty
+  {
+    get => _isEmpty;
+    set
+    {
+      if (_isEmpty == value) return;
+      _isEmpty = value;
+      OnPropertyChanged();
+    }
+  }
+
   public NotesPage(NoteManager noteManager, FolderManager folderManager,
-      ReactiveSyncService reactiveSync)
+      ReactiveSyncService reactiveSync, Services.ToastService toastService)
   {
     InitializeComponent();
     _noteManager = noteManager;
     _folderManager = folderManager;
     _reactiveSync = reactiveSync;
-    NotesCollection.ItemsSource = Items;
+    _toastService = toastService;
+    Items.CollectionChanged += (_, _) => IsEmpty = Items.Count == 0;
     BindingContext = this;
   }
 
@@ -69,6 +129,10 @@ public partial class NotesPage : ContentPage
     global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = OnSwipeProgress;
     global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = OnSwipeEnd;
     global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = () => _ = SpringBackAsync();
+    global::Notes.Platforms.Android.DragReorderGesture.OnLongPress = OnNativeLongPress;
+    global::Notes.Platforms.Android.DragReorderGesture.OnMove = OnNativeDragMove;
+    global::Notes.Platforms.Android.DragReorderGesture.OnEnd = OnNativeDragEnd;
+    global::Notes.Platforms.Android.DragReorderGesture.OnCancel = OnNativeDragCancel;
 #endif
     _reactiveSync.RemoteChangesApplied += OnRemoteChangesApplied;
   }
@@ -76,12 +140,21 @@ public partial class NotesPage : ContentPage
   protected override void OnDisappearing()
   {
     base.OnDisappearing();
+    // Belt-and-braces: if the page is left mid-drag (back button, notification, etc.)
+    // and the drag never got a proper end, don't leave the "move up" zone stuck visible.
+    IsDragActive = false;
 #if ANDROID
     if (!_isSwipingBack)
       HidePreviousPage();
     global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = null;
     global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = null;
     global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = null;
+    global::Notes.Platforms.Android.DragReorderGesture.OnLongPress = null;
+    global::Notes.Platforms.Android.DragReorderGesture.OnMove = null;
+    global::Notes.Platforms.Android.DragReorderGesture.OnEnd = null;
+    global::Notes.Platforms.Android.DragReorderGesture.OnCancel = null;
+    _draggedItem = null;
+    _draggedRowOrigin = null;
 #endif
     _reactiveSync.RemoteChangesApplied -= OnRemoteChangesApplied;
   }
@@ -95,9 +168,11 @@ public partial class NotesPage : ContentPage
     _loadCts?.Cancel();
     var cts = new CancellationTokenSource();
     _loadCts = cts;
+    var currentFolder = await _folderManager.GetFolderAsync(FolderId);
     var folders = await _folderManager.GetFoldersAsync(FolderId);
     var notes = await _noteManager.GetNotesAsync(FolderId);
     if (cts.IsCancellationRequested) return;
+    _currentParentId = currentFolder?.ParentId;
     var combined = folders.OrderBy(f => f.Name, NaturalSortComparer.Instance).Cast<object>()
         .Concat(notes.OrderBy(n => n.Title, NaturalSortComparer.Instance).Cast<object>())
         .ToList();
@@ -185,6 +260,262 @@ public partial class NotesPage : ContentPage
         { "FolderName", folder.Name }
       });
     }
+  }
+
+  private static void DragLog(string message) => System.Diagnostics.Debug.WriteLine($"[dragdrop] {message}");
+
+  // Hover state, shared between folder rows and the "move up" zone — kept simple
+  // (single tracked row/flag) since only one thing can be hovered at a time.
+  private VisualElement? _hoveredFolderRow;
+  private bool _moveUpHovered;
+
+  private const double MoveUpZoneRestHeight = 56;
+  private const double MoveUpZoneHoverHeight = 68;
+
+  // Animates HeightRequest rather than TranslationY: the zone is bottom-anchored
+  // (VerticalOptions="End"), so growing its height keeps the bottom edge fixed
+  // and only the top edge moves up — translating the whole bar instead would
+  // shift the bottom edge too, which reads as illogical for a "grows on hover"
+  // affordance.
+  private static void AnimateMoveUpHeight(VisualElement owner, Border zone, double to)
+  {
+    new Animation(v => zone.HeightRequest = v, zone.HeightRequest, to)
+        .Commit(owner, "MoveUpHeightAnim", length: 120, easing: Easing.CubicOut);
+  }
+
+#if ANDROID
+  // Drag is driven entirely by raw touch tracking from MainActivity (see
+  // DragReorderGesture) instead of Android's native View.startDragAndDrop —
+  // that native API has a long-standing platform bug where a live drag session
+  // crashes (ConcurrentModificationException in ViewGroup.dispatchDragEvent) if
+  // the view hierarchy changes anywhere nearby, which a reactive MAUI UI does
+  // constantly (highlight animations, list reloads, IsVisible bindings). Manual
+  // touch tracking never touches that code path.
+  private object? _draggedItem;
+  private View? _draggedRowOrigin;
+
+  private enum DropTargetKind { None, Folder, MoveUp }
+
+  private void OnNativeLongPress(float rawX, float rawY)
+  {
+    var (row, item) = HitTestRow(rawX, rawY);
+    DragLog($"LongPress row={row?.GetType().Name} item={item?.GetType().Name}");
+    if (row == null || item == null) return;
+
+    _draggedItem = item;
+    _draggedRowOrigin = row;
+    IsDragActive = true;
+    ShowDragGhost(item, rawX, rawY);
+  }
+
+  private void OnNativeDragMove(float rawX, float rawY)
+  {
+    if (_draggedItem == null) return;
+    PositionGhost(rawX, rawY);
+    UpdateHover(rawX, rawY);
+  }
+
+  private async void OnNativeDragEnd(float rawX, float rawY)
+  {
+    if (_draggedItem == null) return;
+    var item = _draggedItem;
+    _draggedItem = null;
+    _draggedRowOrigin = null;
+    HideDragGhost();
+
+    var (kind, targetFolder) = HitTestDropTarget(rawX, rawY);
+    // ClearHoverState animates the hovered row/zone straight back to rest (scale
+    // 1 / resting height) — that alone reads as "dropped here", no extra pulse
+    // needed on top of it.
+    ClearHoverState();
+    IsDragActive = false;
+
+    DragLog($"DragEnd kind={kind} item={item.GetType().Name}");
+    if (kind == DropTargetKind.Folder && targetFolder != null)
+    {
+      await MoveItemAsync(item, targetFolder.Id);
+    }
+    else if (kind == DropTargetKind.MoveUp)
+    {
+      if (item is Note && _currentParentId == null)
+        _toastService.Show("notes can't be moved outside a folder");
+      else
+        await MoveItemAsync(item, _currentParentId);
+    }
+  }
+
+  private void OnNativeDragCancel()
+  {
+    DragLog("DragCancel");
+    _draggedItem = null;
+    _draggedRowOrigin = null;
+    HideDragGhost();
+    ClearHoverState();
+    IsDragActive = false;
+  }
+
+  private void UpdateHover(float rawX, float rawY)
+  {
+    var (kind, folder) = HitTestDropTarget(rawX, rawY);
+
+    VisualElement? newHoverRow = null;
+    if (kind == DropTargetKind.Folder && folder != null)
+      foreach (var child in ItemsStack.Children)
+        if (child is VisualElement v && ReferenceEquals(v.BindingContext, folder)) { newHoverRow = v; break; }
+
+    if (!ReferenceEquals(newHoverRow, _hoveredFolderRow))
+    {
+      _hoveredFolderRow?.ScaleTo(1, 120, Easing.CubicOut);
+      _hoveredFolderRow = newHoverRow;
+      // Kept subtle on purpose: the row scales from its center, which doesn't line
+      // up with the left-aligned icon/text — a bigger bump makes that drift obvious.
+      _hoveredFolderRow?.ScaleTo(1.02, 120, Easing.CubicOut);
+    }
+
+    bool overMoveUp = kind == DropTargetKind.MoveUp;
+    if (overMoveUp != _moveUpHovered)
+    {
+      _moveUpHovered = overMoveUp;
+      AnimateMoveUpHeight(this, MoveUpZone, overMoveUp ? MoveUpZoneHoverHeight : MoveUpZoneRestHeight);
+    }
+  }
+
+  private void ClearHoverState()
+  {
+    if (_hoveredFolderRow != null)
+    {
+      _hoveredFolderRow.ScaleTo(1, 120, Easing.CubicOut);
+      _hoveredFolderRow = null;
+    }
+    if (_moveUpHovered)
+    {
+      _moveUpHovered = false;
+      MoveUpZone.HeightRequest = MoveUpZoneRestHeight;
+    }
+  }
+
+  private (View? row, object? item) HitTestRow(float rawX, float rawY)
+  {
+    foreach (var child in ItemsStack.Children)
+    {
+      if (child is not View view) continue;
+      if (ContainsScreenPoint(view, rawX, rawY))
+        return (view, view.BindingContext);
+    }
+    return (null, null);
+  }
+
+  private (DropTargetKind kind, Folder? folder) HitTestDropTarget(float rawX, float rawY)
+  {
+    if (MoveUpZone.Opacity > 0.05 && ContainsScreenPoint(MoveUpZone, rawX, rawY))
+      return (DropTargetKind.MoveUp, null);
+
+    foreach (var child in ItemsStack.Children)
+    {
+      if (child is not View view || view == _draggedRowOrigin) continue;
+      if (view.BindingContext is not Folder folder) continue;
+      if (ContainsScreenPoint(view, rawX, rawY))
+        return (DropTargetKind.Folder, folder);
+    }
+    return (DropTargetKind.None, null);
+  }
+
+  private static bool ContainsScreenPoint(VisualElement view, float rawX, float rawY)
+  {
+    if (view.Handler?.PlatformView is not Android.Views.View native || !native.IsShown) return false;
+    var loc = new int[2];
+    native.GetLocationOnScreen(loc);
+    return rawX >= loc[0] && rawX <= loc[0] + native.Width
+        && rawY >= loc[1] && rawY <= loc[1] + native.Height;
+  }
+
+  private void ShowDragGhost(object item, float rawX, float rawY)
+  {
+    DragGhostLabel.Text = item switch { Folder f => f.Name, Note n => n.Title, _ => "" };
+    DragGhostIcon.Text = item switch { Folder f => f.Icon, Note n => n.Icon, _ => "" };
+    // Match each row template's own icon color: notes tint their icon (Primary/
+    // PrimaryDark), folders use the label's default color. Without this the ghost's
+    // icon used the MaterialIconLabel style's flat default for both, which doesn't
+    // match either original row.
+    if (item is Note)
+    {
+      string key = Application.Current?.RequestedTheme == AppTheme.Dark ? "PrimaryDark" : "Primary";
+      if (Application.Current?.Resources.TryGetValue(key, out var color) == true)
+        DragGhostIcon.TextColor = (Color)color;
+    }
+    else
+    {
+      DragGhostIcon.ClearValue(Label.TextColorProperty);
+    }
+    DragGhost.IsVisible = true;
+    DragGhost.Opacity = 0;
+    DragGhost.Scale = 0.95;
+    PositionGhost(rawX, rawY);
+    DragGhost.FadeTo(0.94, 100);
+    DragGhost.ScaleTo(1, 100, Easing.CubicOut);
+  }
+
+  private void PositionGhost(float rawX, float rawY)
+  {
+    // TranslationX/Y on DragGhost are relative to RootGrid's own on-screen origin,
+    // not the screen's — RootGrid starts below the page's toolbar/status bar, so
+    // rawX/rawY (screen-absolute) need that origin subtracted first, the same way
+    // ContainsScreenPoint compares against each row's own on-screen location.
+    if (RootGrid.Handler?.PlatformView is not Android.Views.View rootNative) return;
+    var loc = new int[2];
+    rootNative.GetLocationOnScreen(loc);
+    float density = Android.App.Application.Context?.Resources?.DisplayMetrics?.Density ?? 1f;
+    // Centered on the touch point — half of WidthRequest (260) and the row's
+    // typical height (Padding 20,10 + 24pt icon ≈ 44dp).
+    DragGhost.TranslationX = (rawX - loc[0]) / density - 130;
+    DragGhost.TranslationY = (rawY - loc[1]) / density - 22;
+  }
+
+  private void HideDragGhost() => DragGhost.IsVisible = false;
+#endif
+
+  // targetParentId == null means "move to the top level" — only ever valid for a folder.
+  // Returns whether an item was actually relocated (false for a no-op or rejected move).
+  private async Task<bool> MoveItemAsync(object draggedItem, string? targetParentId)
+  {
+    DragLog($"MoveItemAsync draggedItem={draggedItem?.GetType().Name} targetParentId={targetParentId}");
+    if (draggedItem is Note note)
+    {
+      if (targetParentId == null || note.FolderId == targetParentId)
+      {
+        DragLog("MoveItemAsync: no-op for note (same folder or null target)");
+        return false;
+      }
+      note.FolderId = targetParentId;
+      await _noteManager.UpdateNoteAsync(note);
+      DragLog($"MoveItemAsync: note '{note.Title}' moved to folder {targetParentId}");
+      await LoadItemsAsync();
+      return true;
+    }
+
+    if (draggedItem is Folder folder)
+    {
+      if (folder.Id == targetParentId || folder.ParentId == targetParentId)
+      {
+        DragLog("MoveItemAsync: no-op for folder (self or same parent)");
+        return false;
+      }
+
+      var descendants = await _folderManager.GetDescendantFoldersAsync(folder.Id);
+      if (targetParentId != null && descendants.Any(d => d.Id == targetParentId))
+      {
+        DragLog("MoveItemAsync: rejected, would create a cycle");
+        _toastService.Show("can't move a folder into its own subfolder");
+        return false;
+      }
+
+      await _folderManager.MoveFolderAsync(folder.Id, targetParentId);
+      DragLog($"MoveItemAsync: folder '{folder.Name}' moved to parent {targetParentId}");
+      await LoadItemsAsync();
+      return true;
+    }
+
+    return false;
   }
 
   private void OnSwipeProgress(float dx)
