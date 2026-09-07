@@ -17,6 +17,10 @@ public partial class NoteViewPage : ContentPage
   private Note _note;
   private string _noteId;
   private bool _isSwipingBack;
+  // gates the swipe-back gesture to a settled, fully-appeared page. cleared while a
+  // navigation (this gesture's own, or an external one) is in flight so OnSwipeProgress
+  // never reaches into Shell's native container tree mid-FragmentTransaction.
+  private bool _swipeReady;
 #if ANDROID
   private Android.Views.View? _prevPageView;
   private Android.Views.ViewGroup? _actualCurrentContainer;
@@ -131,6 +135,7 @@ public partial class NoteViewPage : ContentPage
     if (e.Url == "swipe://disable")
     {
       e.Cancel = true;
+      _swipeReady = false;
       global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = null;
       global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = null;
       global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = null;
@@ -140,7 +145,8 @@ public partial class NoteViewPage : ContentPage
       e.Cancel = true;
       global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = OnSwipeProgress;
       global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = OnSwipeEnd;
-      global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = () => _ = SpringBackAsync();
+      global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = OnSwipeCancel;
+      _swipeReady = true;
     }
     else if (e.Url.StartsWith("img-viewer://open/"))
     {
@@ -205,6 +211,7 @@ public partial class NoteViewPage : ContentPage
 
   private void OnSwipeProgress(float dx)
   {
+    if (!_swipeReady) return;
     float d = Math.Max(0, dx);
 #if ANDROID
     if (_actualCurrentContainer == null || _actualCurrentContainer.Handle == IntPtr.Zero)
@@ -228,6 +235,8 @@ public partial class NoteViewPage : ContentPage
 
   private void OnSwipeEnd(float dx)
   {
+    if (!_swipeReady) return;
+    _swipeReady = false;
     var screenWidth = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
     if (dx > screenWidth * 0.35)
       _ = CompleteSwipeBackAsync();
@@ -235,24 +244,37 @@ public partial class NoteViewPage : ContentPage
       _ = SpringBackAsync();
   }
 
+  // installed as SwipeBackGesture.OnCancel: a named method rather than a lambda so
+  // OnDisappearing can check whether the static still points at this page.
+  private void OnSwipeCancel()
+  {
+    if (!_swipeReady) return;
+    _swipeReady = false;
+    _ = SpringBackAsync();
+  }
+
   private async Task CompleteSwipeBackAsync()
   {
+    if (_isSwipingBack) return;
     _isSwipingBack = true;
+    _swipeReady = false;
     var screenWidth = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
 #if ANDROID
     if (_actualCurrentContainer != null)
     {
-      float screenWidthPx = (float)DeviceDisplay.MainDisplayInfo.Width;
-      await NativeTranslateAsync(_actualCurrentContainer, screenWidthPx + 20, 220,
-          _nativeShadow, screenWidthPx + 20 - _shadowWidthPx, 0f);
+      var leaving = _actualCurrentContainer;
       _actualCurrentContainer = null;
-      if (_nativeShadow != null)
-      {
-        (_nativeShadow.Parent as Android.Views.ViewGroup)?.RemoveView(_nativeShadow);
-        _nativeShadow.Dispose();
-        _nativeShadow = null;
-      }
+      float screenWidthPx = (float)DeviceDisplay.MainDisplayInfo.Width;
+      await NativeTranslateAsync(leaving, screenWidthPx + 20, 220,
+          _nativeShadow, screenWidthPx + 20 - _shadowWidthPx, 0f);
+      RemoveNativeShadow();
       await Shell.Current.GoToAsync("..", false);
+      // Shell owns this container again and may reuse it for the next push - hand it
+      // back at TranslationX 0 instead of parked off-screen (which renders as a white
+      // screen on the reused page).
+      if (leaving.Handle != IntPtr.Zero)
+        leaving.TranslationX = 0;
+      _prevPageView = null;
       return;
     }
 #endif
@@ -273,6 +295,7 @@ public partial class NoteViewPage : ContentPage
       await NativeTranslateAsync(_actualCurrentContainer, 0, 300,
           _nativeShadow, -_shadowWidthPx, 0f);
       HidePreviousPage();
+      _swipeReady = true;
       return;
     }
 #endif
@@ -281,6 +304,7 @@ public partial class NoteViewPage : ContentPage
       SwipeShadow.FadeTo(0, 180)
     );
     SwipeShadow.TranslationX = -24;
+    _swipeReady = true;
   }
 
 #if ANDROID
@@ -325,10 +349,18 @@ public partial class NoteViewPage : ContentPage
 
       if (currentContainer != null && prevContainer != null)
       {
-        _actualCurrentContainer = currentContainer;
-        prevContainer.Visibility = Android.Views.ViewStates.Visible;
-        _prevPageView = prevContainer;
-        AddNativeShadow();
+        try
+        {
+          _actualCurrentContainer = currentContainer;
+          prevContainer.Visibility = Android.Views.ViewStates.Visible;
+          _prevPageView = prevContainer;
+          AddNativeShadow();
+        }
+        catch
+        {
+          _actualCurrentContainer = null;
+          _prevPageView = null;
+        }
         return;
       }
 
@@ -338,22 +370,39 @@ public partial class NoteViewPage : ContentPage
 
   private void HidePreviousPage()
   {
-    if (_prevPageView != null)
+    try
     {
-      _prevPageView.Visibility = Android.Views.ViewStates.Gone;
-      _prevPageView = null;
+      if (_prevPageView != null && _prevPageView.Handle != IntPtr.Zero)
+        _prevPageView.Visibility = Android.Views.ViewStates.Gone;
     }
-    if (_actualCurrentContainer != null)
+    catch { }
+    _prevPageView = null;
+
+    try
     {
-      _actualCurrentContainer.TranslationX = 0;
-      _actualCurrentContainer = null;
+      if (_actualCurrentContainer != null && _actualCurrentContainer.Handle != IntPtr.Zero)
+        _actualCurrentContainer.TranslationX = 0;
     }
-    if (_nativeShadow != null)
+    catch { }
+    _actualCurrentContainer = null;
+
+    RemoveNativeShadow();
+  }
+
+  private void RemoveNativeShadow()
+  {
+    if (_nativeShadow == null)
+      return;
+    try
     {
-      (_nativeShadow.Parent as Android.Views.ViewGroup)?.RemoveView(_nativeShadow);
-      _nativeShadow.Dispose();
-      _nativeShadow = null;
+      if (_nativeShadow.Handle != IntPtr.Zero)
+      {
+        (_nativeShadow.Parent as Android.Views.ViewGroup)?.RemoveView(_nativeShadow);
+        _nativeShadow.Dispose();
+      }
     }
+    catch { }
+    _nativeShadow = null;
   }
 
   private void AddNativeShadow()
@@ -463,8 +512,9 @@ public partial class NoteViewPage : ContentPage
 #if ANDROID
     global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = OnSwipeProgress;
     global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = OnSwipeEnd;
-    global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = () => _ = SpringBackAsync();
+    global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = OnSwipeCancel;
 #endif
+    _swipeReady = true;
     if (_note != null)
     {
       _mediaDownloadCoordinator.SetNoteFocus(NoteManager.ExtractMediaIds(_note.Content ?? ""));
@@ -475,13 +525,19 @@ public partial class NoteViewPage : ContentPage
   protected override void OnDisappearing()
   {
     base.OnDisappearing();
+    _swipeReady = false;
     _mediaDownloadCoordinator.ClearNoteFocus();
 #if ANDROID
     if (!_isSwipingBack)
       HidePreviousPage();
-    Notes.Platforms.Android.SwipeBackGesture.OnProgress = null;
-    Notes.Platforms.Android.SwipeBackGesture.OnEnd = null;
-    Notes.Platforms.Android.SwipeBackGesture.OnCancel = null;
+    // only clear callbacks still pointing at this page: during an overlapping
+    // transition the next page may have already installed its own handlers.
+    if (Notes.Platforms.Android.SwipeBackGesture.OnProgress == OnSwipeProgress)
+      Notes.Platforms.Android.SwipeBackGesture.OnProgress = null;
+    if (Notes.Platforms.Android.SwipeBackGesture.OnEnd == OnSwipeEnd)
+      Notes.Platforms.Android.SwipeBackGesture.OnEnd = null;
+    if (Notes.Platforms.Android.SwipeBackGesture.OnCancel == OnSwipeCancel)
+      Notes.Platforms.Android.SwipeBackGesture.OnCancel = null;
 #endif
   }
 }
