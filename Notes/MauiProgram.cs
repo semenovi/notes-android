@@ -70,7 +70,6 @@ public static class MauiProgram
         builder.Services.AddTransient<WindowsNoteListView>();
         builder.Services.AddTransient<WindowsNoteEditor>();
 #else
-    builder.Services.AddTransient<FoldersPage>();
     builder.Services.AddTransient<NotesPage>();
     builder.Services.AddTransient<NoteEditorPage>();
     builder.Services.AddTransient<NoteViewPage>();

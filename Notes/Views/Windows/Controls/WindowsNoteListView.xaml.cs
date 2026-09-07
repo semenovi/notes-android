@@ -42,7 +42,8 @@ public partial class WindowsNoteListView : ContentView
   // rows whose content hasn't changed (that's what LoadNotesAsync's diffing is for).
   private void OnMediaAvailable(string mediaId)
   {
-    if (string.IsNullOrEmpty(_currentFolderId)) return;
+    // "" is a valid selection (the top level); only null means nothing is open yet.
+    if (_currentFolderId == null) return;
     var affected = _allNotes.Where(vm => vm.PendingMediaIds.Contains(mediaId)).ToList();
     if (affected.Count == 0) return;
     MainThread.BeginInvokeOnMainThread(async () =>
@@ -66,7 +67,7 @@ public partial class WindowsNoteListView : ContentView
   {
     // LoadNotesAsync merges into the existing list and keeps the current
     // selection; NoteSelected is not re-fired, so the editor stays untouched.
-    if (string.IsNullOrEmpty(_currentFolderId)) return;
+    if (_currentFolderId == null) return;
     await LoadNotesAsync(_currentFolderId);
   }
 
@@ -201,7 +202,7 @@ public partial class WindowsNoteListView : ContentView
 
   private async void OnNewNoteButtonClicked(object sender, EventArgs e)
   {
-    if (string.IsNullOrEmpty(_currentFolderId))
+    if (_currentFolderId == null)
     {
       _toastService.Show("please select a folder");
       return;

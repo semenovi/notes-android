@@ -16,6 +16,15 @@ public partial class NotesPage : ContentPage
   private readonly ReactiveSyncService _reactiveSync;
   private readonly Services.ToastService _toastService;
   private readonly Services.Sync.MediaDownloadCoordinator _mediaDownloadCoordinator;
+  private readonly Services.Export.ExportService _exportService;
+  private readonly SyncManager _syncManager;
+  private readonly Services.Sync.SyncSettingsService _syncSettingsService;
+  private readonly Services.ProgressNotificationService _progressService;
+
+  // The root instance (Shell content) is never handed a FolderId — it stands in for
+  // "top level": top-level folders plus notes with no folder. Pushed instances always
+  // carry a real folder id.
+  public bool IsRoot => string.IsNullOrEmpty(_folderId);
   public ObservableCollection<object> Items { get; } = new ObservableCollection<object>();
   private CancellationTokenSource? _loadCts;
   private bool _isSwipingBack;
@@ -72,6 +81,13 @@ public partial class NotesPage : ContentPage
 
   private async void AnimateMoveUpZone(bool show)
   {
+    // Everything shown at the root is already top-level — there's nothing to move up to.
+    if (IsRoot)
+    {
+      MoveUpZone.InputTransparent = true;
+      MoveUpZone.Opacity = 0;
+      return;
+    }
     MoveUpZone.InputTransparent = !show;
     if (show)
       await Task.WhenAll(
@@ -113,7 +129,10 @@ public partial class NotesPage : ContentPage
 
   public NotesPage(NoteManager noteManager, FolderManager folderManager,
       ReactiveSyncService reactiveSync, Services.ToastService toastService,
-      Services.Sync.MediaDownloadCoordinator mediaDownloadCoordinator)
+      Services.Sync.MediaDownloadCoordinator mediaDownloadCoordinator,
+      Services.Export.ExportService exportService, SyncManager syncManager,
+      Services.Sync.SyncSettingsService syncSettingsService,
+      Services.ProgressNotificationService progressService)
   {
     InitializeComponent();
     _noteManager = noteManager;
@@ -121,21 +140,32 @@ public partial class NotesPage : ContentPage
     _reactiveSync = reactiveSync;
     _toastService = toastService;
     _mediaDownloadCoordinator = mediaDownloadCoordinator;
+    _exportService = exportService;
+    _syncManager = syncManager;
+    _syncSettingsService = syncSettingsService;
+    _progressService = progressService;
     Items.CollectionChanged += (_, _) => IsEmpty = Items.Count == 0;
     BindingContext = this;
   }
 
-  protected override void OnAppearing()
+  protected override async void OnAppearing()
   {
     base.OnAppearing();
+
+    if (IsRoot)
+      EnsureRootChrome();
     _isSwipingBack = false;
     RootGrid.TranslationX = 0;
     SwipeShadow.TranslationX = -24;
     SwipeShadow.Opacity = 0;
 #if ANDROID
-    global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = OnSwipeProgress;
-    global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = OnSwipeEnd;
-    global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = OnSwipeCancel;
+    // No page to reveal underneath the root — leave the swipe-back gesture unbound there.
+    if (!IsRoot)
+    {
+      global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = OnSwipeProgress;
+      global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = OnSwipeEnd;
+      global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = OnSwipeCancel;
+    }
     global::Notes.Platforms.Android.DragReorderGesture.OnLongPress = OnNativeLongPress;
     global::Notes.Platforms.Android.DragReorderGesture.OnMove = OnNativeDragMove;
     global::Notes.Platforms.Android.DragReorderGesture.OnEnd = OnNativeDragEnd;
@@ -143,6 +173,9 @@ public partial class NotesPage : ContentPage
 #endif
     _reactiveSync.RemoteChangesApplied += OnRemoteChangesApplied;
     _swipeReady = true;
+
+    if (IsRoot)
+      await LoadItemsAsync();
   }
 
   protected override void OnDisappearing()
@@ -178,14 +211,12 @@ public partial class NotesPage : ContentPage
 
   private async Task LoadItemsAsync()
   {
-    if (string.IsNullOrEmpty(FolderId))
-      return;
     _loadCts?.Cancel();
     var cts = new CancellationTokenSource();
     _loadCts = cts;
-    var currentFolder = await _folderManager.GetFolderAsync(FolderId);
-    var folders = await _folderManager.GetFoldersAsync(FolderId);
-    var notes = await _noteManager.GetNotesAsync(FolderId);
+    var currentFolder = IsRoot ? null : await _folderManager.GetFolderAsync(FolderId);
+    var folders = await _folderManager.GetFoldersAsync(IsRoot ? null : FolderId);
+    var notes = await _noteManager.GetNotesAsync(IsRoot ? "" : FolderId);
     if (cts.IsCancellationRequested) return;
     _currentParentId = currentFolder?.ParentId;
     _mediaDownloadCoordinator.SetFolderFocus(notes.SelectMany(n => NoteManager.ExtractMediaIds(n.Content ?? "")));
@@ -259,7 +290,7 @@ public partial class NotesPage : ContentPage
 
     if (!string.IsNullOrWhiteSpace(folderName))
     {
-      await _folderManager.CreateFolderAsync(folderName, FolderId);
+      await _folderManager.CreateFolderAsync(folderName, IsRoot ? null : FolderId);
       await LoadItemsAsync();
     }
   }
@@ -353,10 +384,10 @@ public partial class NotesPage : ContentPage
     }
     else if (kind == DropTargetKind.MoveUp)
     {
-      if (item is Note && _currentParentId == null)
-        _toastService.Show("notes can't be moved outside a folder");
-      else
-        await MoveItemAsync(item, _currentParentId);
+      // _currentParentId == null here means the current folder is itself top-level,
+      // so "move up" drops the item at the top level (folder ParentId / note FolderId
+      // cleared).
+      await MoveItemAsync(item, _currentParentId);
     }
   }
 
@@ -490,21 +521,23 @@ public partial class NotesPage : ContentPage
   private void HideDragGhost() => DragGhost.IsVisible = false;
 #endif
 
-  // targetParentId == null means "move to the top level" — only ever valid for a folder.
+  // targetParentId == null means "move to the top level": a folder's ParentId becomes
+  // null, a note's FolderId becomes "".
   // Returns whether an item was actually relocated (false for a no-op or rejected move).
   private async Task<bool> MoveItemAsync(object draggedItem, string? targetParentId)
   {
     DragLog($"MoveItemAsync draggedItem={draggedItem?.GetType().Name} targetParentId={targetParentId}");
     if (draggedItem is Note note)
     {
-      if (targetParentId == null || note.FolderId == targetParentId)
+      string destFolderId = targetParentId ?? "";
+      if (note.FolderId == destFolderId)
       {
-        DragLog("MoveItemAsync: no-op for note (same folder or null target)");
+        DragLog("MoveItemAsync: no-op for note (same folder)");
         return false;
       }
-      note.FolderId = targetParentId;
+      note.FolderId = destFolderId;
       await _noteManager.UpdateNoteAsync(note);
-      DragLog($"MoveItemAsync: note '{note.Title}' moved to folder {targetParentId}");
+      DragLog($"MoveItemAsync: note '{note.Title}' moved to folder '{destFolderId}'");
       await LoadItemsAsync();
       return true;
     }
