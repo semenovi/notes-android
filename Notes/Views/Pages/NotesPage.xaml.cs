@@ -19,6 +19,10 @@ public partial class NotesPage : ContentPage
   public ObservableCollection<object> Items { get; } = new ObservableCollection<object>();
   private CancellationTokenSource? _loadCts;
   private bool _isSwipingBack;
+  // gates the swipe-back gesture to a settled, fully-appeared page. cleared while a
+  // navigation (this gesture's own, or an external one) is in flight so OnSwipeProgress
+  // never reaches into Shell's native container tree mid-FragmentTransaction.
+  private bool _swipeReady;
   // parent of the currently open folder — drop target for the "move up" zone.
   // Null both before the first load and when the current folder is itself a root.
   private string? _currentParentId;
@@ -131,27 +135,34 @@ public partial class NotesPage : ContentPage
 #if ANDROID
     global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = OnSwipeProgress;
     global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = OnSwipeEnd;
-    global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = () => _ = SpringBackAsync();
+    global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = OnSwipeCancel;
     global::Notes.Platforms.Android.DragReorderGesture.OnLongPress = OnNativeLongPress;
     global::Notes.Platforms.Android.DragReorderGesture.OnMove = OnNativeDragMove;
     global::Notes.Platforms.Android.DragReorderGesture.OnEnd = OnNativeDragEnd;
     global::Notes.Platforms.Android.DragReorderGesture.OnCancel = OnNativeDragCancel;
 #endif
     _reactiveSync.RemoteChangesApplied += OnRemoteChangesApplied;
+    _swipeReady = true;
   }
 
   protected override void OnDisappearing()
   {
     base.OnDisappearing();
+    _swipeReady = false;
     // Belt-and-braces: if the page is left mid-drag (back button, notification, etc.)
     // and the drag never got a proper end, don't leave the "move up" zone stuck visible.
     IsDragActive = false;
 #if ANDROID
     if (!_isSwipingBack)
       HidePreviousPage();
-    global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = null;
-    global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = null;
-    global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = null;
+    // only clear callbacks still pointing at this page: during an overlapping
+    // transition the next page may have already installed its own handlers.
+    if (global::Notes.Platforms.Android.SwipeBackGesture.OnProgress == OnSwipeProgress)
+      global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = null;
+    if (global::Notes.Platforms.Android.SwipeBackGesture.OnEnd == OnSwipeEnd)
+      global::Notes.Platforms.Android.SwipeBackGesture.OnEnd = null;
+    if (global::Notes.Platforms.Android.SwipeBackGesture.OnCancel == OnSwipeCancel)
+      global::Notes.Platforms.Android.SwipeBackGesture.OnCancel = null;
     global::Notes.Platforms.Android.DragReorderGesture.OnLongPress = null;
     global::Notes.Platforms.Android.DragReorderGesture.OnMove = null;
     global::Notes.Platforms.Android.DragReorderGesture.OnEnd = null;
@@ -525,6 +536,7 @@ public partial class NotesPage : ContentPage
 
   private void OnSwipeProgress(float dx)
   {
+    if (!_swipeReady) return;
     float d = Math.Max(0, dx);
 #if ANDROID
     if (_actualCurrentContainer == null || _actualCurrentContainer.Handle == IntPtr.Zero)
@@ -548,6 +560,8 @@ public partial class NotesPage : ContentPage
 
   private void OnSwipeEnd(float dx)
   {
+    if (!_swipeReady) return;
+    _swipeReady = false;
     var screenWidth = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
     if (dx > screenWidth * 0.35)
       _ = CompleteSwipeBackAsync();
@@ -555,24 +569,37 @@ public partial class NotesPage : ContentPage
       _ = SpringBackAsync();
   }
 
+  // installed as SwipeBackGesture.OnCancel: a named method rather than a lambda so
+  // OnDisappearing can check whether the static still points at this page.
+  private void OnSwipeCancel()
+  {
+    if (!_swipeReady) return;
+    _swipeReady = false;
+    _ = SpringBackAsync();
+  }
+
   private async Task CompleteSwipeBackAsync()
   {
+    if (_isSwipingBack) return;
     _isSwipingBack = true;
+    _swipeReady = false;
     var screenWidth = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
 #if ANDROID
     if (_actualCurrentContainer != null)
     {
-      float screenWidthPx = (float)DeviceDisplay.MainDisplayInfo.Width;
-      await NativeTranslateAsync(_actualCurrentContainer, screenWidthPx + 20, 220,
-          _nativeShadow, screenWidthPx + 20 - _shadowWidthPx, 0f);
+      var leaving = _actualCurrentContainer;
       _actualCurrentContainer = null;
-      if (_nativeShadow != null)
-      {
-        (_nativeShadow.Parent as Android.Views.ViewGroup)?.RemoveView(_nativeShadow);
-        _nativeShadow.Dispose();
-        _nativeShadow = null;
-      }
+      float screenWidthPx = (float)DeviceDisplay.MainDisplayInfo.Width;
+      await NativeTranslateAsync(leaving, screenWidthPx + 20, 220,
+          _nativeShadow, screenWidthPx + 20 - _shadowWidthPx, 0f);
+      RemoveNativeShadow();
       await Shell.Current.GoToAsync("..", false);
+      // Shell owns this container again and may reuse it for the next push - hand it
+      // back at TranslationX 0 instead of parked off-screen (which renders as a white
+      // screen on the reused page).
+      if (leaving.Handle != IntPtr.Zero)
+        leaving.TranslationX = 0;
+      _prevPageView = null;
       return;
     }
 #endif
@@ -593,6 +620,7 @@ public partial class NotesPage : ContentPage
       await NativeTranslateAsync(_actualCurrentContainer, 0, 300,
           _nativeShadow, -_shadowWidthPx, 0f);
       HidePreviousPage();
+      _swipeReady = true;
       return;
     }
 #endif
@@ -601,6 +629,7 @@ public partial class NotesPage : ContentPage
       SwipeShadow.FadeTo(0, 180)
     );
     SwipeShadow.TranslationX = -24;
+    _swipeReady = true;
   }
 
 #if ANDROID
@@ -649,10 +678,18 @@ public partial class NotesPage : ContentPage
 
       if (currentContainer != null && prevContainer != null)
       {
-        _actualCurrentContainer = currentContainer;
-        prevContainer.Visibility = Android.Views.ViewStates.Visible;
-        _prevPageView = prevContainer;
-        AddNativeShadow();
+        try
+        {
+          _actualCurrentContainer = currentContainer;
+          prevContainer.Visibility = Android.Views.ViewStates.Visible;
+          _prevPageView = prevContainer;
+          AddNativeShadow();
+        }
+        catch
+        {
+          _actualCurrentContainer = null;
+          _prevPageView = null;
+        }
         return;
       }
 
@@ -662,22 +699,39 @@ public partial class NotesPage : ContentPage
 
   private void HidePreviousPage()
   {
-    if (_prevPageView != null)
+    try
     {
-      _prevPageView.Visibility = Android.Views.ViewStates.Gone;
-      _prevPageView = null;
+      if (_prevPageView != null && _prevPageView.Handle != IntPtr.Zero)
+        _prevPageView.Visibility = Android.Views.ViewStates.Gone;
     }
-    if (_actualCurrentContainer != null)
+    catch { }
+    _prevPageView = null;
+
+    try
     {
-      _actualCurrentContainer.TranslationX = 0;
-      _actualCurrentContainer = null;
+      if (_actualCurrentContainer != null && _actualCurrentContainer.Handle != IntPtr.Zero)
+        _actualCurrentContainer.TranslationX = 0;
     }
-    if (_nativeShadow != null)
+    catch { }
+    _actualCurrentContainer = null;
+
+    RemoveNativeShadow();
+  }
+
+  private void RemoveNativeShadow()
+  {
+    if (_nativeShadow == null)
+      return;
+    try
     {
-      (_nativeShadow.Parent as Android.Views.ViewGroup)?.RemoveView(_nativeShadow);
-      _nativeShadow.Dispose();
-      _nativeShadow = null;
+      if (_nativeShadow.Handle != IntPtr.Zero)
+      {
+        (_nativeShadow.Parent as Android.Views.ViewGroup)?.RemoveView(_nativeShadow);
+        _nativeShadow.Dispose();
+      }
     }
+    catch { }
+    _nativeShadow = null;
   }
 
   private void AddNativeShadow()

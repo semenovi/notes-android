@@ -61,6 +61,17 @@
 	  <TrimMode>link</TrimMode>
 	</PropertyGroup>
 
+	<!-- pinned debug signing key, committed to the repo: every tool (VS, dotnet, another
+	     machine) signs the debug apk identically, so `adb install -r` keeps app data
+	     instead of falling back to uninstall+install on a signature mismatch. -->
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Debug'">
+	  <AndroidKeyStore>true</AndroidKeyStore>
+	  <AndroidSigningKeyStore>$(MSBuildThisFileDirectory)build\debug.keystore</AndroidSigningKeyStore>
+	  <AndroidSigningStorePass>android</AndroidSigningStorePass>
+	  <AndroidSigningKeyAlias>androiddebugkey</AndroidSigningKeyAlias>
+	  <AndroidSigningKeyPass>android</AndroidSigningKeyPass>
+	</PropertyGroup>
+
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android34.0|AnyCPU'">
 	  <AndroidPackageFormat>apk</AndroidPackageFormat>
 	  <DebugSymbols>True</DebugSymbols>
