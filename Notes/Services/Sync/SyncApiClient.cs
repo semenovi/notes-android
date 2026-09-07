@@ -91,7 +91,10 @@ public class SyncApiClient : IDisposable
     var auth = new AuthenticationHeaderValue("Bearer", apiToken);
     _http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
     _http.DefaultRequestHeaders.Authorization = auth;
-    _pushHttp = new HttpClient { Timeout = System.Threading.Timeout.InfiniteTimeSpan };
+    // Bounded, but generous enough for a single 4 MB chunk or a large media pull on a
+    // slow link. Without this a stalled connection (network there but router
+    // unreachable) hangs the call - and its progress overlay - indefinitely.
+    _pushHttp = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
     _pushHttp.DefaultRequestHeaders.Authorization = auth;
     _sseHttp = new HttpClient { Timeout = System.Threading.Timeout.InfiniteTimeSpan };
     _sseHttp.DefaultRequestHeaders.Authorization = auth;
@@ -110,7 +113,7 @@ public class SyncApiClient : IDisposable
         if (!resp.IsSuccessStatusCode) return default;
         return JsonSerializer.Deserialize<T>(await resp.Content.ReadAsStringAsync(), JsonOpts);
       }
-      catch (HttpRequestException)
+      catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
       {
         if (attempt == 0)
           await Task.Delay(700);
@@ -129,7 +132,7 @@ public class SyncApiClient : IDisposable
           Json(new { device_id = deviceId }));
       _ = resp.IsSuccessStatusCode;
     }
-    catch (HttpRequestException) { }
+    catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException) { }
   }
 
   public async Task<ManifestResponse?> PostManifestAsync(SyncManifestRequest manifest)
@@ -151,7 +154,7 @@ public class SyncApiClient : IDisposable
         using var resp = await _http.PostAsync(_baseUrl + "/api/sync/push", body);
         if (resp.IsSuccessStatusCode) return true;
       }
-      catch (HttpRequestException)
+      catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
       {
         if (attempt == 0)
           await Task.Delay(700);
@@ -262,7 +265,7 @@ public class SyncApiClient : IDisposable
         if (!resp.IsSuccessStatusCode) return default;
         return JsonSerializer.Deserialize<PullResponse>(await resp.Content.ReadAsStringAsync(), JsonOpts);
       }
-      catch (HttpRequestException)
+      catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
       {
         if (attempt == 0)
           await Task.Delay(700);

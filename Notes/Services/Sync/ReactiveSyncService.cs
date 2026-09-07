@@ -128,11 +128,11 @@ public class ReactiveSyncService : IDisposable
     // StopAsync mid-queue) are recovered without waiting for the first 5-minute tick.
     if (!ct.IsCancellationRequested)
     {
-      using var session = _progressService.Begin("syncing");
+      using var session = _progressService.Begin("syncing", maxDurationMs: 90_000);
       try
       {
         DebugLogService.Current?.Log("initial-sync-start");
-        int applied = await _syncManager.SynchronizeAsync(DefaultProfile, session.Report);
+        int applied = await _syncManager.SynchronizeAsync(DefaultProfile, session.Report, ct);
         DebugLogService.Current?.Log($"initial-sync-done applied={applied}");
         if (applied > 0)
           MainThread.BeginInvokeOnMainThread(() => RemoteChangesApplied?.Invoke());
@@ -144,15 +144,16 @@ public class ReactiveSyncService : IDisposable
     using var timer = new PeriodicTimer(PeriodicInterval);
     while (await timer.WaitForNextTickAsync(ct))
     {
-      using var session = _progressService.Begin("syncing");
+      using var session = _progressService.Begin("syncing", maxDurationMs: 90_000);
       try
       {
         DebugLogService.Current?.Log("periodic-sync-start");
-        int applied = await _syncManager.SynchronizeAsync(DefaultProfile, session.Report);
+        int applied = await _syncManager.SynchronizeAsync(DefaultProfile, session.Report, ct);
         DebugLogService.Current?.Log($"periodic-sync-done applied={applied}");
         if (applied > 0)
           MainThread.BeginInvokeOnMainThread(() => RemoteChangesApplied?.Invoke());
       }
+      catch (OperationCanceledException) { break; }
       catch (Exception ex) { DebugLogService.Current?.Log($"periodic-sync-err: {ex.GetType().Name}: {ex.Message}"); }
     }
   }
