@@ -12,11 +12,14 @@ public partial class App : Application
 {
   private readonly ReactiveSyncService _reactiveSync;
   private readonly DebugLogService _debugLog;
+  private readonly ProgressNotificationService _progressService;
 
-  public App(ReactiveSyncService reactiveSync, DebugLogService debugLog)
+  public App(ReactiveSyncService reactiveSync, DebugLogService debugLog,
+      ProgressNotificationService progressService)
   {
     _reactiveSync = reactiveSync;
     _debugLog = debugLog;
+    _progressService = progressService;
     InitializeComponent();
 
 #if !WINDOWS
@@ -36,6 +39,10 @@ public partial class App : Application
   protected override void OnSleep()
   {
     base.OnSleep();
+    // No viewer for an in-app overlay while backgrounded; every underlying operation
+    // (sync, media download, note render) keeps running regardless. On return, fresh
+    // sessions represent whatever is actually active then.
+    _progressService.CancelAll();
 #if ANDROID
     if (_reactiveSync.IsRunning)
       StartAndroidSyncService();

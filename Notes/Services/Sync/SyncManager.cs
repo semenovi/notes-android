@@ -32,9 +32,13 @@ public class SyncManager
 
   // Returns the number of remote note/folder changes applied locally, so callers
   // can skip UI refreshes when a sync brought nothing new.
-  public async Task<int> SynchronizeAsync(SyncProfile profile, Action<double, string?>? onProgress = null)
+  public async Task<int> SynchronizeAsync(SyncProfile profile, Action<double, string?>? onProgress = null,
+      CancellationToken ct = default)
   {
-    await _syncLock.WaitAsync();
+    // Honour cancellation while queued on the lock: a stopped/superseded sync loop that
+    // can't interrupt the in-flight sync would otherwise sit here, keep its "syncing"
+    // overlay up, and never report a thing.
+    await _syncLock.WaitAsync(ct);
     try
     {
       ISyncAdapter? adapter = _adapters.FirstOrDefault(a => a.ProtocolType == profile.Protocol);
@@ -46,9 +50,11 @@ public class SyncManager
 
       try
       {
+        ct.ThrowIfCancellationRequested();
         List<SyncChange> remoteChanges = await adapter.GetChangesAsync(onProgress);
         await ApplyRemoteChangesAsync(remoteChanges);
 
+        ct.ThrowIfCancellationRequested();
         List<SyncChange> localChanges = await GetLocalChangesAsync();
         await adapter.ApplyChangesAsync(localChanges, onProgress);
 

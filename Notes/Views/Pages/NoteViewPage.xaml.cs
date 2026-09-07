@@ -16,6 +16,7 @@ public partial class NoteViewPage : ContentPage
   private readonly Services.Sync.MediaDownloadCoordinator _mediaDownloadCoordinator;
   private Note _note;
   private string _noteId;
+  private CancellationTokenSource? _renderCts;
   private bool _isSwipingBack;
   // gates the swipe-back gesture to a settled, fully-appeared page. cleared while a
   // navigation (this gesture's own, or an external one) is in flight so OnSwipeProgress
@@ -75,22 +76,38 @@ public partial class NoteViewPage : ContentPage
     if (_note == null)
       return;
 
+    // Supersede an earlier render still in flight (LoadNoteAsync and OnAppearing both
+    // call in on a cold open) and give OnDisappearing a handle to abandon image
+    // injection when the user leaves before it finishes — otherwise its "loading note"
+    // session outlives the page.
+    _renderCts?.Cancel();
+    _renderCts?.Dispose();
+    var cts = new CancellationTokenSource();
+    _renderCts = cts;
+    var ct = cts.Token;
+
     string content = _note.Content ?? "";
-    string html = await _markdownProcessor.ConvertToHtmlAsync(content);
+    try
+    {
+      string html = await _markdownProcessor.ConvertToHtmlAsync(content);
 
-    var navTask = WaitForNavigationAsync(NoteContentWebView);
-    NoteContentWebView.Source = new HtmlWebViewSource { Html = BuildFullHtml(html) };
-    await navTask;
+      var navTask = WaitForNavigationAsync(NoteContentWebView);
+      NoteContentWebView.Source = new HtmlWebViewSource { Html = BuildFullHtml(html) };
+      await navTask;
+      ct.ThrowIfCancellationRequested();
 
-    using var session = _progressService.Begin("loading note");
-    await _markdownProcessor.InjectImagesIntoWebViewAsync(content, NoteContentWebView,
-        (loaded, total) => session.Report((double)loaded / total,
-            total - loaded > 0 ? $"{total - loaded} images left" : null));
+      using var session = _progressService.Begin("loading note",
+          idleTimeoutMs: 45_000, maxDurationMs: 0, scope: ProgressScope.Page);
+      await _markdownProcessor.InjectImagesIntoWebViewAsync(content, NoteContentWebView,
+          (loaded, total) => session.Report((double)loaded / total,
+              total - loaded > 0 ? $"{total - loaded} images left" : null), ct);
 
-    // applied only after images finish loading: images resize as they land, and doing
-    // this earlier races the WebView's own scroll-anchoring
-    if (EditorScrollSync.TryTakeReturnLine(_note.Id, out int returnLine))
-      await EditorScrollSync.ScrollToSourceLineAsync(NoteContentWebView, returnLine);
+      // applied only after images finish loading: images resize as they land, and doing
+      // this earlier races the WebView's own scroll-anchoring
+      if (EditorScrollSync.TryTakeReturnLine(_note.Id, out int returnLine))
+        await EditorScrollSync.ScrollToSourceLineAsync(NoteContentWebView, returnLine);
+    }
+    catch (OperationCanceledException) { }
   }
 
   private static async Task WaitForNavigationAsync(WebView webView)
@@ -527,6 +544,7 @@ public partial class NoteViewPage : ContentPage
   {
     base.OnDisappearing();
     _swipeReady = false;
+    _renderCts?.Cancel();
     _mediaDownloadCoordinator.ClearNoteFocus();
 #if ANDROID
     if (!_isSwipingBack)

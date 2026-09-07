@@ -144,8 +144,15 @@ public class MarkdownProcessor
     });
   }
 
+  // A JS eval against a WebView whose page has navigated away or lost its native peer
+  // never completes on Android. Cap it so it can't wedge the caller (and its progress
+  // overlay) indefinitely; ct lets the owning page abandon injection outright.
+  private static Task EvalJsAsync(WebView webView, string js, CancellationToken ct) =>
+      MainThread.InvokeOnMainThreadAsync(() => webView.EvaluateJavaScriptAsync(js))
+          .WaitAsync(TimeSpan.FromSeconds(5), ct);
+
   public async Task InjectImagesIntoWebViewAsync(string markdown, WebView webView,
-      Action<int, int>? onProgress = null)
+      Action<int, int>? onProgress = null, CancellationToken ct = default)
   {
     var mediaIds = new System.Text.RegularExpressions.Regex(@"!\[.*?\]\(media:(.*?)\)")
       .Matches(markdown)
@@ -164,6 +171,7 @@ public class MarkdownProcessor
     // OOM on Android when notes contain many photos, silently dropping the last half.
     for (int i = 0; i < mediaIds.Count; i++)
     {
+      ct.ThrowIfCancellationRequested();
       var id = mediaIds[i];
       try
       {
@@ -174,21 +182,22 @@ public class MarkdownProcessor
         var item = await _mediaManager.GetMediaAsync(id);
         if (item == null)
         {
-          if (!await EnsureLocalAsync(id)) continue;
+          if (!await EnsureLocalAsync(id, ct)) continue;
           item = await _mediaManager.GetMediaAsync(id);
           if (item == null) continue;
         }
         if (item.FileType?.ToLowerInvariant() == "pdf")
-          await InjectPdfPagesAsync(id, webView);
+          await InjectPdfPagesAsync(id, webView, ct);
         else
         {
-          string dataUri = await GetMediaDataUriAsync(id, item);
+          string dataUri = await GetMediaDataUriAsync(id, item, ct);
           if (string.IsNullOrEmpty(dataUri)) continue;
           string js = $"(function(){{var e=document.getElementById('media-{id}');if(e)e.src='{dataUri}';}})();";
-          await MainThread.InvokeOnMainThreadAsync(() => webView.EvaluateJavaScriptAsync(js));
+          await EvalJsAsync(webView, js, ct);
         }
         onProgress?.Invoke(i + 1, total);
       }
+      catch (OperationCanceledException) { throw; }
       catch { }
     }
   }
@@ -198,7 +207,7 @@ public class MarkdownProcessor
   private const int PdfDisplayMaxDim = 1200;
   private const int PdfFullResMaxDim = 2000;
 
-  private async Task InjectPdfPagesAsync(string mediaId, WebView webView)
+  private async Task InjectPdfPagesAsync(string mediaId, WebView webView, CancellationToken ct = default)
   {
     byte[] pdfBytes;
     int pageCount;
@@ -219,6 +228,7 @@ public class MarkdownProcessor
     // Each page is caught individually so one bad page doesn't stop the rest from showing.
     for (int page = 0; page < renderCount; page++)
     {
+      ct.ThrowIfCancellationRequested();
       try
       {
         string cacheKey = $"{mediaId}:p{page}";
@@ -239,8 +249,9 @@ public class MarkdownProcessor
             $"var im=document.createElement('img');im.className='pdf-page';" +
             $"im.setAttribute('data-media-id','{mediaId}');im.setAttribute('data-page','{page}');" +
             $"im.src='{dataUri}';c.appendChild(im);}})();";
-        await MainThread.InvokeOnMainThreadAsync(() => webView.EvaluateJavaScriptAsync(js));
+        await EvalJsAsync(webView, js, ct);
       }
+      catch (OperationCanceledException) { throw; }
       catch (Exception ex)
       {
         Services.DebugLogService.Current?.Log($"pdf-inject-page-err: id={mediaId} page={page} {ex.GetType().Name}: {ex.Message}");
@@ -254,7 +265,7 @@ public class MarkdownProcessor
         string js = $"(function(){{var c=document.getElementById('media-{mediaId}');if(!c)return;" +
             $"var p=document.createElement('p');p.style.color='#8E8E93';" +
             $"p.textContent='+{pageCount - renderCount} more pages not shown';c.appendChild(p);}})();";
-        await MainThread.InvokeOnMainThreadAsync(() => webView.EvaluateJavaScriptAsync(js));
+        await EvalJsAsync(webView, js, ct);
       }
       catch { }
     }
@@ -278,9 +289,10 @@ public class MarkdownProcessor
 
   // Waits up to OnDemandFetchTimeout for the coordinator to fetch mediaId if it isn't
   // local yet. Returns immediately (true) if it's already there.
-  private async Task<bool> EnsureLocalAsync(string mediaId)
+  private async Task<bool> EnsureLocalAsync(string mediaId, CancellationToken ct = default)
   {
-    using var cts = new CancellationTokenSource(OnDemandFetchTimeout);
+    using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+    cts.CancelAfter(OnDemandFetchTimeout);
     return await _mediaDownloadCoordinator.EnsureAvailableAsync(mediaId, cts.Token);
   }
 
@@ -308,14 +320,15 @@ public class MarkdownProcessor
     }
   }
 
-  private async Task<string> GetMediaDataUriAsync(string mediaId, Models.MediaItem? mediaItem = null)
+  private async Task<string> GetMediaDataUriAsync(string mediaId, Models.MediaItem? mediaItem = null,
+      CancellationToken ct = default)
   {
     if (_dataUriCache.TryGetValue(mediaId, out var cached))
       return cached;
 
     try
     {
-      await EnsureLocalAsync(mediaId);
+      await EnsureLocalAsync(mediaId, ct);
       mediaItem ??= await _mediaManager.GetMediaAsync(mediaId);
       string fileType = mediaItem?.FileType?.ToLowerInvariant() ?? "png";
 

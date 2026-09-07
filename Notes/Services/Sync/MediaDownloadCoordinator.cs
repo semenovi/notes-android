@@ -97,14 +97,14 @@ public class MediaDownloadCoordinator : IDisposable
     _loopCts?.Cancel();
     _loopCts = null;
     _loopTask = null;
+    // The old loop is done touching the queue; drop its leftovers and its progress
+    // UI so a reconfigure (Configure + Start) doesn't inherit a half-drained batch
+    // or a "downloading media" session that can never reach its completion count.
+    ClearQueueAndProgress();
   }
 
-  public void Stop()
+  private void ClearQueueAndProgress()
   {
-    StopLoop();
-    _client?.Dispose();
-    _client = null;
-    _key = null;
     lock (_stateLock)
     {
       _backgroundQueue.Clear();
@@ -119,6 +119,14 @@ public class MediaDownloadCoordinator : IDisposable
       _sessionTotal = 0;
       _sessionDone = 0;
     }
+  }
+
+  public void Stop()
+  {
+    StopLoop();
+    _client?.Dispose();
+    _client = null;
+    _key = null;
     DebugLogService.Current?.Log("media-coordinator-stop");
   }
 
@@ -155,9 +163,11 @@ public class MediaDownloadCoordinator : IDisposable
   {
     lock (_progressLock)
     {
+      DropDeadSessionLocked();
       bool isNewSession = _progressSession == null;
       _sessionTotal += added;
-      _progressSession ??= _progressService.Begin("downloading media");
+      _progressSession ??= _progressService.Begin(
+          "downloading media", maxDurationMs: 0, idleTimeoutMs: 60_000);
       // Always show the very first report (0 of N) — only steady-state updates below
       // get throttled.
       ReportProgressLocked(force: isNewSession);
@@ -167,10 +177,24 @@ public class MediaDownloadCoordinator : IDisposable
   // Called once per item that leaves the queue for good (fetched, or given up after
   // exhausting retries) — both count as "processed" for the purpose of the bar, so a
   // permanently unreachable item doesn't stall it short of 100%.
+  // Caller holds _progressLock. The session can be torn down out from under us by its
+  // own safety timeout or by App.OnSleep's CancelAll; drop the reference so the next
+  // enqueue opens a fresh one instead of reporting into a dead session forever.
+  private void DropDeadSessionLocked()
+  {
+    if (_progressSession is { IsActive: false })
+    {
+      _progressSession = null;
+      _sessionTotal = 0;
+      _sessionDone = 0;
+    }
+  }
+
   private void OnItemProcessed()
   {
     lock (_progressLock)
     {
+      DropDeadSessionLocked();
       if (_progressSession == null) return;
       _sessionDone++;
       if (_sessionDone >= _sessionTotal)
@@ -199,6 +223,7 @@ public class MediaDownloadCoordinator : IDisposable
   // Caller holds _progressLock.
   private void ReportProgressLocked(bool force = false)
   {
+    DropDeadSessionLocked();
     if (_progressSession == null) return;
     var now = DateTime.UtcNow;
     if (!force && now - _lastProgressReportUtc < ProgressReportInterval) return;
