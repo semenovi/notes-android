@@ -70,6 +70,13 @@
 	  <AndroidSigningStorePass>android</AndroidSigningStorePass>
 	  <AndroidSigningKeyAlias>androiddebugkey</AndroidSigningKeyAlias>
 	  <AndroidSigningKeyPass>android</AndroidSigningKeyPass>
+	  <!-- one universal apk from every tool (VS deploy and `dotnet -t:Install` alike):
+	       fast deployment / per-abi splits make VS install the app as split_config apks
+	       via install-multiple, and switching that shape against a single-apk install
+	       forces android to wipe app data. keeping it off keeps `adb install -r` clean. -->
+	  <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+	  <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
+	  <AndroidPackageFormat>apk</AndroidPackageFormat>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android34.0|AnyCPU'">
