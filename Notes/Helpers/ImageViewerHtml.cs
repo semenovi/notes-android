@@ -74,7 +74,7 @@ public static class ImageViewerHtml
     // CSS is intentionally single-line: the C# preprocessor scans skipped #if/#else branches
     // for directives and would mistake CSS "#_iv {" on its own line for a preprocessor directive.
     public const string ViewerCss =
-        "img:not(#_iv_img){cursor:pointer;}" +
+        "img:not(#_iv_img){cursor:pointer;-webkit-tap-highlight-color:transparent;}" +
         " #_iv{display:none;position:fixed;top:0;left:0;width:100%;height:100%;" +
             "background:rgba(0,0,0,0.92);z-index:9999;overflow:hidden;}" +
         " #_iv_img{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);" +
