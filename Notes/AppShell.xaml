@@ -7,9 +7,9 @@
     Title="notes">
 
     <ShellContent
-        Title="folders"
-        ContentTemplate="{DataTemplate pages:FoldersPage}"
-        Route="FoldersPage" />
+        Title="notes"
+        ContentTemplate="{DataTemplate pages:NotesPage}"
+        Route="RootNotes" />
 
     <Shell.Resources>
         <ResourceDictionary>

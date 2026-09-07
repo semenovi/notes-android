@@ -93,8 +93,8 @@
                                  IsVisible="{Binding IsEmpty}"
                                  Margin="0,60,0,0"
                                  HorizontalOptions="Center">
-                        <Label Text="this folder is empty" FontSize="18" HorizontalOptions="Center" TextColor="Gray" />
-                        <Label Text="add a note or subfolder" FontSize="14" HorizontalOptions="Center" TextColor="Gray" />
+                        <Label x:Name="EmptyStateTitle" Text="this folder is empty" FontSize="18" HorizontalOptions="Center" TextColor="Gray" />
+                        <Label x:Name="EmptyStateSubtitle" Text="add a note or subfolder" FontSize="14" HorizontalOptions="Center" TextColor="Gray" />
                     </StackLayout>
                 </Grid>
             </ScrollView>

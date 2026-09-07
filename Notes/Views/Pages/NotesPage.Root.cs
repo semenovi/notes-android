@@ -2,111 +2,53 @@ using CommunityToolkit.Maui.Storage;
 using Notes.Helpers;
 using Notes.Models;
 using Notes.Services;
-using Notes.Services.Export;
-using Notes.Services.Notes;
-using Notes.Services.Sync;
-using Notes.Views.Controls;
-using System.Collections.ObjectModel;
-using System.Linq;
 
 namespace Notes.Views.Pages;
 
-public partial class FoldersPage : ContentPage
+// Root-only behaviour: when NotesPage stands in for the top level it also carries the
+// app-wide actions that used to live on the now-removed FoldersPage (sync, backup, info).
+public partial class NotesPage
 {
-  private readonly FolderManager _folderManager;
-  private readonly NoteManager _noteManager;
-  private readonly ExportService _exportService;
-  private readonly SyncManager _syncManager;
-  private readonly SyncSettingsService _syncSettingsService;
-  private readonly ReactiveSyncService _reactiveSync;
-  private readonly ProgressNotificationService _progressService;
-  private readonly ToastService _toastService;
-  public ObservableCollection<Folder> Folders { get; } = new ObservableCollection<Folder>();
-  private CancellationTokenSource? _loadCts;
+  private bool _rootChromeReady;
+  private ToolbarItem? _syncToggleItem;
 
-  public FoldersPage(FolderManager folderManager, NoteManager noteManager,
-      ExportService exportService, SyncManager syncManager,
-      SyncSettingsService syncSettingsService, ReactiveSyncService reactiveSync,
-      ProgressNotificationService progressService, ToastService toastService)
+  private void EnsureRootChrome()
   {
-    InitializeComponent();
-    _folderManager = folderManager;
-    _noteManager = noteManager;
-    _exportService = exportService;
-    _syncManager = syncManager;
-    _syncSettingsService = syncSettingsService;
-    _reactiveSync = reactiveSync;
-    _progressService = progressService;
-    _toastService = toastService;
-    FoldersCollection.ItemsSource = Folders;
+    if (_rootChromeReady) return;
+    _rootChromeReady = true;
 
-    var exportLogsItem = new ToolbarItem { Text = "export logs", Order = ToolbarItemOrder.Secondary };
-    exportLogsItem.Clicked += OnExportLogsClicked;
-    ToolbarItems.Add(exportLogsItem);
+    FolderName = "notes";
+    EmptyStateTitle.Text = "no notes yet";
+    EmptyStateSubtitle.Text = "add a note or folder";
+
+    ToolbarItems.Clear();
+
+    _syncToggleItem = new ToolbarItem { Text = "sync: off", Order = ToolbarItemOrder.Secondary };
+    _syncToggleItem.Clicked += OnSyncToggleClicked;
+    ToolbarItems.Add(_syncToggleItem);
+
+    AddSecondaryItem("sync now", OnSyncNowClicked);
+    AddSecondaryItem("sync settings...", OnSyncSettingsClicked);
+    AddSecondaryItem("export backup", OnExportBackupClicked);
+    AddSecondaryItem("import backup", OnImportBackupClicked);
+    AddSecondaryItem("info", OnOverallInfoClicked);
+    AddSecondaryItem("export logs", OnExportLogsClicked);
+
+    _ = UpdateSyncToggleTextAsync();
   }
 
-  protected override async void OnAppearing()
+  private void AddSecondaryItem(string text, EventHandler handler)
   {
-    base.OnAppearing();
-    _reactiveSync.RemoteChangesApplied += OnRemoteChangesApplied;
-    await Task.WhenAll(UpdateSyncToggleTextAsync(), LoadFoldersAsync());
+    var item = new ToolbarItem { Text = text, Order = ToolbarItemOrder.Secondary };
+    item.Clicked += handler;
+    ToolbarItems.Add(item);
   }
-
-  protected override void OnDisappearing()
-  {
-    base.OnDisappearing();
-    _reactiveSync.RemoteChangesApplied -= OnRemoteChangesApplied;
-  }
-
-  private async void OnRemoteChangesApplied() => await LoadFoldersAsync();
 
   private async Task UpdateSyncToggleTextAsync()
   {
+    if (_syncToggleItem == null) return;
     var settings = await _syncSettingsService.LoadAsync();
-    SyncToggleItem.Text = settings.Enabled ? "sync: on" : "sync: off";
-  }
-
-  private async Task LoadFoldersAsync()
-  {
-    _loadCts?.Cancel();
-    var cts = new CancellationTokenSource();
-    _loadCts = cts;
-    var folders = await _folderManager.GetFoldersAsync(null);
-    if (cts.IsCancellationRequested) return;
-    var sorted = folders.OrderBy(f => f.Name, NaturalSortComparer.Instance).ToList();
-    DiffUpdateFolders(sorted);
-  }
-
-  private void DiffUpdateFolders(List<Folder> newFolders)
-  {
-    var newById = newFolders.ToDictionary(f => f.Id);
-
-    for (int i = Folders.Count - 1; i >= 0; i--)
-      if (!newById.ContainsKey(Folders[i].Id))
-        Folders.RemoveAt(i);
-
-    foreach (var folder in newFolders)
-    {
-      int idx = -1;
-      for (int i = 0; i < Folders.Count; i++)
-        if (Folders[i].Id == folder.Id) { idx = i; break; }
-
-      if (idx < 0)
-        Folders.Add(folder);
-      else if (Folders[idx].Modified != folder.Modified)
-        Folders[idx] = folder;
-    }
-  }
-
-  private async void OnAddFolderClicked(object sender, EventArgs e)
-  {
-    string folderName = await DisplayPromptAsync("new folder", "enter folder name:", initialValue: "");
-
-    if (!string.IsNullOrWhiteSpace(folderName))
-    {
-      await _folderManager.CreateFolderAsync(folderName);
-      await LoadFoldersAsync();
-    }
+    _syncToggleItem.Text = settings.Enabled ? "sync: on" : "sync: off";
   }
 
   private async void OnSyncToggleClicked(object sender, EventArgs e)
@@ -114,7 +56,8 @@ public partial class FoldersPage : ContentPage
     var settings = await _syncSettingsService.LoadAsync();
     settings.Enabled = !settings.Enabled;
     await _syncSettingsService.SaveAsync(settings);
-    SyncToggleItem.Text = settings.Enabled ? "sync: on" : "sync: off";
+    if (_syncToggleItem != null)
+      _syncToggleItem.Text = settings.Enabled ? "sync: on" : "sync: off";
 
     if (settings.Enabled && string.IsNullOrEmpty(settings.ServerUrl))
       await ShowSyncSettingsDialogAsync();
@@ -129,7 +72,7 @@ public partial class FoldersPage : ContentPage
       return;
     }
     int applied = await RunSyncAsync();
-    await LoadFoldersAsync();
+    await LoadItemsAsync();
     if (applied >= 0)
       _toastService.Show(applied > 0
           ? $"sync complete: {applied} {(applied == 1 ? "change" : "changes")} applied"
@@ -160,15 +103,10 @@ public partial class FoldersPage : ContentPage
     await _syncSettingsService.SaveAsync(settings);
     _toastService.Show("settings saved");
 
-    // RestartAsync already runs an immediate sync in the background (see
-    // ReactiveSyncService.RunPeriodicSyncAsync) — a second RunSyncAsync() call here used
-    // to race it: both create their own "syncing" progress session, and the second one
-    // blocks on SyncManager's lock behind the first without ever reporting progress, yet
-    // still wins the notification (same priority, added later), freezing the UI on an
-    // indeterminate spinner for the whole real sync. LoadFoldersAsync() picks up the
-    // result once RemoteChangesApplied fires.
+    // RestartAsync already runs an immediate sync in the background — a second
+    // RunSyncAsync() here would race it (see the same note in the old FoldersPage).
     await _reactiveSync.RestartAsync();
-    await LoadFoldersAsync();
+    await LoadItemsAsync();
   }
 
   // Returns the number of remote changes applied, or -1 if the sync failed.
@@ -177,10 +115,10 @@ public partial class FoldersPage : ContentPage
     using var session = _progressService.Begin("syncing");
     try
     {
-      return await Task.Run(() => _syncManager.SynchronizeAsync(new Notes.Models.SyncProfile
+      return await Task.Run(() => _syncManager.SynchronizeAsync(new SyncProfile
       {
         Name = "Network",
-        Protocol = Notes.Models.SyncProtocolType.Network,
+        Protocol = SyncProtocolType.Network,
       }, session.Report));
     }
     catch (InvalidOperationException ex)
@@ -198,7 +136,7 @@ public partial class FoldersPage : ContentPage
   {
     try
     {
-      string result = await _exportService.ExportBackupAsync();
+      await _exportService.ExportBackupAsync();
       _toastService.Show("backup exported successfully");
     }
     catch (Exception ex)
@@ -217,20 +155,6 @@ public partial class FoldersPage : ContentPage
     var folders = await _folderManager.GetAllFoldersAsync();
     var notes = await _noteManager.GetAllNotesAsync();
     await DisplayAlert("notes info", ItemInfoHelper.BuildOverallInfo(folders, notes), "ok");
-  }
-
-  private async void OnFolderTapped(object sender, TappedEventArgs e)
-  {
-    if (sender is View view && view.BindingContext is Folder folder)
-    {
-      await view.ScaleTo(0.96, 80);
-      await view.ScaleTo(1.0, 80);
-      await Shell.Current.GoToAsync(nameof(NotesPage), new Dictionary<string, object>
-      {
-        { "FolderId", folder.Id },
-        { "FolderName", folder.Name }
-      });
-    }
   }
 
   private async void OnExportLogsClicked(object sender, EventArgs e)
@@ -285,7 +209,7 @@ public partial class FoldersPage : ContentPage
 
       _toastService.Show("backup imported successfully. the app data has been replaced");
 
-      await LoadFoldersAsync();
+      await LoadItemsAsync();
     }
     catch (Exception ex)
     {

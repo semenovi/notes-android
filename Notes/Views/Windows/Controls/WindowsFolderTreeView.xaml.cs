@@ -31,6 +31,12 @@ public partial class WindowsFolderTreeView : ContentView
   private CancellationTokenSource? _loadCts;
   private List<Folder> _allFolders = new();
 
+  // Sentinel row pinned to the top of the tree. Selecting it lists notes with no
+  // folder; dropping a note on it clears the note's FolderId. Its Folder.Id is "",
+  // which no real folder ever has.
+  private readonly FolderViewModel _topLevelVm =
+      new(new Folder { Id = "", Name = "top level", Icon = MaterialIconCodes.FolderOpen });
+
   public WindowsFolderTreeView()
   {
     InitializeComponent();
@@ -69,6 +75,7 @@ public partial class WindowsFolderTreeView : ContentView
   {
     var byId = Folders.ToDictionary(vm => vm.Folder.Id);
     var desired = BuildVisibleTree(folders, byId);
+    desired.Insert(0, _topLevelVm);
     CollectionMerge.MergeInto(Folders, desired);
 
     var selected = _selectedFolder == null
@@ -140,12 +147,14 @@ public partial class WindowsFolderTreeView : ContentView
     // Otherwise ReactiveSyncService already runs an initial sync in the background
     // and fires RemoteChangesApplied when something new arrives.
     var settings = await _syncSettingsService.LoadAsync();
-    if (settings.Enabled && Folders.Count == 0)
+    // Folders always holds at least the "top level" sentinel — gauge emptiness by
+    // the real folder list instead.
+    if (settings.Enabled && _allFolders.Count == 0)
     {
       await RunSyncAsync();
       await LoadFoldersAsync();
     }
-    if (Folders.Count == 0)
+    if (_allFolders.Count == 0)
     {
       await _folderManager.CreateFolderAsync("General");
       await LoadFoldersAsync();
@@ -165,6 +174,8 @@ public partial class WindowsFolderTreeView : ContentView
     _selectedFolder = vm.Folder;
     FolderSelected?.Invoke(this, vm.Folder);
   }
+
+  private static bool IsTopLevelRow(FolderViewModel vm) => vm.Folder.Id.Length == 0;
 
   private static readonly Color FolderHoverColor = Color.FromArgb("#E8F0FE");
 
@@ -268,6 +279,7 @@ public partial class WindowsFolderTreeView : ContentView
   private async void OnChangeFolderIconContextMenuClicked(object sender, EventArgs e)
   {
     if (sender is not MenuFlyoutItem item || item.BindingContext is not FolderViewModel vm) return;
+    if (IsTopLevelRow(vm)) return;
     var page = Application.Current?.Windows.FirstOrDefault()?.Page;
     if (page == null) return;
 
@@ -283,6 +295,7 @@ public partial class WindowsFolderTreeView : ContentView
   private async void OnNewSubfolderContextMenuClicked(object sender, EventArgs e)
   {
     if (sender is not MenuFlyoutItem item || item.BindingContext is not FolderViewModel vm) return;
+    if (IsTopLevelRow(vm)) return;
     var page = Application.Current?.Windows.FirstOrDefault()?.Page;
     if (page == null) return;
 
@@ -298,6 +311,7 @@ public partial class WindowsFolderTreeView : ContentView
   {
     if (sender is not MenuFlyoutItem item || item.BindingContext is not FolderViewModel vm)
       return;
+    if (IsTopLevelRow(vm)) return;
     var page = Application.Current?.Windows.FirstOrDefault()?.Page;
     if (page == null) return;
 
@@ -320,6 +334,7 @@ public partial class WindowsFolderTreeView : ContentView
   {
     if (sender is not MenuFlyoutItem item || item.BindingContext is not FolderViewModel vm)
       return;
+    if (IsTopLevelRow(vm)) return;
     var page = Application.Current?.Windows.FirstOrDefault()?.Page;
     if (page == null) return;
 
@@ -331,6 +346,7 @@ public partial class WindowsFolderTreeView : ContentView
   {
     if (sender is not MenuFlyoutItem item || item.BindingContext is not FolderViewModel vm)
       return;
+    if (IsTopLevelRow(vm)) return;
     var page = Application.Current?.Windows.FirstOrDefault()?.Page;
     if (page == null) return;
 
