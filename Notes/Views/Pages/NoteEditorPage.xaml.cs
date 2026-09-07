@@ -70,6 +70,7 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     _progressService = progressService;
     _toastService = toastService;
     BindingContext = this;
+    Notes.Helpers.OverscrollStretch.Enable(EditorScrollView);
   }
 
   // reads the native ScrollView directly (ScrollY / child height in real pixels) instead
