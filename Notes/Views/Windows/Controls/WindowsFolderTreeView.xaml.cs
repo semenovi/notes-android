@@ -19,6 +19,10 @@ public partial class WindowsFolderTreeView : ContentView
 
   public event EventHandler<Folder>? FolderSelected;
 
+  // Fired after a note dragged from the note list is successfully moved into one
+  // of these folders, so MainWindow can drop it from the currently open list.
+  public event EventHandler<string>? NoteMovedToFolder;
+
   private readonly ReactiveSyncService _reactiveSync;
   private readonly NoteManager _noteManager;
   private readonly Services.ProgressNotificationService _progressService;
@@ -160,6 +164,46 @@ public partial class WindowsFolderTreeView : ContentView
     vm.IsSelected = true;
     _selectedFolder = vm.Folder;
     FolderSelected?.Invoke(this, vm.Folder);
+  }
+
+  private static readonly Color FolderHoverColor = Color.FromArgb("#E8F0FE");
+
+  // sender is the DropGestureRecognizer, same as the drag source above — its
+  // Parent is the Border the recognizer is attached to.
+  private static Border? DropRowOf(object sender) => (sender as Element)?.Parent as Border;
+
+  private void OnFolderRowDragOver(object sender, DragEventArgs e)
+  {
+    if (DropRowOf(sender) is Border border)
+      border.BackgroundColor = FolderHoverColor;
+  }
+
+  private void OnFolderRowDragLeave(object sender, DragEventArgs e)
+  {
+    if (DropRowOf(sender) is Border border && border.BindingContext is FolderViewModel vm)
+      border.BackgroundColor = vm.IsSelected ? Color.FromArgb("#D4D4D4") : Colors.Transparent;
+  }
+
+  private async void OnNoteDroppedOnFolder(object sender, DropEventArgs e)
+  {
+    var border = DropRowOf(sender);
+    if (border == null) return;
+    if (border.BindingContext is not FolderViewModel vm)
+    {
+      border.BackgroundColor = Colors.Transparent;
+      return;
+    }
+    border.BackgroundColor = vm.IsSelected ? Color.FromArgb("#D4D4D4") : Colors.Transparent;
+
+    if (!e.Data.Properties.TryGetValue("noteId", out var noteIdObj) || noteIdObj is not string noteId)
+      return;
+
+    var note = await _noteManager.GetNoteAsync(noteId);
+    if (note == null || note.FolderId == vm.Folder.Id) return;
+
+    note.FolderId = vm.Folder.Id;
+    await _noteManager.UpdateNoteAsync(note);
+    NoteMovedToFolder?.Invoke(this, noteId);
   }
 
   private async void OnNewFolderButtonClicked(object sender, EventArgs e)

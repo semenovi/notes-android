@@ -38,6 +38,7 @@
                     <Grid Padding="8,3">
                         <Grid.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnNoteTapped" />
+                            <DragGestureRecognizer CanDrag="True" DragStarting="OnNoteDragStarting" />
                         </Grid.GestureRecognizers>
                         <Border BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}}"
                                 StrokeThickness="0"

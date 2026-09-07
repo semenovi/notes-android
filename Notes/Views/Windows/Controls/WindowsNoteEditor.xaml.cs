@@ -64,9 +64,18 @@ public partial class WindowsNoteEditor : ContentView
     if (payload.StartsWith("media-"))
     {
       mediaId = payload[6..]; // strip "media-"
-      imageUrl = await _markdownProcessor.GetFullResDataUriAsync(mediaId);
-      if (string.IsNullOrEmpty(imageUrl))
-        _markdownProcessor.TryGetCachedDataUri(mediaId, out imageUrl);
+      int colonIdx = mediaId.IndexOf(':');
+      if (colonIdx > 0 && int.TryParse(mediaId[(colonIdx + 1)..], out int pageIndex))
+      {
+        mediaId = mediaId[..colonIdx];
+        imageUrl = await _markdownProcessor.GetFullResPdfPageDataUriAsync(mediaId, pageIndex);
+      }
+      else
+      {
+        imageUrl = await _markdownProcessor.GetFullResDataUriAsync(mediaId);
+        if (string.IsNullOrEmpty(imageUrl))
+          _markdownProcessor.TryGetCachedDataUri(mediaId, out imageUrl);
+      }
     }
     else if (payload.StartsWith("http://") || payload.StartsWith("https://"))
     {
@@ -406,6 +415,7 @@ public partial class WindowsNoteEditor : ContentView
   img {{ max-width: 100%; border-radius: 4px; }}
   .media-lazy {{ display: block; min-height: 80px; background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }}
   @keyframes shimmer {{ 0%{{background-position:200% 0}} 100%{{background-position:-200% 0}} }}
+  .pdf-page {{ display: block; margin-bottom: 8px; }}
   hr {{ border: none; border-top: 1px solid #E5E5EA; margin: 16px 0; }}
   {ImageViewerHtml.ViewerCss}
   {ImageViewerHtml.CopyCodeCss}
@@ -462,8 +472,8 @@ public partial class WindowsNoteEditor : ContentView
     {
       var results = await FilePicker.PickMultipleAsync(new PickOptions
       {
-        FileTypes = FilePickerFileType.Images,
-        PickerTitle = "select images"
+        FileTypes = MediaFilePickerTypes.ImagesAndPdf,
+        PickerTitle = "select images or pdf"
       });
       if (results == null || !results.Any()) return;
 

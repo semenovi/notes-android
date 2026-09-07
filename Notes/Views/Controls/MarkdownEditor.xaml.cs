@@ -1,3 +1,4 @@
+using Notes.Helpers;
 using Notes.Models;
 using Notes.Services.Markdown;
 using Notes.Services.Notes;
@@ -67,8 +68,8 @@ public partial class MarkdownEditor : ContentView, INotifyPropertyChanged
   {
     var fileResults = await FilePicker.PickMultipleAsync(new PickOptions
     {
-      FileTypes = FilePickerFileType.Images,
-      PickerTitle = "select images"
+      FileTypes = MediaFilePickerTypes.ImagesAndPdf,
+      PickerTitle = "select images or pdf"
     });
 
     if (fileResults == null || !fileResults.Any())

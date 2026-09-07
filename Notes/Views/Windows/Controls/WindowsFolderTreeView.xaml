@@ -33,6 +33,12 @@
                         <Border BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=folder}"
                                 StrokeThickness="0"
                                 StrokeShape="RoundRectangle 6">
+                            <Border.GestureRecognizers>
+                                <DropGestureRecognizer AllowDrop="True"
+                                                        DragOver="OnFolderRowDragOver"
+                                                        DragLeave="OnFolderRowDragLeave"
+                                                        Drop="OnNoteDroppedOnFolder" />
+                            </Border.GestureRecognizers>
                             <FlyoutBase.ContextFlyout>
                                 <MenuFlyout>
                                     <MenuFlyoutItem Text="new subfolder" Clicked="OnNewSubfolderContextMenuClicked" />

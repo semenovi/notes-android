@@ -18,7 +18,8 @@
 
             <controls:WindowsFolderTreeView x:Name="FolderTree" Grid.Column="0"
                                              FolderSelected="OnFolderSelected"
-                                             MenuRequested="OnMenuRequested" />
+                                             MenuRequested="OnMenuRequested"
+                                             NoteMovedToFolder="OnNoteMovedToFolder" />
 
             <BoxView Grid.Column="1" BackgroundColor="#C6C6C8" />
 

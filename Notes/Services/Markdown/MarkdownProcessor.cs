@@ -114,13 +114,34 @@ public class MarkdownProcessor
     return result;
   }
 
-  public Task<string> ProcessMediaLinksAsync(string markdown)
+  private static readonly System.Text.RegularExpressions.Regex MediaLinkRegex = new(
+      @"!\[(.*?)\]\(media:(.*?)\)");
+
+  public async Task<string> ProcessMediaLinksAsync(string markdown)
   {
-    var result = System.Text.RegularExpressions.Regex.Replace(
-      markdown,
-      @"!\[(.*?)\]\(media:(.*?)\)",
-      m => $"<img id=\"media-{m.Groups[2].Value}\" data-media-id=\"{m.Groups[2].Value}\" alt=\"{m.Groups[1].Value}\" class=\"media-lazy\">");
-    return Task.FromResult(result);
+    var ids = MediaLinkRegex.Matches(markdown)
+      .Cast<System.Text.RegularExpressions.Match>()
+      .Select(m => m.Groups[2].Value)
+      .Distinct()
+      .ToList();
+
+    // sequential lookups mirror InjectImagesIntoWebViewAsync below (small, bounded set
+    // per note; avoids hammering storage with parallel reads)
+    var fileTypes = new Dictionary<string, string?>();
+    foreach (var id in ids)
+    {
+      var item = await _mediaManager.GetMediaAsync(id);
+      fileTypes[id] = item?.FileType?.ToLowerInvariant();
+    }
+
+    return MediaLinkRegex.Replace(markdown, m =>
+    {
+      var id = m.Groups[2].Value;
+      var alt = m.Groups[1].Value;
+      if (fileTypes.TryGetValue(id, out var fileType) && fileType == "pdf")
+        return $"<div id=\"media-{id}\" data-media-id=\"{id}\" class=\"media-lazy pdf-container\"></div>";
+      return $"<img id=\"media-{id}\" data-media-id=\"{id}\" alt=\"{alt}\" class=\"media-lazy\">";
+    });
   }
 
   public async Task InjectImagesIntoWebViewAsync(string markdown, WebView webView,
@@ -157,13 +178,101 @@ public class MarkdownProcessor
           item = await _mediaManager.GetMediaAsync(id);
           if (item == null) continue;
         }
-        string dataUri = await GetMediaDataUriAsync(id, item);
-        if (string.IsNullOrEmpty(dataUri)) continue;
-        string js = $"(function(){{var e=document.getElementById('media-{id}');if(e)e.src='{dataUri}';}})();";
-        await MainThread.InvokeOnMainThreadAsync(() => webView.EvaluateJavaScriptAsync(js));
+        if (item.FileType?.ToLowerInvariant() == "pdf")
+          await InjectPdfPagesAsync(id, webView);
+        else
+        {
+          string dataUri = await GetMediaDataUriAsync(id, item);
+          if (string.IsNullOrEmpty(dataUri)) continue;
+          string js = $"(function(){{var e=document.getElementById('media-{id}');if(e)e.src='{dataUri}';}})();";
+          await MainThread.InvokeOnMainThreadAsync(() => webView.EvaluateJavaScriptAsync(js));
+        }
         onProgress?.Invoke(i + 1, total);
       }
       catch { }
+    }
+  }
+
+  // Caps eager page rendering on note open so an oversized PDF can't hang the note view.
+  private const int MaxEagerPdfPages = 40;
+  private const int PdfDisplayMaxDim = 1200;
+  private const int PdfFullResMaxDim = 2000;
+
+  private async Task InjectPdfPagesAsync(string mediaId, WebView webView)
+  {
+    byte[] pdfBytes;
+    int pageCount;
+    try
+    {
+      pdfBytes = await _mediaManager.GetRawContentAsync(mediaId);
+      pageCount = await Services.Notes.PdfRasterizer.GetPageCountAsync(pdfBytes);
+    }
+    catch (Exception ex)
+    {
+      Services.DebugLogService.Current?.Log($"pdf-inject-load-err: id={mediaId} {ex.GetType().Name}: {ex.Message}");
+      return;
+    }
+
+    int renderCount = Math.Min(pageCount, MaxEagerPdfPages);
+
+    // rendered one page at a time (mirrors the image loop above) to bound peak memory.
+    // Each page is caught individually so one bad page doesn't stop the rest from showing.
+    for (int page = 0; page < renderCount; page++)
+    {
+      try
+      {
+        string cacheKey = $"{mediaId}:p{page}";
+        if (!_dataUriCache.TryGetValue(cacheKey, out var dataUri))
+        {
+          byte[] png = await Services.Notes.PdfRasterizer.RenderPageAsync(pdfBytes, page, PdfDisplayMaxDim);
+          if (png.Length == 0)
+          {
+            Services.DebugLogService.Current?.Log($"pdf-inject-empty: id={mediaId} page={page}");
+            continue;
+          }
+          dataUri = $"data:image/png;base64,{Convert.ToBase64String(png)}";
+          _dataUriCache[cacheKey] = dataUri;
+        }
+
+        string js = $"(function(){{var c=document.getElementById('media-{mediaId}');if(!c)return;" +
+            $"c.classList.remove('media-lazy');" +
+            $"var im=document.createElement('img');im.className='pdf-page';" +
+            $"im.setAttribute('data-media-id','{mediaId}');im.setAttribute('data-page','{page}');" +
+            $"im.src='{dataUri}';c.appendChild(im);}})();";
+        await MainThread.InvokeOnMainThreadAsync(() => webView.EvaluateJavaScriptAsync(js));
+      }
+      catch (Exception ex)
+      {
+        Services.DebugLogService.Current?.Log($"pdf-inject-page-err: id={mediaId} page={page} {ex.GetType().Name}: {ex.Message}");
+      }
+    }
+
+    if (pageCount > renderCount)
+    {
+      try
+      {
+        string js = $"(function(){{var c=document.getElementById('media-{mediaId}');if(!c)return;" +
+            $"var p=document.createElement('p');p.style.color='#8E8E93';" +
+            $"p.textContent='+{pageCount - renderCount} more pages not shown';c.appendChild(p);}})();";
+        await MainThread.InvokeOnMainThreadAsync(() => webView.EvaluateJavaScriptAsync(js));
+      }
+      catch { }
+    }
+  }
+
+  public async Task<string> GetFullResPdfPageDataUriAsync(string mediaId, int pageIndex)
+  {
+    try
+    {
+      await EnsureLocalAsync(mediaId);
+      byte[] pdfBytes = await _mediaManager.GetRawContentAsync(mediaId);
+      byte[] png = await Services.Notes.PdfRasterizer.RenderPageAsync(pdfBytes, pageIndex, PdfFullResMaxDim);
+      if (png.Length == 0) return "";
+      return $"data:image/png;base64,{Convert.ToBase64String(png)}";
+    }
+    catch
+    {
+      return "";
     }
   }
 

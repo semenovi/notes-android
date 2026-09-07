@@ -96,7 +96,7 @@
                         BorderWidth="0" Padding="6,2" WidthRequest="32" HeightRequest="30"
                         Clicked="OnHeaderClicked" />
                 <BoxView BackgroundColor="#E5E5EA" WidthRequest="1" Margin="6,4" />
-                <Button Text="img" FontSize="11"
+                <Button Text="attach" FontSize="11"
                         BackgroundColor="Transparent" TextColor="#007AFF"
                         BorderWidth="0" Padding="6,2"
                         Clicked="OnAddImageClicked" />

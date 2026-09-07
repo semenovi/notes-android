@@ -183,6 +183,14 @@ public partial class WindowsNoteListView : ContentView
       SelectNote(vm);
   }
 
+  // sender is the GestureRecognizer itself (not the row) — its Parent is the row,
+  // same as MenuFlyoutItem.BindingContext is used elsewhere in this file.
+  private void OnNoteDragStarting(object sender, DragStartingEventArgs e)
+  {
+    if ((sender as Element)?.Parent is not Grid row || row.BindingContext is not NoteViewModel vm) return;
+    e.Data.Properties["noteId"] = vm.Note.Id;
+  }
+
   private void SelectNote(NoteViewModel vm)
   {
     foreach (var n in Notes) n.IsSelected = false;
