@@ -53,6 +53,7 @@ public partial class NoteViewPage : ContentPage
     _mediaDownloadCoordinator = mediaDownloadCoordinator;
     BindingContext = this;
     NoteContentWebView.Navigating += OnWebViewNavigating;
+    Notes.Helpers.OverscrollStretch.Enable(NoteContentWebView);
   }
 
   private async Task LoadNoteAsync()
