@@ -80,7 +80,8 @@ public static class ImageViewerHtml
             "background-color:#000;z-index:9999;overflow:hidden;touch-action:none;" +
             "user-select:none;-webkit-user-select:none;}" +
         " #_iv_img{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;" +
-            "border-radius:4px;-webkit-user-drag:none;user-select:none;will-change:transform;}";
+            "border-radius:4px;-webkit-user-drag:none;user-select:none;will-change:transform;" +
+            "image-orientation:from-image;}";
 
     public const string ViewerDiv = "<div id='_iv'><img id='_iv_img' alt=''/></div>";
 
@@ -145,6 +146,10 @@ public static class ImageViewerHtml
             baseW=nw*f; baseH=nh*f;
             baseX=(vw-baseW)/2; baseY=(vh-baseH)/2;
           }
+          function applyBaseSize(){
+            vImg.style.width=baseW+'px';
+            vImg.style.height=baseH+'px';
+          }
           function boundsX(){
             var vw=window.innerWidth, sw=baseW*scale;
             if(sw<=vw){ var c=(baseW-sw)/2; return [c,c]; }
@@ -178,8 +183,7 @@ public static class ImageViewerHtml
             var nw=el.naturalWidth||el.width, nh=el.naturalHeight||el.height;
             computeBase(nw, nh);
             vImg.src=el.src;
-            vImg.style.width=baseW+'px';
-            vImg.style.height=baseH+'px';
+            applyBaseSize();
             vImg.style.opacity='1';
 
             var r=el.getBoundingClientRect();
@@ -231,7 +235,21 @@ public static class ImageViewerHtml
           window._setViewerFullRes = function(src){
             if(state!=='open') return;
             var im=new Image();
-            im.onload=function(){ if(state==='open') vImg.src=src; };
+            im.onload=function(){
+              if(state!=='open') return;
+              vImg.src=src;
+              var nw=im.naturalWidth, nh=im.naturalHeight;
+              if(!nw || !nh) return;
+              // re-fit only if the full-res frame is a different shape than the thumbnail was
+              // (e.g. an orientation mismatch slipped through) - never let it stretch
+              if(Math.abs(nw/nh - baseW/baseH) < 0.01*(baseW/baseH)) return;
+              var keepZoom = scale > ZOOM_SNAP;
+              computeBase(nw, nh);
+              applyBaseSize();
+              if(keepZoom) clampPan();
+              else { scale=1; tx=0; ty=0; }
+              noTransition(); paint();
+            };
             im.onerror=function(){};
             im.src=src;
           };
@@ -255,7 +273,7 @@ public static class ImageViewerHtml
           window.addEventListener('resize', function(){
             if(state!=='open' || animating) return;
             computeBase(vImg.naturalWidth, vImg.naturalHeight);
-            vImg.style.width=baseW+'px'; vImg.style.height=baseH+'px';
+            applyBaseSize();
             clampPan(); paint();
           });
 
