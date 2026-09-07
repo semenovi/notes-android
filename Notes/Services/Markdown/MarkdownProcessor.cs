@@ -312,6 +312,11 @@ public class MarkdownProcessor
         "webp" => "image/webp",
         _ => "image/png",
       };
+      if (fileType is "jpg" or "jpeg" or "png" or "webp")
+      {
+        bytes = await Task.Run(() => NormalizeOrientation(bytes));
+        mimeType = SniffImageMime(bytes, mimeType);
+      }
       return $"data:{mimeType};base64,{Convert.ToBase64String(bytes)}";
     }
     catch
@@ -339,7 +344,7 @@ public class MarkdownProcessor
 
       bool isRasterImage = fileType is "jpg" or "jpeg" or "png" or "webp";
       if (isRasterImage)
-        bytes = await Task.Run(() => ResizeImageForDisplay(bytes));
+        bytes = await Task.Run(() => ResizeImageForDisplay(NormalizeOrientation(bytes)));
 
       string mimeType = fileType switch
       {
@@ -348,6 +353,8 @@ public class MarkdownProcessor
         "webp" => "image/webp",
         _ => "image/png",
       };
+      if (isRasterImage)
+        mimeType = SniffImageMime(bytes, mimeType);
 
       string dataUri = $"data:{mimeType};base64,{Convert.ToBase64String(bytes)}";
       _dataUriCache[mediaId] = dataUri;
@@ -379,6 +386,72 @@ public class MarkdownProcessor
       return data;
     }
   }
+
+  private static string SniffImageMime(byte[] b, string fallback)
+  {
+    if (b.Length >= 3 && b[0] == 0xFF && b[1] == 0xD8 && b[2] == 0xFF) return "image/jpeg";
+    if (b.Length >= 8 && b[0] == 0x89 && b[1] == 0x50 && b[2] == 0x4E && b[3] == 0x47) return "image/png";
+    if (b.Length >= 12 && b[0] == (byte)'R' && b[1] == (byte)'I' && b[2] == (byte)'F' && b[3] == (byte)'F'
+        && b[8] == (byte)'W' && b[9] == (byte)'E' && b[10] == (byte)'B' && b[11] == (byte)'P') return "image/webp";
+    if (b.Length >= 4 && b[0] == (byte)'G' && b[1] == (byte)'I' && b[2] == (byte)'F') return "image/gif";
+    return fallback;
+  }
+
+  // The Android system WebView applies EXIF orientation to <img>, but the resize step re-encodes
+  // and drops the tag, so large photos ended up upright inline yet rotated once the full-res
+  // swap landed in the fullscreen viewer. Bake the rotation into the pixels so every surface
+  // shows the same thing. No-op for images that are already upright.
+#if ANDROID
+  private static byte[] NormalizeOrientation(byte[] data)
+  {
+    try
+    {
+      int orientation;
+      using (var exifStream = new MemoryStream(data, writable: false))
+      {
+        var exif = new global::AndroidX.ExifInterface.Media.ExifInterface(exifStream);
+        orientation = exif.GetAttributeInt(
+            global::AndroidX.ExifInterface.Media.ExifInterface.TagOrientation, 1);
+      }
+      if (orientation is <= 1 or > 8)
+        return data;
+
+      using var src = global::Android.Graphics.BitmapFactory.DecodeByteArray(data, 0, data.Length);
+      if (src == null)
+        return data;
+
+      using var matrix = new global::Android.Graphics.Matrix();
+      switch (orientation)
+      {
+        case 2: matrix.SetScale(-1f, 1f); break;
+        case 3: matrix.SetRotate(180f); break;
+        case 4: matrix.SetScale(1f, -1f); break;
+        case 5: matrix.SetRotate(90f); matrix.PostScale(-1f, 1f); break;
+        case 6: matrix.SetRotate(90f); break;
+        case 7: matrix.SetRotate(-90f); matrix.PostScale(-1f, 1f); break;
+        case 8: matrix.SetRotate(-90f); break;
+      }
+
+      using var upright = global::Android.Graphics.Bitmap.CreateBitmap(
+          src, 0, 0, src.Width, src.Height, matrix, true);
+      if (upright == null)
+        return data;
+
+      using var outMs = new MemoryStream();
+      if (upright.HasAlpha)
+        upright.Compress(global::Android.Graphics.Bitmap.CompressFormat.Png!, 100, outMs);
+      else
+        upright.Compress(global::Android.Graphics.Bitmap.CompressFormat.Jpeg!, 92, outMs);
+      return outMs.ToArray();
+    }
+    catch
+    {
+      return data;
+    }
+  }
+#else
+  private static byte[] NormalizeOrientation(byte[] data) => data;
+#endif
 
   private string ProcessBasicMarkdown(string markdown)
   {
