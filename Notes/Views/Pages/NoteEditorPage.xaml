@@ -22,9 +22,9 @@
                     HeightRequest="44"
                     Clicked="OnPreviewClicked" />
 
-            <Button Text="{x:Static helpers:MaterialIconCodes.Image}" 
+            <Button Text="{x:Static helpers:MaterialIconCodes.AttachFile}"
                     FontFamily="MaterialIcons"
-                    FontSize="22" 
+                    FontSize="22"
                     WidthRequest="44"
                     HeightRequest="44"
                     Clicked="OnAddMediaClicked" />

@@ -284,14 +284,24 @@ public class ReactiveSyncService : IDisposable
       var client = _client;
       var key = _syncKey;
       var deviceId = _deviceId;
-      if (client == null || key == null || deviceId == null) return;
+      if (client == null || key == null || deviceId == null)
+      {
+        DebugLogService.Current?.Log($"note-push-skip: id={noteId} no client/key/device");
+        return;
+      }
+      DebugLogService.Current?.Log($"note-push: id={noteId} kind={kind}");
       if (kind == EntityChangeKind.Deleted)
       {
         await client.PushChangesAsync(new(), new(), new(), new List<string> { noteId }, new(), deviceId);
+        DebugLogService.Current?.Log($"note-push-done: id={noteId} (deleted)");
         return;
       }
       var note = await _noteRepo.GetNoteAsync(noteId);
-      if (note == null) return;
+      if (note == null)
+      {
+        DebugLogService.Current?.Log($"note-push-skip: id={noteId} not found locally");
+        return;
+      }
       byte[] enc = SyncCryptoHelper.AesEncrypt(
           Encoding.UTF8.GetBytes(JsonSerializer.Serialize(note, JsonOpts)), key);
       var item = new SyncItem
@@ -301,8 +311,12 @@ public class ReactiveSyncService : IDisposable
         Modified = note.Modified.ToUniversalTime().ToString(TimeFmt),
       };
       await client.PushChangesAsync(new List<SyncItem> { item }, new(), new(), new(), new(), deviceId);
+      DebugLogService.Current?.Log($"note-push-done: id={noteId} folder={note.FolderId} modified={item.Modified}");
     }
-    catch { }
+    catch (Exception ex)
+    {
+      DebugLogService.Current?.Log($"note-push-err: id={noteId} {ex.GetType().Name}: {ex.Message}");
+    }
     finally { _pushLock.Release(); }
   }
 
@@ -316,14 +330,24 @@ public class ReactiveSyncService : IDisposable
       var client = _client;
       var key = _syncKey;
       var deviceId = _deviceId;
-      if (client == null || key == null || deviceId == null) return;
+      if (client == null || key == null || deviceId == null)
+      {
+        DebugLogService.Current?.Log($"folder-push-skip: id={folderId} no client/key/device");
+        return;
+      }
+      DebugLogService.Current?.Log($"folder-push: id={folderId} kind={kind}");
       if (kind == EntityChangeKind.Deleted)
       {
         await client.PushChangesAsync(new(), new(), new(), new(), new List<string> { folderId }, deviceId);
+        DebugLogService.Current?.Log($"folder-push-done: id={folderId} (deleted)");
         return;
       }
       var folder = await _folderRepo.GetFolderAsync(folderId);
-      if (folder == null) return;
+      if (folder == null)
+      {
+        DebugLogService.Current?.Log($"folder-push-skip: id={folderId} not found locally");
+        return;
+      }
       byte[] enc = SyncCryptoHelper.AesEncrypt(
           Encoding.UTF8.GetBytes(JsonSerializer.Serialize(folder, JsonOpts)), key);
       var item = new SyncItem
@@ -333,8 +357,12 @@ public class ReactiveSyncService : IDisposable
         Modified = folder.Modified.ToUniversalTime().ToString(TimeFmt),
       };
       await client.PushChangesAsync(new(), new List<SyncItem> { item }, new(), new(), new(), deviceId);
+      DebugLogService.Current?.Log($"folder-push-done: id={folderId} parent={folder.ParentId} modified={item.Modified}");
     }
-    catch { }
+    catch (Exception ex)
+    {
+      DebugLogService.Current?.Log($"folder-push-err: id={folderId} {ex.GetType().Name}: {ex.Message}");
+    }
     finally { _pushLock.Release(); }
   }
 

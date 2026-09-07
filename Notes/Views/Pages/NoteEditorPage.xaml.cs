@@ -189,8 +189,8 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
   {
     var fileResults = await FilePicker.PickMultipleAsync(new PickOptions
     {
-      FileTypes = FilePickerFileType.Images,
-      PickerTitle = "select images"
+      FileTypes = Notes.Helpers.MediaFilePickerTypes.ImagesAndPdf,
+      PickerTitle = "select images or pdf"
     });
 
     if (fileResults == null || !fileResults.Any())

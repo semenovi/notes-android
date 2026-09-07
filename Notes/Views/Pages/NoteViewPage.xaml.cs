@@ -110,6 +110,7 @@ public partial class NoteViewPage : ContentPage
         code {{ background-color: #f5f5f5; padding: 2px 4px; }}
         .media-lazy {{ display: block; min-height: 80px; background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }}
         @keyframes shimmer {{ 0%{{background-position:200% 0}} 100%{{background-position:-200% 0}} }}
+        .pdf-page {{ display: block; margin-bottom: 8px; }}
         {ImageViewerHtml.ViewerCss}
         {ImageViewerHtml.CopyCodeCss}
         {Services.Markdown.TaskListMarkdown.Css}
@@ -157,9 +158,14 @@ public partial class NoteViewPage : ContentPage
   }
 
 #if ANDROID
-  private async Task InjectFullResImageAsync(string mediaId)
+  private async Task InjectFullResImageAsync(string payload)
   {
-    string dataUri = await _markdownProcessor.GetFullResDataUriAsync(mediaId);
+    string dataUri;
+    int colonIdx = payload.IndexOf(':');
+    if (colonIdx > 0 && int.TryParse(payload[(colonIdx + 1)..], out int page))
+      dataUri = await _markdownProcessor.GetFullResPdfPageDataUriAsync(payload[..colonIdx], page);
+    else
+      dataUri = await _markdownProcessor.GetFullResDataUriAsync(payload);
     if (string.IsNullOrEmpty(dataUri)) return;
     string js = $"(function(){{if(window._setViewerFullRes)window._setViewerFullRes('{dataUri}')}})();";
     await MainThread.InvokeOnMainThreadAsync(() => NoteContentWebView.EvaluateJavaScriptAsync(js));

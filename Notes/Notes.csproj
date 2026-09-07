@@ -99,6 +99,13 @@
 		<PackageReference Include="System.Reactive" Version="6.1.0" />
 	</ItemGroup>
 
+	<!-- Windows.Data.Pdf renders some pages blank (silently, no error); PDFium handles them,
+	     and matches what Android's own PdfRenderer (also PDFium) produces. Windows only —
+	     Android has PDFium built in, no need to ship a second copy in the APK. -->
+	<ItemGroup Condition="$(TargetFramework.Contains('-windows'))">
+		<PackageReference Include="PDFtoImage" Version="5.4.0" />
+	</ItemGroup>
+
 	<ItemGroup>
 	  <Compile Update="Views\Controls\FolderTreeView.xaml.cs">
 	    <DependentUpon>FolderTreeView.xaml</DependentUpon>

@@ -57,12 +57,13 @@ public static class ImageViewerHtml
         <script>
         document.addEventListener('click', function(e) {
           if (e.target.tagName !== 'IMG' || !e.target.src) return;
-          var id  = e.target.id  || '';
+          var mid = e.target.getAttribute('data-media-id') || '';
+          var pg  = e.target.getAttribute('data-page');
           var src = e.target.src || '';
-          // For media images use the short element ID; for others use the src URL
+          // For media images use the media id; for others use the src URL
           // (skip data: URIs for non-media images — they are too large for a URL).
-          var payload = id.startsWith('media-') ? id
-                      : src.startsWith('data:')  ? ''
+          var payload = mid ? ('media-' + mid + (pg ? ':' + pg : ''))
+                      : src.startsWith('data:') ? ''
                       : src;
           if (!payload) return;
           window.location.href = 'img-viewer://open/' + encodeURIComponent(payload);
@@ -117,6 +118,8 @@ public static class ImageViewerHtml
           document.addEventListener('click', function(e){
             if(e.target.tagName==='IMG' && e.target.id!=='_iv_img' && e.target.src){
               var mid=e.target.getAttribute('data-media-id')||'';
+              var pg=e.target.getAttribute('data-page');
+              if(pg) mid = mid + ':' + pg;
               show(e.target.src, mid);
             }
           });
