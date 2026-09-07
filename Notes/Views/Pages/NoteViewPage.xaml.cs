@@ -287,11 +287,15 @@ public partial class NoteViewPage : ContentPage
           _nativeShadow, screenWidthPx + 20 - _shadowWidthPx, 0f);
       RemoveNativeShadow();
       await Shell.Current.GoToAsync("..", false);
-      // Shell owns this container again and may reuse it for the next push - hand it
-      // back at TranslationX 0 instead of parked off-screen (which renders as a white
-      // screen on the reused page).
+      // Hand the popped container back at TranslationX 0 - parked off-screen it would
+      // render as a white screen if Shell reuses it for the next push. Hide it first:
+      // otherwise the snap-back paints the outgoing page over the revealed one for a
+      // frame right after the navigation settles (a visible blink).
       if (leaving.Handle != IntPtr.Zero)
+      {
+        leaving.Visibility = Android.Views.ViewStates.Gone;
         leaving.TranslationX = 0;
+      }
       _prevPageView = null;
       return;
     }
