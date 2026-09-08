@@ -13,13 +13,15 @@ public partial class App : Application
   private readonly ReactiveSyncService _reactiveSync;
   private readonly DebugLogService _debugLog;
   private readonly ProgressNotificationService _progressService;
+  private readonly SyncSettingsService _settingsService;
 
   public App(ReactiveSyncService reactiveSync, DebugLogService debugLog,
-      ProgressNotificationService progressService)
+      ProgressNotificationService progressService, SyncSettingsService settingsService)
   {
     _reactiveSync = reactiveSync;
     _debugLog = debugLog;
     _progressService = progressService;
+    _settingsService = settingsService;
     InitializeComponent();
 
 #if !WINDOWS
@@ -34,6 +36,9 @@ public partial class App : Application
     _debugLog.StartFileLogging(Path.Combine(AppContext.BaseDirectory, "notes_debug.log"));
 #endif
     _ = _reactiveSync.StartAsync();
+#if ANDROID
+    _ = SyncAndroidBackgroundJobsAsync();
+#endif
   }
 
   protected override void OnSleep()
@@ -43,53 +48,62 @@ public partial class App : Application
     // (sync, media download, note render) keeps running regardless. On return, fresh
     // sessions represent whatever is actually active then.
     _progressService.CancelAll();
-#if ANDROID
-    if (_reactiveSync.IsRunning)
-      StartAndroidSyncService();
-#else
+    // Stop the in-process SSE/timer: a cached process gets frozen on Android and
+    // suspended on Windows, so those tasks can't make progress anyway. Background sync
+    // is handed to the OS scheduler on Android (immediate one-shot + periodic).
     _ = _reactiveSync.StopAsync();
+#if ANDROID
+    _ = OnAndroidSleepAsync();
 #endif
   }
 
   protected override void OnResume()
   {
     base.OnResume();
-#if ANDROID
-    StopAndroidSyncService();
-    // OnStart and OnResume both fire on cold start (OnResume always follows OnStart) —
-    // calling StartAsync unconditionally here raced a second RunPeriodicSyncAsync loop
-    // against the one OnStart kicked off. StopAsync cancels the old loop but can't
-    // actually interrupt an in-flight SynchronizeAsync call (no token threaded through
-    // it), so the second loop's own sync blocked on SyncManager's lock the whole time —
-    // its "syncing" progress session was shown (same priority, added later wins the
-    // tie-break in ProgressNotificationService.Refresh) but never got a single Report()
-    // call, permanently freezing the notification on the indeterminate spinner while the
-    // real sync kept progressing underneath, invisible.
+    // OnStart and OnResume both fire on cold start (OnResume always follows OnStart).
+    // StartAsync stops any prior run first, but can't interrupt an in-flight
+    // SynchronizeAsync, so a blind restart here would stack a second sync loop behind
+    // SyncManager's lock. The guard keeps the one OnStart already kicked off.
     if (!_reactiveSync.IsRunning)
       _ = _reactiveSync.StartAsync();
-#else
-    // On Windows OnStart and OnResume both fire on cold start — don't restart a
-    // running service (OnSleep stops it, so a real resume still restarts here).
-    if (!_reactiveSync.IsRunning)
-      _ = _reactiveSync.StartAsync();
-#endif
   }
 
 #if ANDROID
-  private static void StartAndroidSyncService()
+  // Keeps the periodic background-sync job registered while sync is on, and clears it
+  // when sync is off. Cheap and idempotent - safe to call on every start.
+  private async Task SyncAndroidBackgroundJobsAsync()
   {
-    var ctx = Android.App.Application.Context;
-    var intent = new Android.Content.Intent(ctx, typeof(SyncForegroundService));
-    if (OperatingSystem.IsAndroidVersionAtLeast(26))
-      ctx.StartForegroundService(intent);
-    else
-      ctx.StartService(intent);
+    try
+    {
+      var settings = await _settingsService.LoadAsync();
+      if (settings.Enabled
+          && !string.IsNullOrEmpty(settings.ServerUrl)
+          && !string.IsNullOrEmpty(settings.ApiToken))
+        SyncJobScheduler.EnsurePeriodic();
+      else
+        SyncJobScheduler.CancelAll();
+    }
+    catch { }
   }
 
-  private static void StopAndroidSyncService()
+  private async Task OnAndroidSleepAsync()
   {
-    var ctx = Android.App.Application.Context;
-    ctx.StopService(new Android.Content.Intent(ctx, typeof(SyncForegroundService)));
+    try
+    {
+      var settings = await _settingsService.LoadAsync();
+      if (settings.Enabled
+          && !string.IsNullOrEmpty(settings.ServerUrl)
+          && !string.IsNullOrEmpty(settings.ApiToken))
+      {
+        SyncJobScheduler.ScheduleOneShot();
+        SyncJobScheduler.EnsurePeriodic();
+      }
+      else
+      {
+        SyncJobScheduler.CancelAll();
+      }
+    }
+    catch { }
   }
 
   // Toast/progress used to live inside each page's own RootGrid, which is what the

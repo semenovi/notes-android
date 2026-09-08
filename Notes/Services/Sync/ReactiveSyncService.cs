@@ -51,7 +51,7 @@ public class ReactiveSyncService : IDisposable
 
   private const string TimeFmt = "yyyy-MM-ddTHH:mm:ssZ";
   private static readonly TimeSpan PeriodicInterval = TimeSpan.FromMinutes(5);
-  private static readonly SyncProfile DefaultProfile = new() { Name = "Network", Protocol = SyncProtocolType.Network };
+  internal static readonly SyncProfile DefaultProfile = new() { Name = "Network", Protocol = SyncProtocolType.Network };
 
   public ReactiveSyncService(NoteManager noteManager, FolderManager folderManager,
       MediaManager mediaManager, NoteRepository noteRepo, FolderRepository folderRepo,
