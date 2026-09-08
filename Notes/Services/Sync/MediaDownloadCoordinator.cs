@@ -154,6 +154,67 @@ public class MediaDownloadCoordinator : IDisposable
       OnItemsEnqueued(added);
   }
 
+  public int PendingCount
+  {
+    get { lock (_stateLock) return _backgroundQueue.Count; }
+  }
+
+  // One-off bounded drain of the pending queue for a background job run. Independent of
+  // the persistent Start()/StopLoop() loop so it works when the reactive service is down,
+  // and reuses the same fetch + retry/give-up bookkeeping and in-flight dedup. Returns
+  // when the queue empties, the budget runs out, or the token is cancelled.
+  public async Task DrainPendingAsync(string serverUrl, string apiToken, TimeSpan budget, CancellationToken ct)
+  {
+    if (_client == null || _key == null)
+      Configure(serverUrl, apiToken);
+
+    var deadline = DateTime.UtcNow + budget;
+    while (!ct.IsCancellationRequested && DateTime.UtcNow < deadline)
+    {
+      string? next = PickNextBackgroundId();
+      if (next == null) return;
+
+      bool ok;
+      try
+      {
+        var task = _inFlight.GetOrAdd(next, id => FetchOneAsync(id));
+        ok = await task.WaitAsync(ct).ConfigureAwait(false);
+      }
+      catch (OperationCanceledException) { return; }
+      catch (Exception ex)
+      {
+        DebugLogService.Current?.Log($"media-drain-threw: id={next} {ex.GetType().Name}: {ex.Message}");
+        ok = false;
+      }
+
+      if (ok)
+      {
+        lock (_stateLock) { _backgroundQueue.Remove(next); _queuedIds.Remove(next); }
+        OnItemProcessed();
+      }
+      else
+      {
+        int retries = IncrementRetry(next);
+        if (retries >= MaxRetriesPerCycle)
+        {
+          lock (_stateLock)
+          {
+            _backgroundQueue.Remove(next);
+            _queuedIds.Remove(next);
+            _retryCounts.Remove(next);
+            _givenUp.Add(next);
+          }
+          OnItemProcessed();
+        }
+        else
+        {
+          try { await Task.Delay(TimeSpan.FromSeconds(Math.Min(15, 2 << retries)), ct).ConfigureAwait(false); }
+          catch (OperationCanceledException) { return; }
+        }
+      }
+    }
+  }
+
   // Opens (or extends) the "downloading media" progress session covering everything
   // currently queued. Reported as a fraction of the whole batch queued since the
   // session opened, not just this call's items — a slow connection that's still

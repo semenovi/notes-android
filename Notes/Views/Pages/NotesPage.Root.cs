@@ -59,6 +59,13 @@ public partial class NotesPage
     if (_syncToggleItem != null)
       _syncToggleItem.Text = settings.Enabled ? "sync: on" : "sync: off";
 
+#if ANDROID
+    if (settings.Enabled && !string.IsNullOrEmpty(settings.ServerUrl))
+      SyncJobScheduler.EnsurePeriodic();
+    else if (!settings.Enabled)
+      SyncJobScheduler.CancelAll();
+#endif
+
     if (settings.Enabled && string.IsNullOrEmpty(settings.ServerUrl))
       await ShowSyncSettingsDialogAsync();
   }
@@ -102,6 +109,10 @@ public partial class NotesPage
 
     await _syncSettingsService.SaveAsync(settings);
     _toastService.Show("settings saved");
+
+#if ANDROID
+    SyncJobScheduler.EnsurePeriodic();
+#endif
 
     // RestartAsync already runs an immediate sync in the background — a second
     // RunSyncAsync() here would race it (see the same note in the old FoldersPage).
