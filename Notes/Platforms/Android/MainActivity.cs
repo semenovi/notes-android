@@ -3,6 +3,7 @@ using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using Android.Views;
+using AndroidX.Core.View;
 
 namespace Notes;
 
@@ -23,6 +24,17 @@ public class MainActivity : MauiAppCompatActivity
 
     private const long LongPressMs = 450;
     private const float DragMoveThresholdPx = 24f;
+
+    protected override void OnCreate(Bundle? savedInstanceState)
+    {
+        base.OnCreate(savedInstanceState);
+        var window = Window;
+        if (window == null || window.DecorView == null)
+            return;
+        var controller = WindowCompat.GetInsetsController(window, window.DecorView);
+        if (controller != null)
+            controller.AppearanceLightStatusBars = false;
+    }
 
     protected override void OnResume()
     {
