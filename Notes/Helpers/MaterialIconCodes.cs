@@ -15,6 +15,9 @@ public static class MaterialIconCodes
   public const string Check = "\ue876";
   public const string Image = "\ue410";
   public const string AttachFile = "\ue226";
+  public const string PhotoLibrary = "\ue413";
+  public const string PhotoCamera = "\ue412";
+  public const string InsertDriveFile = "\ue24d";
   public const string ContentPaste = "\ue14f";
   public const string Preview = "\ue8f4";
   public const string Search = "\ue8b6";

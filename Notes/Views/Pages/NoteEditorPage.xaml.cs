@@ -1,7 +1,9 @@
 using Notes.Helpers;
 using Notes.Models;
 using Notes.Services;
+using Notes.Services.Media;
 using Notes.Services.Notes;
+using Notes.Views.Controls;
 using System.ComponentModel;
 using System.Linq;
 using System.Reactive.Linq;
@@ -17,11 +19,17 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
   private readonly MediaManager _mediaManager;
   private readonly ProgressNotificationService _progressService;
   private readonly ToastService _toastService;
+  private readonly AttachmentInserter _attachmentInserter;
+  private readonly IRecentMediaProvider _recentMediaProvider;
+  private readonly AttachmentSheet _attachSheet;
 
   private Note _note;
   private string _noteId;
   private string _content;
   private int? _pendingScrollLine;
+
+  private double _lastPageHeight;
+  private double _lastPageWidth;
 
   public string NoteId
   {
@@ -62,15 +70,48 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
   }
 
   public NoteEditorPage(NoteManager noteManager, MediaManager mediaManager,
-      ProgressNotificationService progressService, ToastService toastService)
+      ProgressNotificationService progressService, ToastService toastService,
+      AttachmentInserter attachmentInserter, IRecentMediaProvider recentMediaProvider)
   {
     InitializeComponent();
     _noteManager = noteManager;
     _mediaManager = mediaManager;
     _progressService = progressService;
     _toastService = toastService;
+    _attachmentInserter = attachmentInserter;
+    _recentMediaProvider = recentMediaProvider;
     BindingContext = this;
     Notes.Helpers.OverscrollStretch.Enable(EditorScrollView);
+    SizeChanged += OnPageSizeChanged;
+
+    _attachSheet = new AttachmentSheet(_recentMediaProvider);
+    RootGrid.Add(_attachSheet);
+    Grid.SetRow(_attachSheet, 0);
+    Grid.SetRowSpan(_attachSheet, 2);
+  }
+
+  private void OnPageSizeChanged(object sender, EventArgs e)
+  {
+    double height = Height;
+    double width = Width;
+    if (double.IsNaN(height) || height <= 0)
+      return;
+
+    double previousHeight = _lastPageHeight;
+    double previousWidth = _lastPageWidth;
+    _lastPageHeight = height;
+    _lastPageWidth = width;
+
+    if (previousHeight <= 0)
+      return;
+
+    double delta = previousHeight - height;
+    bool widthStable = Math.Abs(previousWidth - width) < 1;
+    if (!widthStable || Math.Abs(delta) < 100)
+      return; 
+
+    AttachButton.TranslationY = delta;
+    AttachButton.TranslateTo(0, 0, 200, Easing.CubicOut);
   }
 
   protected override void OnDisappearing()
@@ -107,7 +148,6 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
   }
 
 #if ANDROID
-
   private double CaptureNativeScrollFraction()
   {
     if (EditorScrollView.Handler?.PlatformView is not Android.Views.ViewGroup native || native.ChildCount == 0)
@@ -175,37 +215,24 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     await Navigation.PushModalAsync(page);
   }
 
-  private async void OnAddMediaClicked(object sender, EventArgs e)
+  private async void OnAttachClicked(object sender, EventArgs e)
   {
-    var fileResults = await FilePicker.PickMultipleAsync(new PickOptions
-    {
-      FileTypes = Notes.Helpers.MediaFilePickerTypes.ImagesAndPdf,
-      PickerTitle = "select images or pdf"
-    });
-
-    if (fileResults == null || !fileResults.Any())
+    if (_note == null)
       return;
 
-    var fileList = fileResults.ToList();
-    int total = fileList.Count;
-    using var session = _progressService.Begin("adding images", delayMs: 0);
+    int caret = Math.Clamp(ContentEditor.CursorPosition, 0, (Content ?? string.Empty).Length);
+    ContentEditor.Unfocus();
 
-    var parts = new List<string>();
-    for (int i = 0; i < fileList.Count; i++)
+    var result = await _attachSheet.ShowAsync();
+
+    IReadOnlyList<PendingAttachment>? pending = result switch
     {
-      session.Report((double)i / total, total > 1 ? $"{i + 1} of {total}" : null);
-      var fileResult = fileList[i];
-      using var stream = await fileResult.OpenReadAsync();
-      var mediaItem = await _mediaManager.AddMediaAsync(stream, fileResult.FileName);
-      parts.Add($"![{fileResult.FileName}]({_mediaManager.GetMediaUrl(mediaItem.Id)})");
-      session.Report((double)(i + 1) / total, total > 1 ? $"{i + 1} of {total}" : null);
-    }
+      AttachmentRecentsChosen recents => recents.Items.Select(ToPendingImage).ToList(),
+      AttachmentSourceChosen chosen => await CollectFromSourceAsync(chosen.Source),
+      _ => null,
+    };
 
-    int cursorPosition = ContentEditor.CursorPosition;
-    string insertText = string.Join("\n\n", parts);
-
-    Content = Content.Insert(cursorPosition, insertText);
-    ContentEditor.CursorPosition = cursorPosition + insertText.Length;
+    await InsertAttachmentsAsync(pending, caret);
   }
 
   private async void OnPasteImageClicked(object sender, EventArgs e)
@@ -219,31 +246,120 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
         return;
       }
 
-      int total = images.Count;
-      using var session = _progressService.Begin("adding images", delayMs: 0);
+      var pending = images
+          .Select(img => new PendingAttachment
+          {
+            FileName = img.FileName,
+            Kind = AttachmentKind.Image,
+            OpenAsync = _ => Task.FromResult<Stream>(new MemoryStream(img.Stream.ToArray())),
+          })
+          .ToList();
 
-      var parts = new List<string>();
-      for (int i = 0; i < images.Count; i++)
-      {
-        session.Report((double)i / total, total > 1 ? $"{i + 1} of {total}" : null);
-        using var stream = images[i].Stream;
-        var mediaItem = await _mediaManager.AddMediaAsync(stream, images[i].FileName);
-        parts.Add($"![{images[i].FileName}]({_mediaManager.GetMediaUrl(mediaItem.Id)})");
-        session.Report((double)(i + 1) / total, total > 1 ? $"{i + 1} of {total}" : null);
-      }
-
-      string content = Content ?? "";
-      int cursorPosition = Math.Clamp(ContentEditor.CursorPosition, 0, content.Length);
-      string insertText = string.Join("\n\n", parts);
-
-      Content = content.Insert(cursorPosition, insertText);
-      ContentEditor.CursorPosition = cursorPosition + insertText.Length;
+      int caret = Math.Clamp(ContentEditor.CursorPosition, 0, (Content ?? string.Empty).Length);
+      await InsertAttachmentsAsync(pending, caret);
     }
     catch (Exception ex)
     {
       _toastService.Show(ex.Message);
     }
   }
+
+  private async Task InsertAttachmentsAsync(IReadOnlyList<PendingAttachment>? pending, int caret)
+  {
+    if (pending == null || pending.Count == 0)
+      return;
+
+    string insertText;
+    try
+    {
+      insertText = await _attachmentInserter.BuildInsertTextAsync(pending) ?? string.Empty;
+    }
+    catch (Exception ex)
+    {
+      _toastService.Show(ex.Message);
+      return;
+    }
+
+    if (string.IsNullOrEmpty(insertText))
+      return;
+
+    string content = Content ?? string.Empty;
+    int position = Math.Clamp(caret, 0, content.Length);
+    Content = content.Insert(position, insertText);
+    ContentEditor.CursorPosition = position + insertText.Length;
+  }
+
+  private async Task<IReadOnlyList<PendingAttachment>?> CollectFromSourceAsync(AttachmentSource source)
+  {
+    switch (source)
+    {
+      case AttachmentSource.Gallery:
+      {
+        var picked = await FilePicker.PickMultipleAsync(new PickOptions
+        {
+          FileTypes = MediaFilePickerTypes.ImagesOnly,
+          PickerTitle = "select images",
+        });
+        return picked?.Select(ToPending).ToList();
+      }
+
+      case AttachmentSource.Files:
+      {
+        var picked = await FilePicker.PickMultipleAsync(new PickOptions
+        {
+          FileTypes = MediaFilePickerTypes.ImagesAndPdf,
+          PickerTitle = "select images or pdf",
+        });
+        return picked?.Select(ToPending).ToList();
+      }
+
+      case AttachmentSource.Camera:
+      {
+        if (!MediaPicker.Default.IsCaptureSupported)
+        {
+          _toastService.Show("camera not available");
+          return null;
+        }
+
+        var status = await Permissions.RequestAsync<Permissions.Camera>();
+        if (status != PermissionStatus.Granted)
+        {
+          _toastService.Show("camera permission denied");
+          return null;
+        }
+
+        var photo = await MediaPicker.Default.CapturePhotoAsync();
+        if (photo == null)
+          return null;
+
+        return new[] { ToPending(photo) };
+      }
+
+      default:
+        return null;
+    }
+  }
+
+  private static PendingAttachment ToPending(FileResult file)
+  {
+    var kind = file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
+        ? AttachmentKind.Pdf
+        : AttachmentKind.Image;
+
+    return new PendingAttachment
+    {
+      FileName = file.FileName,
+      Kind = kind,
+      OpenAsync = _ => file.OpenReadAsync(),
+    };
+  }
+
+  private PendingAttachment ToPendingImage(RecentImage image) => new()
+  {
+    FileName = image.DisplayName,
+    Kind = AttachmentKind.Image,
+    OpenAsync = ct => _recentMediaProvider.OpenAsync(image, ct),
+  };
 
   private void OnFormatBoldClicked(object sender, EventArgs e)
   {

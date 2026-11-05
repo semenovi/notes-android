@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:helpers="clr-namespace:Notes.Helpers"
+             x:Class="Notes.Views.Controls.AttachmentSheet"
+             IsVisible="False">
+
+    <Grid x:Name="Root">
+        <BoxView x:Name="Scrim"
+                 Color="Black"
+                 Opacity="0">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnScrimTapped" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
+        <Border x:Name="Sheet"
+                VerticalOptions="End"
+                MaximumHeightRequest="560"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 20,20,0,0"
+                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+                Padding="0">
+            <Grid>
+            <CollectionView x:Name="RecentsView"
+                            Margin="10,0,10,16"
+                            ItemsUpdatingScrollMode="KeepItemsInView">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical"
+                                      Span="4"
+                                      HorizontalItemSpacing="6"
+                                      VerticalItemSpacing="6" />
+                </CollectionView.ItemsLayout>
+
+                <CollectionView.Header>
+                    <VerticalStackLayout Spacing="0" Padding="0,10,0,14">
+                        <BoxView WidthRequest="36"
+                                 HeightRequest="4"
+                                 CornerRadius="2"
+                                 Color="{StaticResource Gray300}"
+                                 HorizontalOptions="Center"
+                                 Margin="0,0,0,14" />
+
+                        <Grid ColumnDefinitions="*,*,*" Padding="6,0,6,10">
+                            <VerticalStackLayout Grid.Column="0" Spacing="6">
+                                <Border HeightRequest="56"
+                                        WidthRequest="56"
+                                        HorizontalOptions="Center"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 28"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}">
+                                    <Label Text="{x:Static helpers:MaterialIconCodes.PhotoLibrary}"
+                                           FontFamily="MaterialIcons"
+                                           FontSize="24"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnGalleryTapped" />
+                                    </Border.GestureRecognizers>
+                                </Border>
+                                <Label Text="Gallery" FontSize="12" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="6">
+                                <Border HeightRequest="56"
+                                        WidthRequest="56"
+                                        HorizontalOptions="Center"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 28"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}">
+                                    <Label Text="{x:Static helpers:MaterialIconCodes.InsertDriveFile}"
+                                           FontFamily="MaterialIcons"
+                                           FontSize="24"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnFilesTapped" />
+                                    </Border.GestureRecognizers>
+                                </Border>
+                                <Label Text="File" FontSize="12" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="2" Spacing="6">
+                                <Border HeightRequest="56"
+                                        WidthRequest="56"
+                                        HorizontalOptions="Center"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 28"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}">
+                                    <Label Text="{x:Static helpers:MaterialIconCodes.PhotoCamera}"
+                                           FontFamily="MaterialIcons"
+                                           FontSize="24"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnCameraTapped" />
+                                    </Border.GestureRecognizers>
+                                </Border>
+                                <Label Text="Camera" FontSize="12" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </CollectionView.Header>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid HeightRequest="92">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnRecentTapped" />
+                            </Grid.GestureRecognizers>
+                            <Border StrokeThickness="0" StrokeShape="RoundRectangle 10">
+                                <Grid>
+                                    <Image Source="{Binding Thumb}" Aspect="AspectFill" />
+                                    <BoxView Color="Black" Opacity="{Binding OverlayOpacity}" />
+                                </Grid>
+                            </Border>
+                            <Border IsVisible="{Binding IsSelected}"
+                                    HeightRequest="22"
+                                    WidthRequest="22"
+                                    Margin="6"
+                                    HorizontalOptions="End"
+                                    VerticalOptions="Start"
+                                    Stroke="White"
+                                    StrokeThickness="2"
+                                    StrokeShape="RoundRectangle 11"
+                                    BackgroundColor="{StaticResource Primary}">
+                                <Label Text="{Binding OrderLabel}"
+                                       TextColor="White"
+                                       FontSize="11"
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center" />
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <ActivityIndicator x:Name="LoadingIndicator"
+                                IsRunning="False"
+                                IsVisible="False"
+                                HeightRequest="240"
+                                Color="{StaticResource Primary}" />
+            </Grid>
+        </Border>
+
+        <Border x:Name="ActionButton"
+                IsVisible="False"
+                Opacity="0"
+                Scale="0.6"
+                HeightRequest="58"
+                WidthRequest="58"
+                HorizontalOptions="End"
+                VerticalOptions="End"
+                Margin="0,0,22,150"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 29"
+                BackgroundColor="{StaticResource Primary}">
+            <Border.Shadow>
+                <Shadow Brush="Black" Opacity="0.35" Radius="10" Offset="0,4" />
+            </Border.Shadow>
+            <Grid>
+                <Label Text="{x:Static helpers:MaterialIconCodes.Check}"
+                       FontFamily="MaterialIcons"
+                       FontSize="24"
+                       TextColor="White"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
+                <Border x:Name="ActionCountBadge"
+                        HeightRequest="20"
+                        WidthRequest="20"
+                        Margin="0,-4,-4,0"
+                        HorizontalOptions="End"
+                        VerticalOptions="Start"
+                        Stroke="White"
+                        StrokeThickness="2"
+                        StrokeShape="RoundRectangle 10"
+                        BackgroundColor="#E53935">
+                    <Label x:Name="ActionCountLabel"
+                           Text="0"
+                           TextColor="White"
+                           FontSize="10"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
+                </Border>
+            </Grid>
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnAddTapped" />
+            </Border.GestureRecognizers>
+        </Border>
+    </Grid>
+</ContentView>

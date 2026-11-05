@@ -1,6 +1,7 @@
 using Notes.Helpers;
 using Notes.Models;
 using Notes.Services.Markdown;
+using Notes.Services.Media;
 using Notes.Services.Notes;
 using Notes.Views.Pages;
 using System.Reactive.Linq;
@@ -13,6 +14,7 @@ public partial class WindowsNoteEditor : ContentView
   private readonly NoteManager _noteManager;
   private readonly MediaManager _mediaManager;
   private readonly MarkdownProcessor _markdownProcessor;
+  private readonly AttachmentInserter _attachmentInserter;
   private readonly Services.ProgressNotificationService _progressService;
   private readonly Services.ToastService _toastService;
 
@@ -27,6 +29,7 @@ public partial class WindowsNoteEditor : ContentView
     _noteManager = App.Current!.Handler!.MauiContext!.Services.GetService<NoteManager>()!;
     _mediaManager = App.Current!.Handler!.MauiContext!.Services.GetService<MediaManager>()!;
     _markdownProcessor = App.Current!.Handler!.MauiContext!.Services.GetService<MarkdownProcessor>()!;
+    _attachmentInserter = App.Current!.Handler!.MauiContext!.Services.GetService<AttachmentInserter>()!;
     _progressService = App.Current!.Handler!.MauiContext!.Services.GetService<Services.ProgressNotificationService>()!;
     _toastService = App.Current!.Handler!.MauiContext!.Services.GetService<Services.ToastService>()!;
 
@@ -435,29 +438,15 @@ public partial class WindowsNoteEditor : ContentView
   {
     try
     {
-      var results = await FilePicker.PickMultipleAsync(new PickOptions
-      {
-        FileTypes = MediaFilePickerTypes.ImagesAndPdf,
-        PickerTitle = "select images or pdf"
-      });
-      if (results == null || !results.Any()) return;
-
-      var fileList = results.ToList();
-      int total = fileList.Count;
-      using var session = _progressService.Begin("adding images", delayMs: 0);
-
-      var parts = new List<string>();
-      for (int i = 0; i < fileList.Count; i++)
-      {
-        session.Report((double)i / total, total > 1 ? $"{i + 1} of {total}" : null);
-        var result = fileList[i];
-        using var stream = await result.OpenReadAsync();
-        var media = await _mediaManager.AddMediaAsync(stream, result.FileName);
-        parts.Add($"![{result.FileName}]({_mediaManager.GetMediaUrl(media.Id)})");
-        session.Report((double)(i + 1) / total, total > 1 ? $"{i + 1} of {total}" : null);
-      }
-
-      InsertText(string.Join("\n\n", parts));
+#if WINDOWS
+      int caret = ContentEditor.CursorPosition;
+      var pending = await Notes.Platforms.Windows.WindowsAttachmentPage.ShowAsync();
+      if (pending == null || pending.Count == 0)
+        return;
+      await InsertAttachmentsAsync(pending, caret);
+#else
+      await Task.CompletedTask;
+#endif
     }
     catch (Exception ex)
     {
@@ -482,25 +471,48 @@ public partial class WindowsNoteEditor : ContentView
         return;
       }
 
-      int total = images.Count;
-      using var session = _progressService.Begin("adding images", delayMs: 0);
-
-      var parts = new List<string>();
-      for (int i = 0; i < images.Count; i++)
+      var pending = new List<PendingAttachment>(images.Count);
+      foreach (var image in images)
       {
-        session.Report((double)i / total, total > 1 ? $"{i + 1} of {total}" : null);
-        using var stream = images[i].Stream;
-        var media = await _mediaManager.AddMediaAsync(stream, images[i].FileName);
-        parts.Add($"![{images[i].FileName}]({_mediaManager.GetMediaUrl(media.Id)})");
-        session.Report((double)(i + 1) / total, total > 1 ? $"{i + 1} of {total}" : null);
+        using (image.Stream)
+        {
+          using var buffer = new MemoryStream();
+          await image.Stream.CopyToAsync(buffer);
+          var data = buffer.ToArray();
+          pending.Add(new PendingAttachment
+          {
+            FileName = image.FileName,
+            Kind = AttachmentKind.Image,
+            OpenAsync = _ => Task.FromResult<Stream>(new MemoryStream(data)),
+          });
+        }
       }
 
-      InsertText(string.Join("\n\n", parts));
+      await InsertAttachmentsAsync(pending, ContentEditor.CursorPosition);
     }
     catch (Exception ex)
     {
       _toastService.Show(ex.Message);
     }
+  }
+
+  private async Task InsertAttachmentsAsync(IReadOnlyList<PendingAttachment> pending, int caret)
+  {
+    if (pending.Count == 0)
+      return;
+
+    string? insertText = await _attachmentInserter.BuildInsertTextAsync(pending);
+    if (string.IsNullOrEmpty(insertText))
+      return;
+
+    var content = ContentEditor.Text ?? "";
+    int position = Math.Clamp(caret, 0, content.Length);
+    string prefix = position > 0 && content[position - 1] != '\n' ? "\n\n" : "";
+    string suffix = position < content.Length && content[position] != '\n' ? "\n\n" : "";
+    string block = prefix + insertText + suffix;
+    ContentEditor.Text = content.Insert(position, block);
+    ContentEditor.CursorPosition = position + block.Length;
+    UpdateCurrentNoteContent();
   }
 
   private void InsertMarkdownFormat(string prefix, string suffix, string placeholder)

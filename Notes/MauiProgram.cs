@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Notes.Helpers;
 using Notes.Data.Repositories;
 using Notes.Data.Storage;
@@ -35,6 +35,11 @@ public static class MauiProgram
           fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
         });
 
+#if ANDROID
+    Microsoft.Maui.Handlers.ImageHandler.Mapper.AppendToMapping("SoftwareLayer", (handler, _) =>
+        handler.PlatformView.SetLayerType(global::Android.Views.LayerType.Software, null));
+#endif
+
     string appDataPath = AppPaths.DataRoot;
 
     builder.Services.AddSingleton<FileSystemStorage>(new FileSystemStorage(appDataPath));
@@ -45,6 +50,13 @@ public static class MauiProgram
     builder.Services.AddSingleton<NoteManager>();
     builder.Services.AddSingleton<FolderManager>();
     builder.Services.AddSingleton<MediaManager>();
+
+    builder.Services.AddSingleton<Notes.Services.Media.AttachmentInserter>();
+#if ANDROID
+    builder.Services.AddSingleton<Notes.Services.Media.IRecentMediaProvider, Notes.Platforms.Android.AndroidRecentMediaProvider>();
+#else
+    builder.Services.AddSingleton<Notes.Services.Media.IRecentMediaProvider, Notes.Services.Media.DefaultRecentMediaProvider>();
+#endif
 
     builder.Services.AddSingleton<MediaDownloadCoordinator>();
     builder.Services.AddSingleton<MarkdownProcessor>();
