@@ -26,6 +26,32 @@
     </ContentPage.ToolbarItems>
 
     <ContentPage.Resources>
+        <Style x:Key="RowOverlayButton" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="BorderWidth" Value="0" />
+            <Setter Property="BorderColor" Value="Transparent" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="VisualStateManager.VisualStateGroups">
+                <VisualStateGroupList>
+                    <VisualStateGroup Name="CommonStates">
+                        <VisualState Name="Normal">
+                            <VisualState.Setters>
+                                <Setter Property="BorderColor" Value="Transparent" />
+                                <Setter Property="BorderWidth" Value="0" />
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState Name="Focused">
+                            <VisualState.Setters>
+                                <Setter Property="BorderColor" Value="{StaticResource Primary}" />
+                                <Setter Property="BorderWidth" Value="2" />
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateGroupList>
+            </Setter>
+        </Style>
+
         <DataTemplate x:Key="FolderRowTemplate">
             <Grid Padding="20,10" ColumnDefinitions="Auto,*">
                 <Grid.GestureRecognizers>
@@ -41,6 +67,10 @@
                        FontSize="16"
                        VerticalOptions="Center"
                        Margin="12,0,0,0" />
+                <Button Grid.ColumnSpan="2"
+                        Style="{StaticResource RowOverlayButton}"
+                        CommandParameter="{Binding .}"
+                        Clicked="OnFolderItemClicked" />
             </Grid>
         </DataTemplate>
 
@@ -63,6 +93,10 @@
                            FontSize="12"
                            TextColor="Gray" />
                 </StackLayout>
+                <Button Grid.ColumnSpan="2"
+                        Style="{StaticResource RowOverlayButton}"
+                        CommandParameter="{Binding .}"
+                        Clicked="OnNoteItemClicked" />
             </Grid>
         </DataTemplate>
 

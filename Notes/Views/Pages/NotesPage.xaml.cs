@@ -294,15 +294,26 @@ public partial class NotesPage : ContentPage
   private async void OnFolderItemTapped(object sender, TappedEventArgs e)
   {
     if (sender is View view && view.BindingContext is Folder folder)
+      await ActivateFolderAsync(view, folder);
+  }
+
+  private async void OnFolderItemClicked(object sender, EventArgs e)
+  {
+    if (sender is not Button button || button.CommandParameter is not Folder folder)
+      return;
+
+    await ActivateFolderAsync(button.Parent as View ?? button, folder);
+  }
+
+  private async Task ActivateFolderAsync(View view, Folder folder)
+  {
+    await view.ScaleTo(0.96, 80);
+    await view.ScaleTo(1.0, 80);
+    await Shell.Current.GoToAsync(nameof(NotesPage), new Dictionary<string, object>
     {
-      await view.ScaleTo(0.96, 80);
-      await view.ScaleTo(1.0, 80);
-      await Shell.Current.GoToAsync(nameof(NotesPage), new Dictionary<string, object>
-      {
-        { "FolderId", folder.Id },
-        { "FolderName", folder.Name }
-      });
-    }
+      { "FolderId", folder.Id },
+      { "FolderName", folder.Name }
+    });
   }
 
   private static void DragLog(string message) => System.Diagnostics.Debug.WriteLine($"[dragdrop] {message}");
@@ -765,11 +776,22 @@ public partial class NotesPage : ContentPage
   private async void OnNoteTapped(object sender, TappedEventArgs e)
   {
     if (sender is View view && view.BindingContext is Note note)
-    {
-      await view.ScaleTo(0.96, 80);
-      await view.ScaleTo(1.0, 80);
-      await NavigateToNoteView(note);
-    }
+      await ActivateNoteAsync(view, note);
+  }
+
+  private async void OnNoteItemClicked(object sender, EventArgs e)
+  {
+    if (sender is not Button button || button.CommandParameter is not Note note)
+      return;
+
+    await ActivateNoteAsync(button.Parent as View ?? button, note);
+  }
+
+  private async Task ActivateNoteAsync(View view, Note note)
+  {
+    await view.ScaleTo(0.96, 80);
+    await view.ScaleTo(1.0, 80);
+    await NavigateToNoteView(note);
   }
 
   private async void OnChangeFolderIconClicked(object sender, EventArgs e)

@@ -49,6 +49,13 @@ public class MainActivity : MauiAppCompatActivity
         Notes.Platforms.Android.AndroidCameraCapture.HandleResult(requestCode, resultCode, data);
     }
 
+    public override bool DispatchKeyEvent(KeyEvent? e)
+    {
+        if (Notes.Views.Controls.AttachmentSheet.HandleActiveKey(e))
+            return true;
+        return base.DispatchKeyEvent(e);
+    }
+
     public override bool DispatchTouchEvent(MotionEvent? e)
     {
         bool hasSwipeHandlers = Notes.Platforms.Android.SwipeBackGesture.OnProgress != null;
