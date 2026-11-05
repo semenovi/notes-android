@@ -532,7 +532,7 @@ public class FolderViewModel : INotifyPropertyChanged
     }
   }
 
-  private bool _isExpanded = true;
+  private bool _isExpanded = false;
   public bool IsExpanded
   {
     get => _isExpanded;
