@@ -554,6 +554,66 @@ public partial class WindowsNoteEditor : ContentView
     StartAutoSave();
   }
 
+#if WINDOWS
+  private Microsoft.UI.Xaml.FrameworkElement? _dropTarget;
+
+  protected override void OnHandlerChanged()
+  {
+    base.OnHandlerChanged();
+    if (_dropTarget != null)
+    {
+      _dropTarget.DragOver -= OnEditorDragOver;
+      _dropTarget.Drop -= OnEditorDrop;
+    }
+
+    _dropTarget = Handler?.PlatformView as Microsoft.UI.Xaml.FrameworkElement;
+    if (_dropTarget == null)
+      return;
+
+    _dropTarget.AllowDrop = true;
+    _dropTarget.DragOver += OnEditorDragOver;
+    _dropTarget.Drop += OnEditorDrop;
+  }
+
+  private static void OnEditorDragOver(object sender, Microsoft.UI.Xaml.DragEventArgs e)
+  {
+    if (!e.DataView.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+      return;
+    e.AcceptedOperation = global::Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+    e.DragUIOverride.Caption = "attach images";
+  }
+
+  private async void OnEditorDrop(object sender, Microsoft.UI.Xaml.DragEventArgs e)
+  {
+    if (!e.DataView.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+      return;
+
+    var items = await e.DataView.GetStorageItemsAsync();
+    var files = new List<(string Name, byte[] Data)>();
+    foreach (var item in items.OfType<global::Windows.Storage.StorageFile>())
+    {
+      string extension = System.IO.Path.GetExtension(item.Name).ToLowerInvariant();
+      if (extension is not (".png" or ".jpg" or ".jpeg" or ".gif" or ".bmp" or ".webp" or ".pdf"))
+        continue;
+
+      using var randomAccess = await item.OpenReadAsync();
+      using var stream = randomAccess.AsStreamForRead();
+      using var buffer = new MemoryStream();
+      await stream.CopyToAsync(buffer);
+      files.Add((item.Name, buffer.ToArray()));
+    }
+
+    if (files.Count == 0)
+      return;
+
+    int caret = ContentEditor.CursorPosition;
+    var pending = await Notes.Platforms.Windows.WindowsAttachmentPage.ShowAsync(files);
+    if (pending == null || pending.Count == 0)
+      return;
+    await InsertAttachmentsAsync(pending, caret);
+  }
+#endif
+
   protected override void OnParentChanged()
   {
     base.OnParentChanged();

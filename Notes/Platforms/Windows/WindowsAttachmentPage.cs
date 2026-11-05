@@ -192,9 +192,16 @@ public sealed class WindowsAttachmentPage : ContentPage
     UpdateSelection();
   }
 
-  public static async Task<IReadOnlyList<PendingAttachment>?> ShowAsync()
+  public static async Task<IReadOnlyList<PendingAttachment>?> ShowAsync(
+      IReadOnlyList<(string Name, byte[] Data)>? initial = null)
   {
     var page = new WindowsAttachmentPage();
+    if (initial is { Count: > 0 })
+    {
+      foreach (var item in initial)
+        page.AddBytes(item.Name, item.Data);
+      page.UpdateSelection();
+    }
     var window = new Window(page)
     {
       Title = "attach images",
