@@ -68,7 +68,6 @@ public static class ImageViewerHtml
         </script>
         """;
 #else
-
     public const string ViewerCss =
         "img:not(#_iv_img){cursor:pointer;-webkit-tap-highlight-color:transparent;}" +
         " #_iv{display:none;position:fixed;top:0;left:0;width:100%;height:100%;" +

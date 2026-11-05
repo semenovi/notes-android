@@ -150,7 +150,6 @@ public partial class NotesPage : ContentPage
     SwipeShadow.TranslationX = -24;
     SwipeShadow.Opacity = 0;
 #if ANDROID
-
     if (!IsRoot)
     {
       global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = OnSwipeProgress;
@@ -310,7 +309,6 @@ public partial class NotesPage : ContentPage
   }
 
 #if ANDROID
-
   private object? _draggedItem;
   private View? _draggedRowOrigin;
 

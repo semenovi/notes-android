@@ -23,7 +23,7 @@ public class MainActivity : MauiAppCompatActivity
     private const long LongPressMs = 450;
     private const float DragMoveThresholdPx = 24f;
 
-        protected override void OnResume()
+    protected override void OnResume()
     {
         base.OnResume();
         Window?.SetSoftInputMode(SoftInput.AdjustResize);

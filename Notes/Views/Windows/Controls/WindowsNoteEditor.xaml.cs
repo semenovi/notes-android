@@ -197,7 +197,6 @@ public partial class WindowsNoteEditor : ContentView
   }
 
 #if WINDOWS
-
   private void ApplyEditorScrollLine(int line, string content)
   {
     GetAttachedTextBoxOnce()

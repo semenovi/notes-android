@@ -4,7 +4,7 @@ public static class ClipboardImageHelper
 {
   public record ClipboardImage(MemoryStream Stream, string FileName);
 
-    public static async Task<List<ClipboardImage>> GetImagesAsync()
+  public static async Task<List<ClipboardImage>> GetImagesAsync()
   {
     var images = new List<ClipboardImage>();
 #if WINDOWS

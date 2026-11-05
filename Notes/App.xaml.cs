@@ -62,7 +62,6 @@ public partial class App : Application
   }
 
 #if ANDROID
-
   private async Task SyncAndroidBackgroundJobsAsync()
   {
     try
