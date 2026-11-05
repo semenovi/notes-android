@@ -68,9 +68,6 @@ public class FolderManager
     return true;
   }
 
-  // All folders nested anywhere under folderId, at any depth. Guards against a
-  // parent cycle (two folders reparented into each other by conflicting syncs
-  // from different devices) sending Collect into infinite recursion.
   public async Task<List<Folder>> GetDescendantFoldersAsync(string folderId)
   {
     var all = await _repository.GetAllFoldersAsync();

@@ -54,7 +54,6 @@ public class NetworkSyncAdapter : ISyncAdapter
 
     _apiClient = new SyncApiClient(_settings.ServerUrl, _settings.ApiToken);
 
-    // Key is derived from the shared API token — no key exchange needed
     _syncKey = SyncCryptoHelper.DeriveKeyFromToken(_settings.ApiToken);
 
     await _apiClient.RegisterDeviceAsync(_settings.DeviceId);
@@ -99,7 +98,6 @@ public class NetworkSyncAdapter : ISyncAdapter
     _toUploadMedia = manifestResp.ToUpload.Media;
     DebugLogService.Current?.Log($"manifest: ul(n={_toUploadNotes.Count} f={_toUploadFolders.Count} m={_toUploadMedia.Count}) dl(n={manifestResp.ToDownload.Notes.Count} f={manifestResp.ToDownload.Folders.Count} m={manifestResp.ToDownload.Media.Count})");
 
-    // Notes and folders are small — pull in one batch.
     PullResponse? pull = await _apiClient.PullChangesAsync(
         manifestResp.ToDownload.Notes,
         manifestResp.ToDownload.Folders,
@@ -123,7 +121,7 @@ public class NetworkSyncAdapter : ISyncAdapter
           Timestamp = DateTime.Parse(item.Modified, null, System.Globalization.DateTimeStyles.RoundtripKind).ToLocalTime(),
         });
       }
-      catch { /* skip undecryptable item — will be overwritten on push */ }
+      catch {  }
     }
 
     foreach (var item in pull.Folders)
@@ -140,13 +138,9 @@ public class NetworkSyncAdapter : ISyncAdapter
           Timestamp = DateTime.Parse(item.Modified, null, System.Globalization.DateTimeStyles.RoundtripKind).ToLocalTime(),
         });
       }
-      catch { /* skip undecryptable item — will be overwritten on push */ }
+      catch {  }
     }
 
-    // Media content is not fetched here — it would block notes/folders (already pulled
-    // above) from reaching the local DB and the UI until every media item finished
-    // downloading. Instead, hand the missing ids off to the coordinator, which fetches
-    // them in the background, prioritized by whatever note/folder is currently open.
     _mediaDownloadCoordinator.EnqueueBackground(manifestResp.ToDownload.Media);
 
     foreach (var id in manifestResp.ToDeleteLocal.Notes)
@@ -195,14 +189,12 @@ public class NetworkSyncAdapter : ISyncAdapter
       });
     }
 
-    // Notes and folders are small — send in one request via the push endpoint.
     if (syncNotes.Count > 0 || syncFolders.Count > 0)
     {
       DebugLogService.Current?.Log($"full-sync-push: notes={syncNotes.Count} folders={syncFolders.Count}");
       await _apiClient.PushChangesAsync(syncNotes, syncFolders, new(), new(), new(), _settings?.DeviceId);
     }
 
-    // Media: load content only for items that actually need uploading (lazy — avoids loading all media into memory).
     var mediaToUpload = localChanges.Where(c => c.EntityType == SyncEntityType.Media
         && c.ChangeType != SyncChangeType.Delete
         && _toUploadMedia.Contains(c.Id)).ToList();

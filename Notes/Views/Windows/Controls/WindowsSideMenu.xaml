@@ -55,7 +55,6 @@
             </Border.Shadow>
             <VerticalStackLayout Spacing="0">
 
-                <!-- Header -->
                 <Grid Padding="16,0" HeightRequest="52" ColumnSpacing="16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="24" />
@@ -71,7 +70,6 @@
 
                 <BoxView HeightRequest="1" BackgroundColor="#E5E5E5" />
 
-                <!-- Sync toggle -->
                 <Grid Style="{StaticResource SideMenuItem}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="24" />
@@ -88,7 +86,6 @@
                            VerticalOptions="Center" />
                 </Grid>
 
-                <!-- Sync Now -->
                 <Grid Style="{StaticResource SideMenuItem}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="24" />
@@ -101,7 +98,6 @@
                     <Label Grid.Column="1" Text="sync now" Style="{StaticResource SideMenuText}" />
                 </Grid>
 
-                <!-- Sync Settings -->
                 <Grid Style="{StaticResource SideMenuItem}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="24" />
@@ -116,7 +112,6 @@
 
                 <BoxView HeightRequest="1" BackgroundColor="#E5E5E5" Margin="0,4" />
 
-                <!-- Export -->
                 <Grid Style="{StaticResource SideMenuItem}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="24" />
@@ -129,7 +124,6 @@
                     <Label Grid.Column="1" Text="export archive" Style="{StaticResource SideMenuText}" />
                 </Grid>
 
-                <!-- Import -->
                 <Grid Style="{StaticResource SideMenuItem}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="24" />
@@ -144,7 +138,6 @@
 
                 <BoxView HeightRequest="1" BackgroundColor="#E5E5E5" Margin="0,4" />
 
-                <!-- Info -->
                 <Grid Style="{StaticResource SideMenuItem}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="24" />

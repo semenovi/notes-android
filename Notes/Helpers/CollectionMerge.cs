@@ -4,10 +4,7 @@ namespace Notes.Helpers;
 
 public static class CollectionMerge
 {
-  // Brings target to match desired (order included) with minimal changes:
-  // removes missing items, inserts new ones, moves the rest. Items already in
-  // place produce no collection events at all, so the UI doesn't rebuild rows
-  // that didn't change — no flicker, selection and scroll position survive.
+
   public static void MergeInto<T>(ObservableCollection<T> target, IReadOnlyList<T> desired) where T : class
   {
     var desiredSet = new HashSet<T>(desired);

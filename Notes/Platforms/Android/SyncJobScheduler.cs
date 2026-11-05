@@ -4,15 +4,11 @@ using Notes.Services;
 
 namespace Notes;
 
-// Registers the OS-scheduled background sync jobs. Replaces the old persistent
-// dataSync foreground service, which Android 15+ caps at ~6h/24h and forbids starting
-// from the background - the source of the repeated ForegroundService* crashes.
 public static class SyncJobScheduler
 {
   public const int PeriodicJobId = 7001;
   public const int OneShotJobId = 7002;
 
-  // 15 min is the JobScheduler floor for a periodic job.
   private static readonly long PeriodicIntervalMs = (long)TimeSpan.FromMinutes(15).TotalMilliseconds;
   private static readonly long OneShotDeadlineMs = (long)TimeSpan.FromMinutes(5).TotalMilliseconds;
 
@@ -22,8 +18,6 @@ public static class SyncJobScheduler
   private static ComponentName Component
       => new(Android.App.Application.Context, Java.Lang.Class.FromType(typeof(SyncJobService)));
 
-  // Idempotent: keeps the existing periodic job (and its OS interval timer) if one is
-  // already registered, so calling this on every app start/stop doesn't reset the clock.
   public static void EnsurePeriodic()
   {
     var scheduler = Scheduler;
@@ -47,8 +41,6 @@ public static class SyncJobScheduler
     }
   }
 
-  // Fired when the app is backgrounded so edits made right before locking the phone
-  // sync within seconds. Expedited where available; otherwise a plain immediate job.
   public static void ScheduleOneShot()
   {
     var scheduler = Scheduler;

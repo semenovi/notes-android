@@ -3,15 +3,6 @@
 	<PropertyGroup>
 		<TargetFrameworks>net10.0-android36.0</TargetFrameworks>
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
-		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
-		<!-- <TargetFrameworks>$(TargetFrameworks);net9.0-tizen</TargetFrameworks> -->
-
-		<!-- Note for MacCatalyst:
-		The default runtime is maccatalyst-x64, except in Release config, in which case the default is maccatalyst-x64;maccatalyst-arm64.
-		When specifying both architectures, use the plural <RuntimeIdentifiers> instead of the singular <RuntimeIdentifier>.
-		The Mac App Store will NOT accept apps with ONLY maccatalyst-arm64 indicated;
-		either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
-		<!-- For example: <RuntimeIdentifiers>maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers> -->
 
 		<OutputType>Exe</OutputType>
 		<RootNamespace>Notes</RootNamespace>
@@ -20,17 +11,13 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
-		<!-- Display name -->
 		<ApplicationTitle>Notes</ApplicationTitle>
 
-		<!-- App Identifier -->
 		<ApplicationId>com.madbearing.notes</ApplicationId>
 
-		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
 
-		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
 		<WindowsPackageType>None</WindowsPackageType>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
@@ -41,7 +28,6 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
 	</PropertyGroup>
 
-	<!-- Faster cold start on Windows: pre-JIT (ReadyToRun) + profile-guided tiered JIT -->
 	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release'">
 	  <PublishReadyToRun>true</PublishReadyToRun>
 	  <TieredPGO>true</TieredPGO>
@@ -61,39 +47,29 @@
 	  <TrimMode>link</TrimMode>
 	</PropertyGroup>
 
-	<!-- pinned debug signing key, committed to the repo: every tool (VS, dotnet, another
-	     machine) signs the debug apk identically, so `adb install -r` keeps app data
-	     instead of falling back to uninstall+install on a signature mismatch. -->
 	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Debug'">
 	  <AndroidKeyStore>true</AndroidKeyStore>
 	  <AndroidSigningKeyStore>$(MSBuildThisFileDirectory)build\debug.keystore</AndroidSigningKeyStore>
 	  <AndroidSigningStorePass>android</AndroidSigningStorePass>
 	  <AndroidSigningKeyAlias>androiddebugkey</AndroidSigningKeyAlias>
 	  <AndroidSigningKeyPass>android</AndroidSigningKeyPass>
-	  <!-- one universal apk from every tool (VS deploy and `dotnet -t:Install` alike):
-	       fast deployment / per-abi splits make VS install the app as split_config apks
-	       via install-multiple, and switching that shape against a single-apk install
-	       forces android to wipe app data. keeping it off keeps `adb install -r` clean. -->
+
 	  <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
 	  <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
 	  <AndroidPackageFormat>apk</AndroidPackageFormat>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- App Icon -->
+
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
 
-		<!-- Splash Screen -->
 		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
 
-		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
 		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
 
-		<!-- Custom Fonts -->
 		<MauiFont Include="Resources\Fonts\*" />
 
-		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
 	</ItemGroup>
 
@@ -104,9 +80,6 @@
 		<PackageReference Include="System.Reactive" Version="6.1.0" />
 	</ItemGroup>
 
-	<!-- Windows.Data.Pdf renders some pages blank (silently, no error); PDFium handles them,
-	     and matches what Android's own PdfRenderer (also PDFium) produces. Windows only —
-	     Android has PDFium built in, no need to ship a second copy in the APK. -->
 	<ItemGroup Condition="$(TargetFramework.Contains('-windows'))">
 		<PackageReference Include="PDFtoImage" Version="5.4.0" />
 	</ItemGroup>

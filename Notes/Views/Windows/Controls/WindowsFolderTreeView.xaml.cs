@@ -19,8 +19,6 @@ public partial class WindowsFolderTreeView : ContentView
 
   public event EventHandler<Folder>? FolderSelected;
 
-  // Fired after a note dragged from the note list is successfully moved into one
-  // of these folders, so MainWindow can drop it from the currently open list.
   public event EventHandler<string>? NoteMovedToFolder;
 
   private readonly ReactiveSyncService _reactiveSync;
@@ -31,9 +29,6 @@ public partial class WindowsFolderTreeView : ContentView
   private CancellationTokenSource? _loadCts;
   private List<Folder> _allFolders = new();
 
-  // Sentinel row pinned to the top of the tree. Selecting it lists notes with no
-  // folder; dropping a note on it clears the note's FolderId. Its Folder.Id is "",
-  // which no real folder ever has.
   private readonly FolderViewModel _topLevelVm =
       new(new Folder { Id = "", Name = "top level", Icon = MaterialIconCodes.FolderOpen });
 
@@ -69,8 +64,6 @@ public partial class WindowsFolderTreeView : ContentView
     ApplyFolders(folders);
   }
 
-  // Diff-merge into the existing collection: unchanged folders keep their view
-  // models (no rebuild, no flicker) and the current selection survives a refresh.
   private void ApplyFolders(List<Folder> folders)
   {
     var byId = Folders.ToDictionary(vm => vm.Folder.Id);
@@ -85,12 +78,11 @@ public partial class WindowsFolderTreeView : ContentView
     {
       foreach (var f in Folders) f.IsSelected = f == selected;
       _selectedFolder = selected.Folder;
-      // Selection unchanged — don't fire FolderSelected, the note list refreshes itself.
+
     }
     else if (Folders.Count > 0)
     {
-      // Nothing selected yet, or the selected folder was deleted — fall back to
-      // the first folder and notify so the note list follows.
+
       SelectFolder(Folders[0]);
     }
     else
@@ -99,9 +91,6 @@ public partial class WindowsFolderTreeView : ContentView
     }
   }
 
-  // Depth-first flatten: each folder is followed immediately by its own children
-  // (recursively), skipping the subtree of any collapsed folder. Reuses existing
-  // view models via byId so IsExpanded/IsSelected survive a refresh.
   private static List<FolderViewModel> BuildVisibleTree(List<Folder> folders, Dictionary<string, FolderViewModel> byId)
   {
     var childrenByParent = folders
@@ -143,12 +132,9 @@ public partial class WindowsFolderTreeView : ContentView
 
   public async Task SyncIfEnabledAsync()
   {
-    // Only block on a full sync when there is no local data yet (fresh install).
-    // Otherwise ReactiveSyncService already runs an initial sync in the background
-    // and fires RemoteChangesApplied when something new arrives.
+
     var settings = await _syncSettingsService.LoadAsync();
-    // Folders always holds at least the "top level" sentinel — gauge emptiness by
-    // the real folder list instead.
+
     if (settings.Enabled && _allFolders.Count == 0)
     {
       await RunSyncAsync();
@@ -179,8 +165,6 @@ public partial class WindowsFolderTreeView : ContentView
 
   private static readonly Color FolderHoverColor = Color.FromArgb("#E8F0FE");
 
-  // sender is the DropGestureRecognizer, same as the drag source above — its
-  // Parent is the Border the recognizer is attached to.
   private static Border? DropRowOf(object sender) => (sender as Element)?.Parent as Border;
 
   private void OnFolderRowDragOver(object sender, DragEventArgs e)
@@ -322,9 +306,7 @@ public partial class WindowsFolderTreeView : ContentView
     vm.Folder.Modified = DateTime.UtcNow;
     await _folderManager.UpdateFolderAsync(vm.Folder);
     vm.Update(vm.Folder);
-    // Folders now only holds the visible (non-collapsed) subset — rebuild from
-    // _allFolders instead, or a rename while some branch is collapsed would
-    // silently drop the hidden folders from the tree until the next full reload.
+
     ApplyFolders(_allFolders);
     if (vm.IsSelected)
       FolderSelected?.Invoke(this, vm.Folder);
@@ -393,18 +375,10 @@ public partial class WindowsFolderTreeView : ContentView
     await _syncSettingsService.SaveAsync(settings);
     _toastService.Show("settings saved");
 
-    // RestartAsync already runs an immediate sync in the background (see
-    // ReactiveSyncService.RunPeriodicSyncAsync) — a second RunSyncAsync() call here used
-    // to race it: both create their own "syncing" progress session, and the second one
-    // blocks on SyncManager's lock behind the first without ever reporting progress, yet
-    // still wins the notification (same priority, added later), freezing the UI on an
-    // indeterminate spinner for the whole real sync. LoadFoldersAsync() picks up the
-    // result once RemoteChangesApplied fires.
     await _reactiveSync.RestartAsync();
     await LoadFoldersAsync();
   }
 
-  // Returns the number of remote changes applied, or -1 if the sync failed.
   private async Task<int> RunSyncAsync()
   {
     using var session = _progressService.Begin("syncing");
@@ -519,8 +493,6 @@ public class FolderViewModel : INotifyPropertyChanged
   public string Name => Folder.Name;
   public string Icon => Folder.Icon;
 
-  // Swaps the underlying folder in place so the bound row refreshes
-  // without being recreated (keeps the list stable during sync updates).
   public void Update(Folder folder)
   {
     Folder = folder;
@@ -560,7 +532,6 @@ public class FolderViewModel : INotifyPropertyChanged
     }
   }
 
-  // Defaults to expanded so a freshly created subfolder is visible right away.
   private bool _isExpanded = true;
   public bool IsExpanded
   {

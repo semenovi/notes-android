@@ -44,13 +44,9 @@ public partial class App : Application
   protected override void OnSleep()
   {
     base.OnSleep();
-    // No viewer for an in-app overlay while backgrounded; every underlying operation
-    // (sync, media download, note render) keeps running regardless. On return, fresh
-    // sessions represent whatever is actually active then.
+
     _progressService.CancelAll();
-    // Stop the in-process SSE/timer: a cached process gets frozen on Android and
-    // suspended on Windows, so those tasks can't make progress anyway. Background sync
-    // is handed to the OS scheduler on Android (immediate one-shot + periodic).
+
     _ = _reactiveSync.StopAsync();
 #if ANDROID
     _ = OnAndroidSleepAsync();
@@ -60,17 +56,13 @@ public partial class App : Application
   protected override void OnResume()
   {
     base.OnResume();
-    // OnStart and OnResume both fire on cold start (OnResume always follows OnStart).
-    // StartAsync stops any prior run first, but can't interrupt an in-flight
-    // SynchronizeAsync, so a blind restart here would stack a second sync loop behind
-    // SyncManager's lock. The guard keeps the one OnStart already kicked off.
+
     if (!_reactiveSync.IsRunning)
       _ = _reactiveSync.StartAsync();
   }
 
 #if ANDROID
-  // Keeps the periodic background-sync job registered while sync is on, and clears it
-  // when sync is off. Cheap and idempotent - safe to call on every start.
+
   private async Task SyncAndroidBackgroundJobsAsync()
   {
     try
@@ -106,12 +98,6 @@ public partial class App : Application
     catch { }
   }
 
-  // Toast/progress used to live inside each page's own RootGrid, which is what the
-  // custom swipe-back gesture (see SwipeBackGesture/RootGrid.TranslationX in the
-  // page code-behinds) animates. That dragged notifications along with the swipe and
-  // spawned a fresh instance per page. Mounting one overlay directly on the activity's
-  // content view — a sibling of the Shell's native view, not a child of any page —
-  // keeps it fixed and shared across the whole app.
   private void OnAndroidWindowCreated(object? sender, EventArgs e)
   {
     if (sender is not Window window) return;

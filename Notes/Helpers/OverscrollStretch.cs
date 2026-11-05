@@ -1,9 +1,5 @@
 namespace Notes.Helpers;
 
-// Android 12+ renders the system-wide stretch overscroll for NestedScrollView / WebView
-// automatically, but only when the native overScrollMode allows it. MAUI leaves the mode
-// at the platform default (ifContentScrolls), so short content never stretches. Forcing
-// Always makes the edge bounce back on every boundary drag, matching the rest of the OS.
 public static class OverscrollStretch
 {
   public static void Enable(VisualElement element)

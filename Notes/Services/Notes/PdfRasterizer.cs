@@ -2,9 +2,6 @@ using Notes.Helpers;
 
 namespace Notes.Services.Notes;
 
-// Renders PDF pages to PNG bytes via PDFium on both platforms: Android's built-in
-// android.graphics.pdf.PdfRenderer, and the PDFtoImage package on Windows. Windows.Data.Pdf
-// was tried first and dropped — it renders some pages as a blank white bitmap with no error.
 public static class PdfRasterizer
 {
 #if ANDROID
@@ -54,7 +51,7 @@ public static class PdfRasterizer
   public static Task<byte[]> RenderPageAsync(byte[] pdfBytes, int pageIndex, int maxDimensionPx) => Task.Run(() =>
   {
     var size = PDFtoImage.Conversion.GetPageSize(pdfBytes, pageIndex);
-    // constrain the longer side, letting PDFium derive the other from the aspect ratio
+
     var options = size.Width >= size.Height
         ? new PDFtoImage.RenderOptions(Width: maxDimensionPx, WithAspectRatio: true)
         : new PDFtoImage.RenderOptions(Height: maxDimensionPx, WithAspectRatio: true);

@@ -5,8 +5,7 @@ namespace Notes.Services.Crypto;
 
 public static class SyncCryptoHelper
 {
-  // Derives a 256-bit AES key from the shared API token.
-  // All devices with the same token produce the same key automatically.
+
   public static byte[] DeriveKeyFromToken(string apiToken)
   {
     byte[] ikm = Encoding.UTF8.GetBytes(apiToken);

@@ -51,8 +51,7 @@ public static class ImageViewerHtml
 #if WINDOWS
     public const string ViewerCss = "img { cursor: zoom-in; }";
     public const string ViewerDiv = "";
-    // Encode the element ID (or fallback src URL) directly in the navigation URL —
-    // sessionStorage is unreliable for file:// origins in WebView2.
+
     public const string ViewerScript = """
         <script>
         document.addEventListener('click', function(e) {
@@ -60,8 +59,6 @@ public static class ImageViewerHtml
           var mid = e.target.getAttribute('data-media-id') || '';
           var pg  = e.target.getAttribute('data-page');
           var src = e.target.src || '';
-          // For media images use the media id; for others use the src URL
-          // (skip data: URIs for non-media images — they are too large for a URL).
           var payload = mid ? ('media-' + mid + (pg ? ':' + pg : ''))
                       : src.startsWith('data:') ? ''
                       : src;
@@ -71,9 +68,7 @@ public static class ImageViewerHtml
         </script>
         """;
 #else
-    // CSS pieces are separate C# string literals, not a multi-line block: the C# preprocessor
-    // scans skipped #if branches for directives and would mistake a line that starts with
-    // "#_iv {" for one.
+
     public const string ViewerCss =
         "img:not(#_iv_img){cursor:pointer;-webkit-tap-highlight-color:transparent;}" +
         " #_iv{display:none;position:fixed;top:0;left:0;width:100%;height:100%;" +
@@ -85,13 +80,6 @@ public static class ImageViewerHtml
 
     public const string ViewerDiv = "<div id='_iv'><img id='_iv_img' alt=''/></div>";
 
-    // Telegram-style fullscreen viewer: FLIP open/close from the thumbnail rect, rAF-batched
-    // transforms, focal-point pinch, double-tap zoom, edge-clamped pan with rubber-band, and a
-    // velocity-aware swipe-to-dismiss. Native contract is unchanged:
-    //   swipe://disable | swipe://enable      - toggles the back-gesture while the viewer is up
-    //   img-viewer://open/<mediaId[:page]>    - asks the host for the full-resolution data URI
-    //   img-download://<mediaId>              - long-press on an inline image
-    //   window._setViewerFullRes(src)         - host pushes the full-resolution image back
     public const string ViewerScript = """
         <script>
         (function(){
@@ -102,13 +90,12 @@ public static class ImageViewerHtml
           var TAP_SLOP=10, DBL_MS=280, DBL_SLOP=30, RUBBER=0.35;
           var DISMISS_SHIFT=110, DISMISS_VEL=0.5, DISMISS_FADE=320, DISMISS_SHRINK=260;
 
-          var state='closed';                 // 'closed' | 'open'
+          var state='closed';
           var animating=false;
-          var baseW=0, baseH=0, baseX=0, baseY=0;   // fitted rect at scale 1
-          var scale=1, tx=0, ty=0, bg=1;            // tx/ty are screen-space px, origin 0 0
-          var srcEl=null;                      // the inline thumbnail, for the close transition
+          var baseW=0, baseH=0, baseX=0, baseY=0;
+          var scale=1, tx=0, ty=0, bg=1;
+          var srcEl=null;
 
-          // one location.href navigation survives per tick, so serialize the bridge calls
           var navQ=[], navBusy=false;
           function nav(u){ navQ.push(u); pump(); }
           function pump(){
@@ -170,7 +157,6 @@ public static class ImageViewerHtml
             if(v>hi) return hi+(v-hi)*RUBBER;
             return v;
           }
-          // scale around a screen point, keeping it pinned under the fingers/tap
           function focalZoom(ns, fx, fy, s0, tx0, ty0){
             var lx=(fx-(baseX+tx0))/s0, ly=(fy-(baseY+ty0))/s0;
             scale=ns;
@@ -193,7 +179,7 @@ public static class ImageViewerHtml
             bg=0;
             noTransition(); paint();
             iv.style.display='block';
-            iv.getBoundingClientRect();          // reflow so the transition has a start value
+            iv.getBoundingClientRect();
 
             state='open';
             nav('swipe://disable');
@@ -240,8 +226,6 @@ public static class ImageViewerHtml
               vImg.src=src;
               var nw=im.naturalWidth, nh=im.naturalHeight;
               if(!nw || !nh) return;
-              // re-fit only if the full-res frame is a different shape than the thumbnail was
-              // (e.g. an orientation mismatch slipped through) - never let it stretch
               if(Math.abs(nw/nh - baseW/baseH) < 0.01*(baseW/baseH)) return;
               var keepZoom = scale > ZOOM_SNAP;
               computeBase(nw, nh);
@@ -280,14 +264,11 @@ public static class ImageViewerHtml
           function d2(a,b){ return Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY); }
           function mid2(a,b){ return {x:(a.clientX+b.clientX)/2, y:(a.clientY+b.clientY)/2}; }
 
-          var g=null;                          // active gesture
+          var g=null;
           var lastTapT=0, lastTapX=0, lastTapY=0, singleTapTimer=0;
           function cancelSingleTap(){ if(singleTapTimer){ clearTimeout(singleTapTimer); singleTapTimer=0; } }
 
-          var ZOOM_SNAP=1.15;              // releasing below this returns to a clean fit
-          // single place a zoom settles after a pinch or a pan: snap the near-fit band back to
-          // 1, cap the top, clamp pan for the resulting scale, then animate there from where the
-          // fingers actually left off
+          var ZOOM_SNAP=1.15;
           function settleZoom(){
             var s=scale, X=tx, Y=ty;
             var ns=scale, nx=tx, ny=ty;
@@ -369,7 +350,6 @@ public static class ImageViewerHtml
               else animateTo(1, 0, 0, 1, SPRING_MS);
               return;
             }
-            // pinch or pan
             if(!moved){ handleTap(e); return; }
             settleZoom();
           }, {passive:false});
@@ -384,7 +364,7 @@ public static class ImageViewerHtml
               return;
             }
             lastTapT=now; lastTapX=x; lastTapY=y;
-            if(scale>1.01) return;              // zoomed: reserve the tap for a double
+            if(scale>1.01) return;
             singleTapTimer=setTimeout(function(){ singleTapTimer=0; close(); }, DBL_MS);
           }
 

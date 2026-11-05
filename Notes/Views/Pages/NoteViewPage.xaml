@@ -26,14 +26,12 @@
     </ContentPage.ToolbarItems>
 
     <Grid IsClippedToBounds="False">
-        <!-- Current screen — opaque, slides right on swipe -->
+
         <Grid x:Name="RootGrid"
               BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
             <WebView x:Name="NoteContentWebView" />
         </Grid>
 
-        <!-- Shadow cast from RootGrid onto the previous screen.
-             Positioned to the left of RootGrid, moves with it. -->
         <ContentView x:Name="SwipeShadow"
                      WidthRequest="24"
                      HorizontalOptions="Start"

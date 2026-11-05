@@ -14,13 +14,6 @@ public class MainActivity : MauiAppCompatActivity
 
     private const float ThresholdPx = 16f;
 
-    // Long-press-then-drag (used for reordering notes/folders between folders).
-    // Deliberately bypasses Android's native View.startDragAndDrop/OnDragListener —
-    // that API has a long-standing platform bug (ConcurrentModificationException in
-    // ViewGroup.dispatchDragEvent) that fires whenever the view hierarchy changes
-    // anywhere nearby a live native drag session, which a reactive MAUI UI does
-    // constantly. Tracking raw touch here, like the swipe-back gesture below, never
-    // touches that code path at all.
     private bool _dragArmed;
     private bool _dragConfirmed;
     private long _downTimeMs;
@@ -30,13 +23,7 @@ public class MainActivity : MauiAppCompatActivity
     private const long LongPressMs = 450;
     private const float DragMoveThresholdPx = 24f;
 
-    /// <summary>
-    /// the manifest value is overridden at runtime (the window ends up in pan mode, which
-    /// scrolls the whole window to reveal the caret and drags the shell bar and the editor
-    /// toolbar off screen), so re-assert resize once maui is up. resizing keeps the content
-    /// above the keyboard, which lets the editor reveal the caret on its own.
-    /// </summary>
-    protected override void OnResume()
+        protected override void OnResume()
     {
         base.OnResume();
         Window?.SetSoftInputMode(SoftInput.AdjustResize);
@@ -72,19 +59,11 @@ public class MainActivity : MauiAppCompatActivity
                 float dx = e.GetX() - _downX;
                 float dy = e.GetY() - _downY;
 
-                // Once a drag is confirmed it owns the gesture for good — without this
-                // guard, a later rightward move (very plausible mid-drag: the note is
-                // being carried across the screen) could still flip _confirmed here and
-                // silently steal the touch stream, leaving the drag confirmed on the
-                // MAUI side forever with no matching End/Cancel ever delivered (ghost
-                // stuck, IsDragActive stuck true, every animation gated on it silently
-                // skipped from then on).
                 if (_tracking && !_confirmed && !_dragConfirmed)
                 {
                     if (Math.Abs(dx) < ThresholdPx && Math.Abs(dy) < ThresholdPx)
                     {
-                        // below the swipe-confirm threshold — fall through to the
-                        // drag-arm check below, don't break early like before.
+
                     }
                     else if (dx > 0 && Math.Abs(dx) > Math.Abs(dy))
                     {
@@ -111,7 +90,7 @@ public class MainActivity : MauiAppCompatActivity
                 {
                     float dist = MathF.Sqrt(dx * dx + dy * dy);
                     if (dist >= DragMoveThresholdPx)
-                        CancelDragArm(); // moved too far before the hold completed — a scroll/fling, not a pickup
+                        CancelDragArm(); 
                 }
 
                 if (_dragConfirmed)
@@ -157,15 +136,12 @@ public class MainActivity : MauiAppCompatActivity
         return base.DispatchTouchEvent(e);
     }
 
-    // Fires ~450ms after Down if the finger is still down and hasn't moved past the
-    // threshold — timer-driven rather than derived from Move events because a
-    // genuinely still hold produces no Move events at all to check elapsed time from.
     private void OnLongPressTimerFired()
     {
         if (!_dragArmed || _dragConfirmed) return;
         _dragConfirmed = true;
         _dragArmed = false;
-        _tracking = false; // a drag owns the gesture now — swipe-back must not engage anymore
+        _tracking = false; 
 
         long now = SystemClock.UptimeMillis();
         using var cancel = MotionEvent.Obtain(_downTimeMs, now, MotionEventActions.Cancel, _downX, _downY, 0);

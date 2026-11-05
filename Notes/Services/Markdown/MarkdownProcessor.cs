@@ -5,10 +5,7 @@ namespace Notes.Services.Markdown;
 
 public class MarkdownProcessor
 {
-  // Bounds how long a single missing image can hold up note rendering before falling
-  // back to a blank placeholder — the fetch itself keeps running and the image resolves
-  // next time the note is opened (or immediately, if InjectImagesIntoWebViewAsync is
-  // still in progress and reaches it again via a later call).
+
   private static readonly TimeSpan OnDemandFetchTimeout = TimeSpan.FromSeconds(20);
 
   private readonly List<ISyntaxExtension> _extensions = new List<ISyntaxExtension>();
@@ -55,11 +52,6 @@ public class MarkdownProcessor
     return processed;
   }
 
-  // stamps each rendered block with the source markdown line it came from
-  // (data-src-line), so the WebView preview's scroll position can be mapped to the
-  // corresponding line in the plain-text editor. Relies on ProcessBasicMarkdown
-  // emitting exactly one block element per non-blank source line (fenced code blocks
-  // being the one exception, collapsed into a single <pre>)
   private static readonly System.Text.RegularExpressions.Regex BlockTagRegex = new(
       @"<(?:p|h1|h2|h3|li|pre|hr|div class=""task-item"")>",
       System.Text.RegularExpressions.RegexOptions.Compiled);
@@ -125,8 +117,6 @@ public class MarkdownProcessor
       .Distinct()
       .ToList();
 
-    // sequential lookups mirror InjectImagesIntoWebViewAsync below (small, bounded set
-    // per note; avoids hammering storage with parallel reads)
     var fileTypes = new Dictionary<string, string?>();
     foreach (var id in ids)
     {
@@ -144,9 +134,6 @@ public class MarkdownProcessor
     });
   }
 
-  // A JS eval against a WebView whose page has navigated away or lost its native peer
-  // never completes on Android. Cap it so it can't wedge the caller (and its progress
-  // overlay) indefinitely; ct lets the owning page abandon injection outright.
   private static Task EvalJsAsync(WebView webView, string js, CancellationToken ct) =>
       MainThread.InvokeOnMainThreadAsync(() => webView.EvaluateJavaScriptAsync(js))
           .WaitAsync(TimeSpan.FromSeconds(5), ct);
@@ -166,19 +153,13 @@ public class MarkdownProcessor
 
     int total = mediaIds.Count;
 
-    // Load and inject images one at a time: limits peak memory to a single image
-    // and lets GC run between items. Concurrent loading via Task.WhenAll caused
-    // OOM on Android when notes contain many photos, silently dropping the last half.
     for (int i = 0; i < mediaIds.Count; i++)
     {
       ct.ThrowIfCancellationRequested();
       var id = mediaIds[i];
       try
       {
-        // Metadata and content arrive together from the server, so a media item that
-        // hasn't been fetched yet has neither — GetMediaAsync alone can't tell "still
-        // downloading" apart from "doesn't exist". Ask the coordinator first; it no-ops
-        // if the content is already local.
+
         var item = await _mediaManager.GetMediaAsync(id);
         if (item == null)
         {
@@ -202,7 +183,6 @@ public class MarkdownProcessor
     }
   }
 
-  // Caps eager page rendering on note open so an oversized PDF can't hang the note view.
   private const int MaxEagerPdfPages = 40;
   private const int PdfDisplayMaxDim = 1200;
   private const int PdfFullResMaxDim = 2000;
@@ -224,8 +204,6 @@ public class MarkdownProcessor
 
     int renderCount = Math.Min(pageCount, MaxEagerPdfPages);
 
-    // rendered one page at a time (mirrors the image loop above) to bound peak memory.
-    // Each page is caught individually so one bad page doesn't stop the rest from showing.
     for (int page = 0; page < renderCount; page++)
     {
       ct.ThrowIfCancellationRequested();
@@ -287,8 +265,6 @@ public class MarkdownProcessor
     }
   }
 
-  // Waits up to OnDemandFetchTimeout for the coordinator to fetch mediaId if it isn't
-  // local yet. Returns immediately (true) if it's already there.
   private async Task<bool> EnsureLocalAsync(string mediaId, CancellationToken ct = default)
   {
     using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -397,10 +373,6 @@ public class MarkdownProcessor
     return fallback;
   }
 
-  // The Android system WebView applies EXIF orientation to <img>, but the resize step re-encodes
-  // and drops the tag, so large photos ended up upright inline yet rotated once the full-res
-  // swap landed in the fullscreen viewer. Bake the rotation into the pixels so every surface
-  // shows the same thing. No-op for images that are already upright.
 #if ANDROID
   private static byte[] NormalizeOrientation(byte[] data)
   {
@@ -457,9 +429,6 @@ public class MarkdownProcessor
   {
     var processedText = markdown.Replace("\r\n", "\n").Replace("\r", "\n");
 
-    // Fenced code blocks are pulled out before any other rule runs, so bold/italic/list/
-    // paragraph regexes below (which operate per-line) can't reach into their contents
-    // and split them into extra <p> lines.
     var codeBlocks = new List<string>();
     processedText = System.Text.RegularExpressions.Regex.Replace(
         processedText,
@@ -475,9 +444,6 @@ public class MarkdownProcessor
         System.Text.RegularExpressions.RegexOptions.Multiline
     );
 
-    // Task lines must be consumed before the generic "- " list rule below.
-    // data-task-index maps back to the Nth TaskLineRegex match in the source
-    // markdown — TaskListMarkdown.Toggle relies on that ordering.
     int taskIndex = 0;
     processedText = TaskListMarkdown.TaskLineRegex.Replace(processedText, m =>
     {
@@ -527,7 +493,6 @@ public class MarkdownProcessor
         "<em>$1</em>"
     );
 
-    // Regular images (non-media: scheme, already resolved to src url)
     processedText = System.Text.RegularExpressions.Regex.Replace(
         processedText,
         @"!\[(.*?)\]\(((?!media:)[^)]+)\)",
@@ -540,10 +505,6 @@ public class MarkdownProcessor
         "<a href=\"$2\">$1</a>"
     );
 
-    // List items are tagged with their source type first, then grouped into
-    // <ul>/<ol> in a single pass below. Grouping pairwise (old approach) couldn't
-    // merge runs longer than two items: .NET regex matches don't overlap, so each
-    // merge consumed the next item's opening <li>, leaving it for a fresh <ul>/<ol>.
     processedText = System.Text.RegularExpressions.Regex.Replace(
         processedText,
         @"^- (.+)$",

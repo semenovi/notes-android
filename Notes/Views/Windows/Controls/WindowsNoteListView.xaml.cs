@@ -37,12 +37,9 @@ public partial class WindowsNoteListView : ContentView
     _mediaDownloadCoordinator.MediaAvailable += OnMediaAvailable;
   }
 
-  // A thumbnail's media may finish downloading in the background while the folder is
-  // still open — refresh just the note(s) that were waiting on it, without touching
-  // rows whose content hasn't changed (that's what LoadNotesAsync's diffing is for).
   private void OnMediaAvailable(string mediaId)
   {
-    // "" is a valid selection (the top level); only null means nothing is open yet.
+
     if (_currentFolderId == null) return;
     var affected = _allNotes.Where(vm => vm.PendingMediaIds.Contains(mediaId)).ToList();
     if (affected.Count == 0) return;
@@ -65,8 +62,7 @@ public partial class WindowsNoteListView : ContentView
 
   private async void OnRemoteChangesApplied()
   {
-    // LoadNotesAsync merges into the existing list and keeps the current
-    // selection; NoteSelected is not re-fired, so the editor stays untouched.
+
     if (_currentFolderId == null) return;
     await LoadNotesAsync(_currentFolderId);
   }
@@ -90,9 +86,6 @@ public partial class WindowsNoteListView : ContentView
     var sorted = notes.OrderBy(n => n.Title, NaturalSortComparer.Instance).ToList();
     _mediaDownloadCoordinator.SetFolderFocus(sorted.SelectMany(n => NoteManager.ExtractMediaIds(n.Content ?? "")));
 
-    // Reuse view models of unchanged notes (same id + Modified) so their rows —
-    // including already-resolved preview images — stay as-is. Only new or
-    // modified notes get a fresh view model, with images resolved in parallel.
     var existing = _allNotes.ToDictionary(vm => vm.Note.Id);
     var viewModels = new List<NoteViewModel?>(sorted.Count);
     var toResolve = new List<(int Index, Note Note)>();
@@ -153,12 +146,11 @@ public partial class WindowsNoteListView : ContentView
             continue;
           }
         }
-        // Not local yet — nudge it up the background queue and remember to refresh
-        // this note's row once MediaAvailable fires for it.
+
         pending.Add(mediaId);
         _ = _mediaDownloadCoordinator.EnsureAvailableAsync(mediaId);
       }
-      catch { /* skip unresolvable images */ }
+      catch {  }
     }
 
     return (result, pending);
@@ -184,8 +176,6 @@ public partial class WindowsNoteListView : ContentView
       SelectNote(vm);
   }
 
-  // sender is the GestureRecognizer itself (not the row) — its Parent is the row,
-  // same as MenuFlyoutItem.BindingContext is used elsewhere in this file.
   private void OnNoteDragStarting(object sender, DragStartingEventArgs e)
   {
     if ((sender as Element)?.Parent is not Grid row || row.BindingContext is not NoteViewModel vm) return;
@@ -330,9 +320,6 @@ public class NoteViewModel : INotifyPropertyChanged
   private string? _preview;
   public IReadOnlyList<ImageSource> PreviewImages { get; }
 
-  // Media ids referenced by this note that weren't local when the preview was last
-  // resolved — used to know whether a MediaDownloadCoordinator.MediaAvailable event
-  // should trigger re-resolving this row's thumbnails.
   public IReadOnlyList<string> PendingMediaIds { get; }
 
   private bool _isSelected;
@@ -366,20 +353,19 @@ public class NoteViewModel : INotifyPropertyChanged
 
     var text = Note.Content;
 
-    // strip fenced code blocks first
     text = CodeBlockRx.Replace(text, " ");
-    // strip images
+
     text = ImageRx.Replace(text, "");
-    // strip links — keep label
+
     text = LinkRx.Replace(text, "$1");
-    // strip headers
+
     text = HeaderRx.Replace(text, "");
-    // strip bold/italic
+
     text = BoldRx.Replace(text, "$1");
     text = ItalicRx.Replace(text, "$1");
-    // strip inline code
+
     text = InlineCodeRx.Replace(text, "$1");
-    // strip blockquotes and list markers
+
     text = ListMarkerRx.Replace(text, "");
     text = NumberedListRx.Replace(text, "");
 

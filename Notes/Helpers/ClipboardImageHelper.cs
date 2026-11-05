@@ -4,11 +4,7 @@ public static class ClipboardImageHelper
 {
   public record ClipboardImage(MemoryStream Stream, string FileName);
 
-  /// <summary>
-  /// Reads images from the system clipboard. Returns an empty list when the
-  /// clipboard holds no image (or on platforms without clipboard image support).
-  /// </summary>
-  public static async Task<List<ClipboardImage>> GetImagesAsync()
+    public static async Task<List<ClipboardImage>> GetImagesAsync()
   {
     var images = new List<ClipboardImage>();
 #if WINDOWS
@@ -24,8 +20,7 @@ public static class ClipboardImageHelper
 
     if (content.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.Bitmap))
     {
-      // Clipboard bitmaps come in an unspecified format — re-encode to PNG so the
-      // stored file has a real image extension (MediaStorage keys the type off it).
+
       var streamRef = await content.GetBitmapAsync();
       using var source = await streamRef.OpenReadAsync();
       var decoder = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(source);
@@ -93,7 +88,7 @@ public static class ClipboardImageHelper
         }
         catch
         {
-          // No read permission for this URI or the source app revoked it — skip the item.
+
         }
       }
     });

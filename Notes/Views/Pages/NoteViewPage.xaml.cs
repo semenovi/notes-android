@@ -18,9 +18,7 @@ public partial class NoteViewPage : ContentPage
   private string _noteId;
   private CancellationTokenSource? _renderCts;
   private bool _isSwipingBack;
-  // gates the swipe-back gesture to a settled, fully-appeared page. cleared while a
-  // navigation (this gesture's own, or an external one) is in flight so OnSwipeProgress
-  // never reaches into Shell's native container tree mid-FragmentTransaction.
+
   private bool _swipeReady;
 #if ANDROID
   private Android.Views.View? _prevPageView;
@@ -76,10 +74,6 @@ public partial class NoteViewPage : ContentPage
     if (_note == null)
       return;
 
-    // Supersede an earlier render still in flight (LoadNoteAsync and OnAppearing both
-    // call in on a cold open) and give OnDisappearing a handle to abandon image
-    // injection when the user leaves before it finishes — otherwise its "loading note"
-    // session outlives the page.
     _renderCts?.Cancel();
     _renderCts?.Dispose();
     var cts = new CancellationTokenSource();
@@ -102,8 +96,6 @@ public partial class NoteViewPage : ContentPage
           (loaded, total) => session.Report((double)loaded / total,
               total - loaded > 0 ? $"{total - loaded} images left" : null), ct);
 
-      // applied only after images finish loading: images resize as they land, and doing
-      // this earlier races the WebView's own scroll-anchoring
       if (EditorScrollSync.TryTakeReturnLine(_note.Id, out int returnLine))
         await EditorScrollSync.ScrollToSourceLineAsync(NoteContentWebView, returnLine);
     }
@@ -262,8 +254,6 @@ public partial class NoteViewPage : ContentPage
       _ = SpringBackAsync();
   }
 
-  // installed as SwipeBackGesture.OnCancel: a named method rather than a lambda so
-  // OnDisappearing can check whether the static still points at this page.
   private void OnSwipeCancel()
   {
     if (!_swipeReady) return;
@@ -287,10 +277,7 @@ public partial class NoteViewPage : ContentPage
           _nativeShadow, screenWidthPx + 20 - _shadowWidthPx, 0f);
       RemoveNativeShadow();
       await Shell.Current.GoToAsync("..", false);
-      // Hand the popped container back at TranslationX 0 - parked off-screen it would
-      // render as a white screen if Shell reuses it for the next push. Hide it first:
-      // otherwise the snap-back paints the outgoing page over the revealed one for a
-      // frame right after the navigation settles (a visible blink).
+
       if (leaving.Handle != IntPtr.Zero)
       {
         leaving.Visibility = Android.Views.ViewStates.Gone;
@@ -460,8 +447,7 @@ public partial class NoteViewPage : ContentPage
   private async Task ToggleTaskAsync(int taskIndex, bool isChecked)
   {
     if (_note == null) return;
-    // The WebView already updated the checkbox visually — only persist the
-    // change, no re-render (that would reload all images).
+
     var updated = Services.Markdown.TaskListMarkdown.Toggle(_note.Content ?? "", taskIndex, isChecked);
     if (updated == null) return;
     _note.Content = updated;
@@ -553,8 +539,7 @@ public partial class NoteViewPage : ContentPage
 #if ANDROID
     if (!_isSwipingBack)
       HidePreviousPage();
-    // only clear callbacks still pointing at this page: during an overlapping
-    // transition the next page may have already installed its own handlers.
+
     if (Notes.Platforms.Android.SwipeBackGesture.OnProgress == OnSwipeProgress)
       Notes.Platforms.Android.SwipeBackGesture.OnProgress = null;
     if (Notes.Platforms.Android.SwipeBackGesture.OnEnd == OnSwipeEnd)

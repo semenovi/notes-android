@@ -50,10 +50,7 @@ public partial class MainWindow : ContentPage
 
   private void OnNoteMovedToFolder(object sender, string noteId)
   {
-    // The note now belongs to a different folder than the one currently open —
-    // drop it from the visible list. If it happened to be selected, leave the
-    // editor showing it; the user can pick another note or reopen it from its
-    // new folder.
+
     NotesList.RemoveNote(noteId);
   }
 

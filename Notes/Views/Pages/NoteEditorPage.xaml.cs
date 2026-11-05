@@ -73,12 +73,6 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     Notes.Helpers.OverscrollStretch.Enable(EditorScrollView);
   }
 
-  // reads the native ScrollView directly (ScrollY / child height in real pixels) instead
-  // of MAUI's cross-platform Height mirror, which lags behind the native AutoSize height
-  // and doesn't move on plain (no-tap) scrolling. The fraction of the editor's own
-  // scrollable range is converted to a source line via its own line count - a raw pixel
-  // fraction doesn't transfer to the WebView, whose blocks are laid out at different
-  // heights (headings, images) than the editor's uniform monospace lines.
   protected override void OnDisappearing()
   {
     base.OnDisappearing();
@@ -113,8 +107,7 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
   }
 
 #if ANDROID
-  // mirrors the WebView's top alignment instead of EditText's "bring point into view"
-  // heuristic, which centers rather than top-aligns
+
   private double CaptureNativeScrollFraction()
   {
     if (EditorScrollView.Handler?.PlatformView is not Android.Views.ViewGroup native || native.ChildCount == 0)
@@ -134,9 +127,6 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     if (content.Height <= 0)
       return false;
 
-    // posted rather than called inline: CursorPosition, set right after this returns,
-    // can itself queue a native "bring point into view" adjustment on the same message
-    // queue; posting puts our correction after it in that FIFO queue so ours sticks
     native.Post(() =>
     {
       int scrollable = Math.Max(0, content.Height - native.Height);
@@ -150,7 +140,6 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     if (TryApplyNativeScrollFraction(fraction))
       return;
 
-    // not laid out yet - react to the next size change instead of polling
     Observable.FromEventPattern<EventHandler, EventArgs>(
             h => ContentEditor.SizeChanged += h,
             h => ContentEditor.SizeChanged -= h)

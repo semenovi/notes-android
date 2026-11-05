@@ -5,8 +5,6 @@ using Notes.Services;
 
 namespace Notes.Views.Pages;
 
-// Root-only behaviour: when NotesPage stands in for the top level it also carries the
-// app-wide actions that used to live on the now-removed FoldersPage (sync, backup, info).
 public partial class NotesPage
 {
   private bool _rootChromeReady;
@@ -114,13 +112,10 @@ public partial class NotesPage
     SyncJobScheduler.EnsurePeriodic();
 #endif
 
-    // RestartAsync already runs an immediate sync in the background — a second
-    // RunSyncAsync() here would race it (see the same note in the old FoldersPage).
     await _reactiveSync.RestartAsync();
     await LoadItemsAsync();
   }
 
-  // Returns the number of remote changes applied, or -1 if the sync failed.
   private async Task<int> RunSyncAsync()
   {
     using var session = _progressService.Begin("syncing");

@@ -27,7 +27,6 @@ public static class ItemInfoHelper
     foreach (Match m in MarkdownLinkRx.Matches(content))
       links.Add(m.Groups[1].Value);
 
-    // strip markdown links out first so their URL isn't also matched as bare
     var withoutMarkdownLinks = MarkdownLinkRx.Replace(content, "");
     foreach (Match m in BareUrlRx.Matches(withoutMarkdownLinks))
       links.Add(m.Value);

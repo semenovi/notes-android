@@ -32,13 +32,8 @@ public class ReactiveSyncService : IDisposable
   private readonly Dictionary<string, CancellationTokenSource> _pendingPush = new();
   private readonly SemaphoreSlim _pushLock = new(1, 1);
 
-  // Fires on the UI thread when remote changes are applied, so pages can refresh.
   public event Action? RemoteChangesApplied;
 
-  // Set synchronously at the top of StartAsync, before the first await, so a
-  // near-simultaneous second caller (App.OnStart immediately followed by App.OnResume
-  // on cold launch) sees IsRunning=true right away instead of racing in during the
-  // settings-file read that precedes _cts being assigned.
   private volatile bool _startPending;
 
   public bool IsRunning => _startPending || (_cts != null && !_cts.IsCancellationRequested);
@@ -79,7 +74,7 @@ public class ReactiveSyncService : IDisposable
     _startPending = true;
     try
     {
-      // Always stop first so settings changes take effect immediately.
+
       await StopAsync();
 
       var settings = await _settingsService.LoadAsync();
@@ -120,12 +115,9 @@ public class ReactiveSyncService : IDisposable
     _periodicTask = null;
   }
 
-  // ── Periodic fallback sync ────────────────────────────────────────────────
-
   private async Task RunPeriodicSyncAsync(CancellationToken ct)
   {
-    // Run an immediate sync on start so any uploads that were cut short (app kill,
-    // StopAsync mid-queue) are recovered without waiting for the first 5-minute tick.
+
     if (!ct.IsCancellationRequested)
     {
       using var session = _progressService.Begin("syncing", maxDurationMs: 90_000);
@@ -157,8 +149,6 @@ public class ReactiveSyncService : IDisposable
       catch (Exception ex) { DebugLogService.Current?.Log($"periodic-sync-err: {ex.GetType().Name}: {ex.Message}"); }
     }
   }
-
-  // ── SSE listener ──────────────────────────────────────────────────────────
 
   private async Task RunSseLoopAsync(CancellationToken ct)
   {
@@ -193,7 +183,7 @@ public class ReactiveSyncService : IDisposable
 
   private async Task ApplyRemoteChangesAsync(SseEvent evt)
   {
-    // Capture locals — _client/_syncKey can be set to null by StopAsync on another thread.
+
     var client = _client;
     var key = _syncKey;
     if (client == null || key == null) return;
@@ -244,8 +234,6 @@ public class ReactiveSyncService : IDisposable
     catch { }
   }
 
-  // ── Local change handlers ─────────────────────────────────────────────────
-
   private void OnNoteChanged(string noteId, EntityChangeKind kind)
     => _ = SchedulePushAsync("n:" + noteId, () => PushNoteAsync(noteId, kind));
 
@@ -255,7 +243,6 @@ public class ReactiveSyncService : IDisposable
   private void OnMediaAdded(string mediaId)
     => _ = SchedulePushAsync("m:" + mediaId, () => PushMediaAsync(mediaId));
 
-  // Debounce: cancel previous pending push for the same entity, wait 400 ms, then push.
   private async Task SchedulePushAsync(string key, Func<Task> pushAction)
   {
     CancellationTokenSource cts;
@@ -378,7 +365,7 @@ public class ReactiveSyncService : IDisposable
     }
     try
     {
-      // Re-read after acquiring lock: StopAsync may have disposed _client while we waited.
+
       var client = _client;
       var key = _syncKey;
       var deviceId = _deviceId;

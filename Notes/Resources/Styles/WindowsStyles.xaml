@@ -2,7 +2,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-    <!-- Windows 7 Style Button -->
     <Style x:Key="Windows7ButtonStyle" TargetType="Button">
         <Setter Property="BackgroundColor" Value="#E1E1E1" />
         <Setter Property="TextColor" Value="Black" />
@@ -13,7 +12,6 @@
         <Setter Property="Padding" Value="8,4" />
     </Style>
 
-    <!-- Windows 7 Style Entry -->
     <Style x:Key="Windows7EntryStyle" TargetType="Entry">
         <Setter Property="BackgroundColor" Value="White" />
         <Setter Property="TextColor" Value="Black" />
@@ -21,7 +19,6 @@
         <Setter Property="FontSize" Value="12" />
     </Style>
 
-    <!-- Windows 7 Style Editor -->
     <Style x:Key="Windows7EditorStyle" TargetType="Editor">
         <Setter Property="BackgroundColor" Value="White" />
         <Setter Property="TextColor" Value="Black" />
@@ -29,7 +26,6 @@
         <Setter Property="FontSize" Value="12" />
     </Style>
 
-    <!-- Panel Background -->
     <Style x:Key="PanelBackgroundStyle" TargetType="Frame">
         <Setter Property="BackgroundColor" Value="White" />
         <Setter Property="HasShadow" Value="False" />
@@ -37,17 +33,14 @@
         <Setter Property="Padding" Value="0" />
     </Style>
 
-    <!-- Toolbar Background -->
     <Style x:Key="ToolbarBackgroundStyle" TargetType="StackLayout">
         <Setter Property="BackgroundColor" Value="#F5F5F5" />
     </Style>
 
-    <!-- Status Bar Background -->
     <Style x:Key="StatusBarBackgroundStyle" TargetType="StackLayout">
         <Setter Property="BackgroundColor" Value="#E5E5E5" />
     </Style>
 
-    <!-- Header Label -->
     <Style x:Key="HeaderLabelStyle" TargetType="Label">
         <Setter Property="BackgroundColor" Value="#F0F0F0" />
         <Setter Property="FontAttributes" Value="Bold" />
@@ -56,7 +49,6 @@
         <Setter Property="TextColor" Value="Black" />
     </Style>
 
-    <!-- Status Label -->
     <Style x:Key="StatusLabelStyle" TargetType="Label">
         <Setter Property="FontSize" Value="10" />
         <Setter Property="TextColor" Value="#666666" />

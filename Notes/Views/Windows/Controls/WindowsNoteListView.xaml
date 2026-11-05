@@ -11,7 +11,6 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
         <Grid Grid.Row="0" Padding="14,0,8,0">
             <Label x:Name="FolderTitleLabel" Text="notes"
                    FontSize="15" FontAttributes="Bold" TextColor="#1C1C1E"
@@ -23,13 +22,11 @@
                     Clicked="OnNewNoteButtonClicked" />
         </Grid>
 
-        <!-- Search -->
         <SearchBar x:Name="SearchEntry" Grid.Row="1"
                    Placeholder="search" PlaceholderColor="#8E8E93"
                    TextChanged="OnSearchTextChanged"
                    Margin="8,0,8,6" />
 
-        <!-- Notes -->
         <CollectionView x:Name="NotesCollectionView" Grid.Row="2"
                         SelectionMode="None"
                         BackgroundColor="Transparent">

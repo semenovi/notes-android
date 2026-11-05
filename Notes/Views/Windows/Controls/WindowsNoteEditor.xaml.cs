@@ -49,7 +49,6 @@ public partial class WindowsNoteEditor : ContentView
       return;
     }
 
-    // Payload is encoded directly in the URL: img-viewer://open/{encodeURIComponent(id|src)}
     if (!e.Url.StartsWith("img-viewer://open/")) return;
     e.Cancel = true;
     var payload = Uri.UnescapeDataString(e.Url["img-viewer://open/".Length..]);
@@ -63,7 +62,7 @@ public partial class WindowsNoteEditor : ContentView
 
     if (payload.StartsWith("media-"))
     {
-      mediaId = payload[6..]; // strip "media-"
+      mediaId = payload[6..]; 
       int colonIdx = mediaId.IndexOf(':');
       if (colonIdx > 0 && int.TryParse(mediaId[(colonIdx + 1)..], out int pageIndex))
       {
@@ -87,8 +86,6 @@ public partial class WindowsNoteEditor : ContentView
     var page   = new Notes.Views.Windows.ImageViewerPage(imageUrl, _mediaManager, mediaId);
     var window = new Window(page) { Title = string.Empty };
 
-    // Window.Activated fires after the WinUI handler is fully initialised —
-    // the only reliable moment to call AppWindow APIs on a newly opened window.
     EventHandler? onActivated = null;
     onActivated = (s, ev) =>
     {
@@ -115,7 +112,6 @@ public partial class WindowsNoteEditor : ContentView
     {
       var content = global::Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
 
-      // Text keeps the default paste; only an image-bearing clipboard without text is intercepted.
       if (content.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.Text)) return;
       if (!content.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.Bitmap) &&
           !content.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems)) return;
@@ -125,14 +121,14 @@ public partial class WindowsNoteEditor : ContentView
     }
     catch
     {
-      // Clipboard API is flaky (CLIPBRD_E_CANT_OPEN etc.) — fall back to default text paste.
+
     }
   }
 
   private async Task ToggleTaskAsync(int taskIndex, bool isChecked)
   {
     if (_currentNote == null || _isEditMode) return;
-    // The WebView already updated the checkbox visually — only persist the change.
+
     var updated = TaskListMarkdown.Toggle(_currentNote.Content ?? "", taskIndex, isChecked);
     if (updated == null) return;
     _currentNote.Content = updated;
@@ -143,7 +139,7 @@ public partial class WindowsNoteEditor : ContentView
 
   private void OnAutoSave(object? sender, ElapsedEventArgs e)
   {
-    // Timer fires on thread pool — must dispatch to UI thread
+
     MainThread.BeginInvokeOnMainThread(async () =>
     {
       if (_isEditMode && _currentNote != null && _hasUnsavedChanges)
@@ -201,18 +197,7 @@ public partial class WindowsNoteEditor : ContentView
   }
 
 #if WINDOWS
-  // mirrors the WebView preview's top alignment instead of the native TextBox's own
-  // "bring caret into view", which centers rather than top-aligns. The target offset is
-  // computed from the editor's own line count/extent rather than reusing the WebView's
-  // pixel fraction - the two renderers lay the same content out at very different
-  // heights (markdown blocks/images vs. uniform monospace lines).
-  //
-  // Caret placement lives here too rather than being set eagerly in OnEditClicked:
-  // setting SelectionStart before the TextBox's template/text view is actually ready
-  // was silently dropped (same readiness race the ScrollViewer had), leaving the caret
-  // wherever `Text = ...` had put it internally (its end). That stale caret only
-  // resurfaced later - e.g. on losing focus when Save was clicked - as a delayed
-  // "bring into view" jump to the bottom, which is what was reported as random drift.
+
   private void ApplyEditorScrollLine(int line, string content)
   {
     GetAttachedTextBoxOnce()
@@ -226,10 +211,6 @@ public partial class WindowsNoteEditor : ContentView
             t.textBox.SelectionLength = 0;
             t.textBox.Focus(Microsoft.UI.Xaml.FocusState.Programmatic);
 
-            // line's position is a fraction of the *content* height (ExtentHeight), not
-            // of the scrollable *range* (ScrollableHeight = ExtentHeight - ViewportHeight)
-            // - using the range there was systematically off by about a viewport's worth
-            // of lines
             int totalLines = EditorScrollSync.GetLineCount(content);
             double target = Math.Min(t.sv.ScrollableHeight,
                 (double)line / Math.Max(1, totalLines) * t.sv.ExtentHeight);
@@ -241,8 +222,6 @@ public partial class WindowsNoteEditor : ContentView
         });
   }
 
-  // yields the native TextBox once ContentEditor's handler exists, whether that's
-  // already true right now (subsequent edits) or happens later (first ever edit)
   private IObservable<Microsoft.UI.Xaml.Controls.TextBox> GetAttachedTextBoxOnce()
   {
     if (ContentEditor.Handler?.PlatformView is Microsoft.UI.Xaml.Controls.TextBox existing)
@@ -256,10 +235,6 @@ public partial class WindowsNoteEditor : ContentView
         .Take(1)!;
   }
 
-  // TextBox.IsLoaded/Loaded fire before its internal ScrollViewer is actually reachable
-  // via VisualTreeHelper (confirmed via logging: FindScrollViewer returned null right
-  // after Loaded, but found it moments later) - LayoutUpdated fires on every subsequent
-  // layout pass, so react to that instead until the ScrollViewer shows up
   private static IObservable<Microsoft.UI.Xaml.Controls.ScrollViewer> GetScrollViewerOnce(
       Microsoft.UI.Xaml.Controls.TextBox textBox)
   {
@@ -275,10 +250,6 @@ public partial class WindowsNoteEditor : ContentView
         .Take(1)!;
   }
 
-  // fraction of the editor's own scrollable range converted to a source line via its
-  // own line count, so it can be handed to the WebView in the same currency it uses
-  // (data-src-line) instead of a pixel fraction that doesn't transfer between the two
-  // very differently laid-out renderers
   private int CaptureEditorScrollLine()
   {
     if (ContentEditor.Handler?.PlatformView is not Microsoft.UI.Xaml.Controls.TextBox textBox)
@@ -288,11 +259,6 @@ public partial class WindowsNoteEditor : ContentView
     if (scrollViewer == null || scrollViewer.ExtentHeight <= 0)
       return 0;
 
-    // mirrors ApplyEditorScrollLine: position is a fraction of the *content* height
-    // (ExtentHeight), not of the scrollable *range* (ScrollableHeight)
-    // ContentEditor.Text (MAUI level), not textBox.Text (native): the native TextBox's
-    // Text can lag behind what was just assigned/edited, which was silently producing a
-    // near-zero line count and wildly wrong targets
     int totalLines = EditorScrollSync.GetLineCount(ContentEditor.Text);
     int line = (int)Math.Round(scrollViewer.VerticalOffset / scrollViewer.ExtentHeight * totalLines);
     System.Diagnostics.Debug.WriteLine(

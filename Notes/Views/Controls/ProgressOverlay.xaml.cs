@@ -4,10 +4,7 @@ namespace Notes.Views.Controls;
 
 public partial class ProgressOverlay : ContentView
 {
-    // Bumped on every show/hide request. An in-flight animation whose generation no
-    // longer matches must not touch visibility — otherwise a Hide animation that was
-    // superseded by a new Show still runs its trailing `IsVisible = false` and buries
-    // the session that just appeared.
+
     private int _generation;
     private ProgressSession? _desired;
 

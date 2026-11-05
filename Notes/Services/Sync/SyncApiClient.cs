@@ -69,8 +69,7 @@ public class ChunkPushRequest
 
 public class SyncApiClient : IDisposable
 {
-  // 4 MB per chunk — standard for chunked upload protocols (S3 multipart, Azure Blob).
-  // Fits comfortably within per-chunk timeout even on slow connections.
+
   private const int ChunkSize = 4 * 1024 * 1024;
 
   private readonly HttpClient _http;
@@ -91,9 +90,7 @@ public class SyncApiClient : IDisposable
     var auth = new AuthenticationHeaderValue("Bearer", apiToken);
     _http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
     _http.DefaultRequestHeaders.Authorization = auth;
-    // Bounded, but generous enough for a single 4 MB chunk or a large media pull on a
-    // slow link. Without this a stalled connection (network there but router
-    // unreachable) hangs the call - and its progress overlay - indefinitely.
+
     _pushHttp = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
     _pushHttp.DefaultRequestHeaders.Authorization = auth;
     _sseHttp = new HttpClient { Timeout = System.Threading.Timeout.InfiniteTimeSpan };
@@ -165,8 +162,6 @@ public class SyncApiClient : IDisposable
     return false;
   }
 
-  // Sends one chunk to /api/sync/chunk. Returns false on hash mismatch (4xx) — no retry.
-  // Retries up to 3 times on network/timeout errors with exponential backoff.
   private async Task<bool> PushChunkAsync(ChunkPushRequest req)
   {
     string json = JsonSerializer.Serialize(req, JsonOpts);
@@ -191,11 +186,6 @@ public class SyncApiClient : IDisposable
     return false;
   }
 
-  // Splits item.EncryptedData into 4 MB chunks and uploads each independently.
-  // SHA256 is verified per chunk and for the fully assembled item on the server.
-  // If a chunk fails after retries, the upload stops; the server will re-request
-  // missing chunks on the next manifest exchange.
-  // onProgress(chunksSent, totalChunks) is called after each successful chunk.
   public async Task PushChunkedAsync(SyncItem item, string type, string? deviceId = null,
       Action<int, int>? onProgress = null)
   {
@@ -207,8 +197,7 @@ public class SyncApiClient : IDisposable
     {
       int offset = i * ChunkSize;
       int length = Math.Min(ChunkSize, base64Bytes.Length - offset);
-      // Slice the base64 string at 4-byte boundaries (base64 encodes 3 bytes → 4 chars),
-      // so any aligned split produces valid substrings that concatenate back cleanly.
+
       string chunkData = Encoding.UTF8.GetString(base64Bytes, offset, length);
       string chunkSha256 = Convert.ToHexString(
           SHA256.HashData(Encoding.UTF8.GetBytes(chunkData))).ToLower();
@@ -255,7 +244,7 @@ public class SyncApiClient : IDisposable
   public async Task<PullResponse?> PullChangesAsync(List<string> noteIds, List<string> folderIds, List<string> mediaIds)
   {
     if (noteIds.Count == 0 && folderIds.Count == 0 && mediaIds.Count == 0) return new PullResponse();
-    // Use _pushHttp (5-min timeout) — media items in the response can be large.
+
     for (int attempt = 0; attempt < 2; attempt++)
     {
       try

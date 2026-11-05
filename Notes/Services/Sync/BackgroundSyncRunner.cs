@@ -4,17 +4,11 @@ using Notes.Services;
 
 namespace Notes.Services.Sync;
 
-// Single background-sync entry point shared by the platform schedulers (the Android
-// JobService today). Runs one full sync plus a bounded media drain, resolving its
-// dependencies from the running MAUI app's service container rather than taking them
-// by constructor - the scheduler that invokes it has no DI of its own.
 public static class BackgroundSyncRunner
 {
   private static readonly TimeSpan SyncTimeout = TimeSpan.FromMinutes(2);
   private static readonly TimeSpan MediaDrainBudget = TimeSpan.FromMinutes(2);
 
-  // Returns true when the run completed (including "sync disabled, nothing to do"),
-  // false on failure/timeout so the caller can ask the OS to reschedule.
   public static async Task<bool> RunOnceAsync(CancellationToken ct)
   {
     IServiceProvider? services = await WaitForServicesAsync(ct);
@@ -52,8 +46,6 @@ public static class BackgroundSyncRunner
           ReactiveSyncService.DefaultProfile, null, timeoutCts.Token);
       DebugLogService.Current?.Log($"bg-sync-done applied={applied}");
 
-      // When the app is foreground the coordinator's own loop is already draining the
-      // queue - don't run a second drain over the same items.
       if (reactive is not { IsRunning: true })
       {
         DebugLogService.Current?.Log($"bg-sync-media-drain pending={mediaCoordinator.PendingCount}");
@@ -79,8 +71,6 @@ public static class BackgroundSyncRunner
     }
   }
 
-  // A job may start the process cold, before MauiApplication has finished building the
-  // app. Give the container a few seconds to appear before giving up.
   private static async Task<IServiceProvider?> WaitForServicesAsync(CancellationToken ct)
   {
     for (int i = 0; i < 20; i++)

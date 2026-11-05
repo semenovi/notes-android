@@ -2,8 +2,6 @@ using System.Text;
 
 namespace Notes.Helpers;
 
-// alphabetical string comparer that treats embedded digit runs as numbers,
-// so "item2" sorts before "item10".
 public class NaturalSortComparer : IComparer<string>
 {
   public static readonly NaturalSortComparer Instance = new();

@@ -10,9 +10,7 @@ public enum ProgressScope
 
 public class ProgressNotificationService
 {
-    // Backstop lifetime for a session whose owner never disposes it (hung await,
-    // page torn down mid-load, network stall). The underlying operation keeps running;
-    // only the overlay is dismissed.
+
     public const int DefaultMaxDurationMs = 120_000;
 
     private readonly List<ProgressSession> _active = new();
@@ -27,8 +25,6 @@ public class ProgressNotificationService
         ProgressScope scope = ProgressScope.App)
         => new(title, delayMs, priority, maxDurationMs, idleTimeoutMs, scope, this);
 
-    // Dismisses every visible session. Does NOT cancel the work behind them — used on
-    // app background, where an in-app overlay has no viewer and would only reappear stale.
     public void CancelAll()
     {
         ProgressSession[] snapshot;
@@ -67,13 +63,6 @@ public class ProgressNotificationService
         }
     }
 
-    // Called under lock. The highest-priority active session is displayed;
-    // a lower-priority one that finishes while hidden never touches the UI,
-    // and the previous session is restored when the top one ends. On a priority tie,
-    // the session already showing keeps winning (strict '>', not '>=') — otherwise a
-    // second session for the same operation (e.g. two overlapping sync triggers) that
-    // never gets to report real progress would keep bumping the one that's actually
-    // reporting, permanently freezing the UI on an indeterminate spinner.
     private void Refresh()
     {
         ProgressSession? top = null;

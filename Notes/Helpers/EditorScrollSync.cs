@@ -2,20 +2,9 @@ using System.Linq;
 
 namespace Notes.Helpers;
 
-// shares scroll position between the markdown preview and the plain-text editor via a
-// common currency: the source markdown line number. Each renderer maps that line to its
-// own scroll target using its own layout - the WebView by finding the actual tagged
-// block element (data-src-line, see MarkdownProcessor), the editor by line-count
-// proportion of its own extent. A raw pixel-fraction of "scrollable range" doesn't work
-// because the two renderers lay the same content out at very different heights (markdown
-// blocks/images/headings vs. uniform monospace lines).
 public static class EditorScrollSync
 {
-  // uses the browser's own hit-testing (what's actually painted a few pixels below the
-  // top edge) rather than comparing block top-edge coordinates against a fixed
-  // threshold: with the latter, when the scroll position lands inside a block's CSS
-  // margin (the gap between two tagged blocks), the block that's almost entirely
-  // scrolled past kept winning over the one that's actually filling the viewport
+
   private const string GetVisibleSourceLineJs =
       "(function(){" +
       "var probe=document.elementFromPoint(window.innerWidth/2,10);" +
@@ -44,8 +33,7 @@ public static class EditorScrollSync
   {
     try
     {
-      // not every line has a tagged block (blank lines, lines mid-way through a fenced
-      // code block) - fall back to the closest tagged line at or before the target
+
       string js =
           "(function(){" +
           $"var target={line};" +
@@ -62,9 +50,6 @@ public static class EditorScrollSync
     catch { }
   }
 
-  // normalizes line endings first: WinUI's native TextBox hands back multi-line text
-  // with bare \r rather than \n, so counting raw '\n' occurrences undercounts lines to
-  // just 1 for anything read via ContentEditor.Text on Windows
   public static int GetLineCount(string content)
   {
     if (string.IsNullOrEmpty(content))
@@ -86,9 +71,6 @@ public static class EditorScrollSync
     return Math.Min(offset, content.Length);
   }
 
-  // carries the editor's source line back to the preview when the user leaves the
-  // editor for the same note. Keyed by note id and consumed once (TryTake) so it
-  // doesn't stick around for unrelated re-appearances of the preview page
   private static readonly Dictionary<string, int> _pendingReturnLine = new();
 
   public static void SetReturnLine(string noteId, int line)

@@ -8,16 +8,16 @@
 
     <Grid RowDefinitions="Auto,*">
         <HorizontalStackLayout Grid.Row="0" Padding="10,6" Spacing="6">
-            <Button Text="{x:Static helpers:MaterialIconCodes.Save}" 
+            <Button Text="{x:Static helpers:MaterialIconCodes.Save}"
                     FontFamily="MaterialIcons"
-                    FontSize="22" 
+                    FontSize="22"
                     WidthRequest="44"
                     HeightRequest="44"
                     Clicked="OnSaveClicked" />
 
-            <Button Text="{x:Static helpers:MaterialIconCodes.Preview}" 
+            <Button Text="{x:Static helpers:MaterialIconCodes.Preview}"
                     FontFamily="MaterialIcons"
-                    FontSize="22" 
+                    FontSize="22"
                     WidthRequest="44"
                     HeightRequest="44"
                     Clicked="OnPreviewClicked" />
@@ -38,21 +38,21 @@
 
             <Button Text="{x:Static helpers:MaterialIconCodes.FormatBold}"
                     FontFamily="MaterialIcons"
-                    FontSize="22" 
+                    FontSize="22"
                     WidthRequest="44"
                     HeightRequest="44"
                     Clicked="OnFormatBoldClicked" />
 
-            <Button Text="{x:Static helpers:MaterialIconCodes.FormatItalic}" 
+            <Button Text="{x:Static helpers:MaterialIconCodes.FormatItalic}"
                     FontFamily="MaterialIcons"
-                    FontSize="22" 
+                    FontSize="22"
                     WidthRequest="44"
                     HeightRequest="44"
                     Clicked="OnFormatItalicClicked" />
 
-            <Button Text="{x:Static helpers:MaterialIconCodes.FormatListBulleted}" 
+            <Button Text="{x:Static helpers:MaterialIconCodes.FormatListBulleted}"
                     FontFamily="MaterialIcons"
-                    FontSize="22" 
+                    FontSize="22"
                     WidthRequest="44"
                     HeightRequest="44"
                     Clicked="OnFormatListClicked" />

@@ -5,14 +5,12 @@
 
     <Grid BackgroundColor="White">
 
-        <!-- Empty state -->
         <Label x:Name="EmptyStateLabel"
                Text="select a note or create a new one"
                FontSize="16" TextColor="#8E8E93"
                HorizontalOptions="Center" VerticalOptions="Center"
                IsVisible="True" />
 
-        <!-- VIEW MODE -->
         <Grid x:Name="ViewMode" IsVisible="False">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -43,7 +41,6 @@
             <WebView x:Name="ContentPreview" Grid.Row="3" BackgroundColor="Transparent" />
         </Grid>
 
-        <!-- EDIT MODE -->
         <Grid x:Name="EditMode" IsVisible="False">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />

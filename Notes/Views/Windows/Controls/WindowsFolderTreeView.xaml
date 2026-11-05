@@ -11,7 +11,6 @@
             <RowDefinition Height="44" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
         <Grid Grid.Row="0" Padding="8,0">
             <Button Text="&#xE5D2;" FontFamily="MaterialIcons"
                     HorizontalOptions="Start" VerticalOptions="Center"
@@ -20,7 +19,6 @@
                     Clicked="OnMenuButtonClicked" />
         </Grid>
 
-        <!-- Folders -->
         <CollectionView x:Name="FoldersCollectionView" Grid.Row="1"
                         SelectionMode="None"
                         BackgroundColor="Transparent">
@@ -72,7 +70,6 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <!-- New Folder -->
         <Button Grid.Row="2" Text="+ new folder"
                 BackgroundColor="Transparent" TextColor="#007AFF" FontSize="13"
                 BorderWidth="0" HorizontalOptions="Start" Margin="12,0"

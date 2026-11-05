@@ -30,14 +30,10 @@ public class SyncManager
     _mediaStorage = mediaStorage;
   }
 
-  // Returns the number of remote note/folder changes applied locally, so callers
-  // can skip UI refreshes when a sync brought nothing new.
   public async Task<int> SynchronizeAsync(SyncProfile profile, Action<double, string?>? onProgress = null,
       CancellationToken ct = default)
   {
-    // Honour cancellation while queued on the lock: a stopped/superseded sync loop that
-    // can't interrupt the in-flight sync would otherwise sit here, keep its "syncing"
-    // overlay up, and never report a thing.
+
     await _syncLock.WaitAsync(ct);
     try
     {
@@ -105,7 +101,7 @@ public class SyncManager
     var mediaItems = await _mediaStorage.GetAllMediaAsync();
     foreach (var item in mediaItems)
     {
-      // Content is loaded lazily in the adapter — only for items that actually need uploading.
+
       changes.Add(new SyncChange
       {
         Id = item.Id,
@@ -180,7 +176,6 @@ public class SyncManager
     var payload = JsonSerializer.Deserialize<MediaSyncPayload>(change.Data, JsonOpts);
     if (payload?.Metadata == null || string.IsNullOrEmpty(payload.ContentBase64)) return;
 
-    // Skip if we already have this media item locally
     var existing = await _mediaStorage.GetMediaAsync(payload.Metadata.Id);
     if (existing != null) return;
 

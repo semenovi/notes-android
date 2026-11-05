@@ -98,8 +98,6 @@ public class MediaStorage
     return await _storage.ReadJsonAsync<MediaItem>(GetMediaMetadataPath(mediaId));
   }
 
-  // Mirrors the server's own integrity check (missing or empty .enc file = not really
-  // there): metadata alone isn't enough proof the content survived a sync.
   public async Task<bool> HasLocalContentAsync(string mediaId)
   {
     var item = await GetMediaAsync(mediaId);

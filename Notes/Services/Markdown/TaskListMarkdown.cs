@@ -2,10 +2,6 @@ using System.Text.RegularExpressions;
 
 namespace Notes.Services.Markdown;
 
-// Task-list ("- [ ] item" / "- [x] item") support shared between the HTML
-// renderer and the toggle handlers. The Nth checkbox in the rendered HTML
-// (data-task-index) always corresponds to the Nth TaskLineRegex match in the
-// note's markdown, so both sides must use this same regex.
 public static class TaskListMarkdown
 {
   public static readonly Regex TaskLineRegex = new(
@@ -32,8 +28,6 @@ public static class TaskListMarkdown
       </script>
       """;
 
-  // Flips the checkbox state of the index-th task line. Returns the updated
-  // markdown, or null if the index no longer matches (content changed since render).
   public static string? Toggle(string content, int index, bool isChecked)
   {
     var matches = TaskLineRegex.Matches(content);

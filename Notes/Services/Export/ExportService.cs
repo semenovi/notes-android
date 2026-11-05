@@ -60,9 +60,6 @@ public class ExportService
     }
   }
 
-  // Writes the archive directly to a caller-chosen path (path is picked before
-  // any work starts). Zipping runs on a worker thread and streams straight to
-  // the destination file — no temp copy, no in-memory buffering.
   public async Task ExportBackupToFileAsync(string targetPath)
   {
     try

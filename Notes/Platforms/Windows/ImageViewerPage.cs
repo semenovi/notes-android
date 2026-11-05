@@ -21,9 +21,6 @@ public class ImageViewerPage : ContentPage
         _webView.Navigating += OnNavigating;
         Content = _webView;
 
-        // Load asynchronously: data URIs can be several MB, write to a temp file
-        // so WebView2 reads it from disk (avoids NavigateToString 2 MB limit and
-        // cross-origin restrictions that block file:// images in HtmlWebViewSource).
         _ = LoadAsync(imageSrc);
     }
 
@@ -95,9 +92,7 @@ public class ImageViewerPage : ContentPage
 
     private static string BuildHtml(string imageSrc, bool hasDownload)
     {
-        // imageSrc is either a data URI (data:image/jpeg;base64,...) or an https:// URL.
-        // It is embedded directly into the HTML so WebView2 never needs to fetch a
-        // separate file:// resource — no cross-origin issues regardless of page origin.
+
         string downloadBtn = hasDownload
             ? "#dl{position:fixed;top:16px;right:16px;background:rgba(255,255,255,0.15);color:#fff;" +
               "border:none;border-radius:8px;padding:8px 14px;font-size:14px;cursor:pointer;" +
@@ -163,7 +158,6 @@ public class ImageViewerPage : ContentPage
             downloadScript +
             "})();</script></body></html>";
 
-        // Single quotes never appear in data URIs (base64 alphabet) or standard https:// URLs.
         return template.Replace("IMGSRC", $"'{imageSrc.Replace("'", "\\'")}'");
     }
 }

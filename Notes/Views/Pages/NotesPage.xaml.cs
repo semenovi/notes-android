@@ -21,19 +21,13 @@ public partial class NotesPage : ContentPage
   private readonly Services.Sync.SyncSettingsService _syncSettingsService;
   private readonly Services.ProgressNotificationService _progressService;
 
-  // The root instance (Shell content) is never handed a FolderId — it stands in for
-  // "top level": top-level folders plus notes with no folder. Pushed instances always
-  // carry a real folder id.
   public bool IsRoot => string.IsNullOrEmpty(_folderId);
   public ObservableCollection<object> Items { get; } = new ObservableCollection<object>();
   private CancellationTokenSource? _loadCts;
   private bool _isSwipingBack;
-  // gates the swipe-back gesture to a settled, fully-appeared page. cleared while a
-  // navigation (this gesture's own, or an external one) is in flight so OnSwipeProgress
-  // never reaches into Shell's native container tree mid-FragmentTransaction.
+
   private bool _swipeReady;
-  // parent of the currently open folder — drop target for the "move up" zone.
-  // Null both before the first load and when the current folder is itself a root.
+
   private string? _currentParentId;
 #if ANDROID
   private Android.Views.View? _prevPageView;
@@ -81,7 +75,7 @@ public partial class NotesPage : ContentPage
 
   private async void AnimateMoveUpZone(bool show)
   {
-    // Everything shown at the root is already top-level — there's nothing to move up to.
+
     if (IsRoot)
     {
       MoveUpZone.InputTransparent = true;
@@ -99,9 +93,6 @@ public partial class NotesPage : ContentPage
           MoveUpZone.TranslateTo(0, 30, 120, Easing.CubicIn));
   }
 
-  // Hidden while dragging: it sits where the "move up" zone now lives, and it's
-  // not something you'd want to hit by accident mid-drag anyway. Animated rather
-  // than an IsVisible binding so it shrinks/fades away instead of popping.
   private async void AnimateFab(bool show)
   {
     AddNoteButton.InputTransparent = !show;
@@ -159,7 +150,7 @@ public partial class NotesPage : ContentPage
     SwipeShadow.TranslationX = -24;
     SwipeShadow.Opacity = 0;
 #if ANDROID
-    // No page to reveal underneath the root — leave the swipe-back gesture unbound there.
+
     if (!IsRoot)
     {
       global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = OnSwipeProgress;
@@ -182,14 +173,12 @@ public partial class NotesPage : ContentPage
   {
     base.OnDisappearing();
     _swipeReady = false;
-    // Belt-and-braces: if the page is left mid-drag (back button, notification, etc.)
-    // and the drag never got a proper end, don't leave the "move up" zone stuck visible.
+
     IsDragActive = false;
 #if ANDROID
     if (!_isSwipingBack)
       HidePreviousPage();
-    // only clear callbacks still pointing at this page: during an overlapping
-    // transition the next page may have already installed its own handlers.
+
     if (global::Notes.Platforms.Android.SwipeBackGesture.OnProgress == OnSwipeProgress)
       global::Notes.Platforms.Android.SwipeBackGesture.OnProgress = null;
     if (global::Notes.Platforms.Android.SwipeBackGesture.OnEnd == OnSwipeEnd)
@@ -226,9 +215,6 @@ public partial class NotesPage : ContentPage
     DiffUpdateItems(combined);
   }
 
-  // Merges newItems (already in folders-then-notes, name-sorted order) into Items:
-  // unchanged entries keep their spot, changed ones are replaced in place, new
-  // ones are inserted at their sorted position instead of just appended.
   private void DiffUpdateItems(List<object> newItems)
   {
     var newIds = newItems.Select(GetId).ToHashSet();
@@ -311,19 +297,12 @@ public partial class NotesPage : ContentPage
 
   private static void DragLog(string message) => System.Diagnostics.Debug.WriteLine($"[dragdrop] {message}");
 
-  // Hover state, shared between folder rows and the "move up" zone — kept simple
-  // (single tracked row/flag) since only one thing can be hovered at a time.
   private VisualElement? _hoveredFolderRow;
   private bool _moveUpHovered;
 
   private const double MoveUpZoneRestHeight = 56;
   private const double MoveUpZoneHoverHeight = 68;
 
-  // Animates HeightRequest rather than TranslationY: the zone is bottom-anchored
-  // (VerticalOptions="End"), so growing its height keeps the bottom edge fixed
-  // and only the top edge moves up — translating the whole bar instead would
-  // shift the bottom edge too, which reads as illogical for a "grows on hover"
-  // affordance.
   private static void AnimateMoveUpHeight(VisualElement owner, Border zone, double to)
   {
     new Animation(v => zone.HeightRequest = v, zone.HeightRequest, to)
@@ -331,13 +310,7 @@ public partial class NotesPage : ContentPage
   }
 
 #if ANDROID
-  // Drag is driven entirely by raw touch tracking from MainActivity (see
-  // DragReorderGesture) instead of Android's native View.startDragAndDrop —
-  // that native API has a long-standing platform bug where a live drag session
-  // crashes (ConcurrentModificationException in ViewGroup.dispatchDragEvent) if
-  // the view hierarchy changes anywhere nearby, which a reactive MAUI UI does
-  // constantly (highlight animations, list reloads, IsVisible bindings). Manual
-  // touch tracking never touches that code path.
+
   private object? _draggedItem;
   private View? _draggedRowOrigin;
 
@@ -371,9 +344,7 @@ public partial class NotesPage : ContentPage
     HideDragGhost();
 
     var (kind, targetFolder) = HitTestDropTarget(rawX, rawY);
-    // ClearHoverState animates the hovered row/zone straight back to rest (scale
-    // 1 / resting height) — that alone reads as "dropped here", no extra pulse
-    // needed on top of it.
+
     ClearHoverState();
     IsDragActive = false;
 
@@ -384,9 +355,7 @@ public partial class NotesPage : ContentPage
     }
     else if (kind == DropTargetKind.MoveUp)
     {
-      // _currentParentId == null here means the current folder is itself top-level,
-      // so "move up" drops the item at the top level (folder ParentId / note FolderId
-      // cleared).
+
       await MoveItemAsync(item, _currentParentId);
     }
   }
@@ -414,8 +383,7 @@ public partial class NotesPage : ContentPage
     {
       _hoveredFolderRow?.ScaleTo(1, 120, Easing.CubicOut);
       _hoveredFolderRow = newHoverRow;
-      // Kept subtle on purpose: the row scales from its center, which doesn't line
-      // up with the left-aligned icon/text — a bigger bump makes that drift obvious.
+
       _hoveredFolderRow?.ScaleTo(1.02, 120, Easing.CubicOut);
     }
 
@@ -480,10 +448,7 @@ public partial class NotesPage : ContentPage
   {
     DragGhostLabel.Text = item switch { Folder f => f.Name, Note n => n.Title, _ => "" };
     DragGhostIcon.Text = item switch { Folder f => f.Icon, Note n => n.Icon, _ => "" };
-    // Match each row template's own icon color: notes tint their icon (Primary/
-    // PrimaryDark), folders use the label's default color. Without this the ghost's
-    // icon used the MaterialIconLabel style's flat default for both, which doesn't
-    // match either original row.
+
     if (item is Note)
     {
       string key = Application.Current?.RequestedTheme == AppTheme.Dark ? "PrimaryDark" : "Primary";
@@ -504,16 +469,12 @@ public partial class NotesPage : ContentPage
 
   private void PositionGhost(float rawX, float rawY)
   {
-    // TranslationX/Y on DragGhost are relative to RootGrid's own on-screen origin,
-    // not the screen's — RootGrid starts below the page's toolbar/status bar, so
-    // rawX/rawY (screen-absolute) need that origin subtracted first, the same way
-    // ContainsScreenPoint compares against each row's own on-screen location.
+
     if (RootGrid.Handler?.PlatformView is not Android.Views.View rootNative) return;
     var loc = new int[2];
     rootNative.GetLocationOnScreen(loc);
     float density = Android.App.Application.Context?.Resources?.DisplayMetrics?.Density ?? 1f;
-    // Centered on the touch point — half of WidthRequest (260) and the row's
-    // typical height (Padding 20,10 + 24pt icon ≈ 44dp).
+
     DragGhost.TranslationX = (rawX - loc[0]) / density - 130;
     DragGhost.TranslationY = (rawY - loc[1]) / density - 22;
   }
@@ -521,9 +482,6 @@ public partial class NotesPage : ContentPage
   private void HideDragGhost() => DragGhost.IsVisible = false;
 #endif
 
-  // targetParentId == null means "move to the top level": a folder's ParentId becomes
-  // null, a note's FolderId becomes "".
-  // Returns whether an item was actually relocated (false for a no-op or rejected move).
   private async Task<bool> MoveItemAsync(object draggedItem, string? targetParentId)
   {
     DragLog($"MoveItemAsync draggedItem={draggedItem?.GetType().Name} targetParentId={targetParentId}");
@@ -602,8 +560,6 @@ public partial class NotesPage : ContentPage
       _ = SpringBackAsync();
   }
 
-  // installed as SwipeBackGesture.OnCancel: a named method rather than a lambda so
-  // OnDisappearing can check whether the static still points at this page.
   private void OnSwipeCancel()
   {
     if (!_swipeReady) return;
@@ -627,10 +583,7 @@ public partial class NotesPage : ContentPage
           _nativeShadow, screenWidthPx + 20 - _shadowWidthPx, 0f);
       RemoveNativeShadow();
       await Shell.Current.GoToAsync("..", false);
-      // Hand the popped container back at TranslationX 0 - parked off-screen it would
-      // render as a white screen if Shell reuses it for the next push. Hide it first:
-      // otherwise the snap-back paints the outgoing page over the revealed one for a
-      // frame right after the navigation settles (a visible blink).
+
       if (leaving.Handle != IntPtr.Zero)
       {
         leaving.Visibility = Android.Views.ViewStates.Gone;
@@ -672,7 +625,7 @@ public partial class NotesPage : ContentPage
 #if ANDROID
   private void ShowPreviousPage()
   {
-    // Clean up any stale state from a previous call before re-searching.
+
     if (_prevPageView != null && _prevPageView.Handle != IntPtr.Zero)
       _prevPageView.Visibility = Android.Views.ViewStates.Gone;
     _prevPageView = null;
@@ -690,7 +643,7 @@ public partial class NotesPage : ContentPage
 
       if (cursor.Visibility == Android.Views.ViewStates.Visible && cursor is Android.Views.ViewGroup cursorVg)
       {
-        // cursor IS the actual current page container
+
         currentContainer = cursorVg;
         for (int i = parent.ChildCount - 1; i >= 0; i--)
         {
@@ -701,8 +654,7 @@ public partial class NotesPage : ContentPage
       }
       else
       {
-        // cursor is a stale Gone container — find visible sibling (actual current)
-        // then first Gone sibling after it in reverse order (skipping cursor) = previous page
+
         for (int i = parent.ChildCount - 1; i >= 0; i--)
         {
           if (parent.GetChildAt(i) is not Android.Views.ViewGroup vg || vg == cursor) continue;
