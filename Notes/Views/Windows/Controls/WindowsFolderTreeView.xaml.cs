@@ -495,7 +495,7 @@ public partial class WindowsFolderTreeView : ContentView
 
       if (fileResult == null) return;
 
-      string tempPath = Path.Combine(FileSystem.CacheDirectory,
+      string tempPath = Path.Combine(AppPaths.CacheRoot,
           Path.GetFileName(fileResult.FullPath));
 
       using (var src = await fileResult.OpenReadAsync())

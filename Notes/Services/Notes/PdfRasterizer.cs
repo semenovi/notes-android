@@ -1,3 +1,5 @@
+using Notes.Helpers;
+
 namespace Notes.Services.Notes;
 
 // Renders PDF pages to PNG bytes via PDFium on both platforms: Android's built-in
@@ -35,7 +37,7 @@ public static class PdfRasterizer
   private static Android.Graphics.Pdf.PdfRenderer OpenRenderer(byte[] pdfBytes,
       out Android.OS.ParcelFileDescriptor pfd, out string tempFile)
   {
-    tempFile = Path.Combine(FileSystem.CacheDirectory, $"pdf-render-{Guid.NewGuid():N}.pdf");
+    tempFile = Path.Combine(AppPaths.CacheRoot, $"pdf-render-{Guid.NewGuid():N}.pdf");
     File.WriteAllBytes(tempFile, pdfBytes);
     pfd = Android.OS.ParcelFileDescriptor.Open(new Java.IO.File(tempFile), Android.OS.ParcelFileMode.ReadOnly)!;
     return new Android.Graphics.Pdf.PdfRenderer(pfd);

@@ -146,7 +146,7 @@ public partial class WindowsNoteListView : ContentView
         var item = await _mediaManager.GetMediaAsync(mediaId);
         if (item != null)
         {
-          var absPath = Path.Combine(FileSystem.AppDataDirectory, "Notes", item.StoragePath);
+          var absPath = Path.Combine(AppPaths.DataRoot, item.StoragePath);
           if (File.Exists(absPath))
           {
             result.Add(ImageSource.FromFile(absPath));

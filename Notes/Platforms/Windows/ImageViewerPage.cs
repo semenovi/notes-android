@@ -1,5 +1,6 @@
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
+using Notes.Helpers;
 using Notes.Services.Notes;
 using WinRT.Interop;
 
@@ -29,7 +30,7 @@ public class ImageViewerPage : ContentPage
     private async Task LoadAsync(string imageSrc)
     {
         var html     = BuildHtml(imageSrc, _mediaId != null);
-        var htmlPath = Path.Combine(FileSystem.CacheDirectory, "iv_page.html");
+        var htmlPath = Path.Combine(AppPaths.CacheRoot, "iv_page.html");
         await File.WriteAllTextAsync(htmlPath, html, System.Text.Encoding.UTF8);
         var fileUrl  = new Uri(htmlPath).AbsoluteUri;
         await MainThread.InvokeOnMainThreadAsync(

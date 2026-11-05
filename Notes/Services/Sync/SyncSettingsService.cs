@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Notes.Helpers;
 using Notes.Models;
 
 namespace Notes.Services.Sync;
@@ -10,7 +11,7 @@ public class SyncSettingsService
 
   public SyncSettingsService()
   {
-    string dir = Path.Combine(FileSystem.AppDataDirectory, "Notes");
+    string dir = AppPaths.DataRoot;
     Directory.CreateDirectory(dir);
     _settingsPath = Path.Combine(dir, "sync_settings.json");
   }

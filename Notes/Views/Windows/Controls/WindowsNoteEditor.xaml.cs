@@ -365,7 +365,7 @@ public partial class WindowsNoteEditor : ContentView
           ? "<p style='color:#8E8E93'>No content</p>"
           : await _markdownProcessor.ConvertToHtmlAsync(content);
 
-      string tempPath = Path.Combine(FileSystem.CacheDirectory, "note_preview.html");
+      string tempPath = Path.Combine(AppPaths.CacheRoot, "note_preview.html");
       await File.WriteAllTextAsync(tempPath, WrapHtml(body), System.Text.Encoding.UTF8);
 
       var navTask = WaitForNavigationAsync(ContentPreview);

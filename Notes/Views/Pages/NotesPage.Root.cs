@@ -209,7 +209,7 @@ public partial class NotesPage
 
       _toastService.Show("starting import process...");
 
-      string tempPath = Path.Combine(FileSystem.CacheDirectory, Path.GetFileName(fileResult.FullPath));
+      string tempPath = Path.Combine(AppPaths.CacheRoot, Path.GetFileName(fileResult.FullPath));
       using (var sourceStream = await fileResult.OpenReadAsync())
       using (var destStream = File.Create(tempPath))
       {

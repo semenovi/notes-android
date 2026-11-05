@@ -1,4 +1,5 @@
-﻿using System.IO.Compression;
+using System.IO.Compression;
+using Notes.Helpers;
 using Notes.Data.Storage;
 using CommunityToolkit.Maui.Storage;
 
@@ -19,7 +20,7 @@ public class ExportService
   {
     string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
     string tempFileName = $"{timestamp}.zip";
-    string tempPath = Path.Combine(FileSystem.CacheDirectory, tempFileName);
+    string tempPath = Path.Combine(AppPaths.CacheRoot, tempFileName);
 
     try
     {
@@ -117,7 +118,7 @@ public class ExportService
     if (string.IsNullOrEmpty(backupPath) || !File.Exists(backupPath))
       throw new FileNotFoundException("Backup file not found", backupPath);
 
-    string tempDir = Path.Combine(FileSystem.CacheDirectory, "import_temp");
+    string tempDir = Path.Combine(AppPaths.CacheRoot, "import_temp");
 
     try
     {

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Notes.Helpers;
 using Notes.Data.Repositories;
 using Notes.Data.Storage;
 using Notes.Services.Crypto;
@@ -34,7 +35,7 @@ public static class MauiProgram
           fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
         });
 
-    string appDataPath = Path.Combine(FileSystem.AppDataDirectory, "Notes");
+    string appDataPath = AppPaths.DataRoot;
 
     builder.Services.AddSingleton<FileSystemStorage>(new FileSystemStorage(appDataPath));
     builder.Services.AddSingleton<MediaStorage>();
