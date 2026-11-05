@@ -172,14 +172,27 @@ public partial class WindowsNoteListView : ContentView
 
   private void OnNoteTapped(object sender, EventArgs e)
   {
-    if (sender is Grid grid && grid.BindingContext is NoteViewModel vm)
+    var vm = NoteOf(sender);
+    if (vm != null)
       SelectNote(vm);
+  }
+
+  private static NoteViewModel? NoteOf(object? sender)
+  {
+    if (sender is VisualElement element && element.BindingContext is NoteViewModel direct)
+      return direct;
+    if (sender is Element child && child.Parent is VisualElement parent && parent.BindingContext is NoteViewModel inherited)
+      return inherited;
+    return null;
   }
 
   private void OnNoteDragStarting(object sender, DragStartingEventArgs e)
   {
-    if ((sender as Element)?.Parent is not Grid row || row.BindingContext is not NoteViewModel vm) return;
+    var vm = NoteOf(sender);
+    if (vm == null)
+      return;
     e.Data.Properties["noteId"] = vm.Note.Id;
+    e.Data.Text = "note:" + vm.Note.Id;
   }
 
   private void SelectNote(NoteViewModel vm)

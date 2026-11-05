@@ -149,7 +149,8 @@ public partial class WindowsFolderTreeView : ContentView
 
   private void OnFolderTapped(object sender, EventArgs e)
   {
-    if (sender is Grid grid && grid.BindingContext is FolderViewModel vm)
+    var vm = FolderOf(sender);
+    if (vm != null)
       SelectFolder(vm);
   }
 
@@ -165,7 +166,17 @@ public partial class WindowsFolderTreeView : ContentView
 
   private static readonly Color FolderHoverColor = Color.FromArgb("#E8F0FE");
 
-  private static Border? DropRowOf(object sender) => (sender as Element)?.Parent as Border;
+  private static Border? DropRowOf(object sender) =>
+      sender as Border ?? (sender as Element)?.Parent as Border;
+
+  private static FolderViewModel? FolderOf(object? sender)
+  {
+    if (sender is VisualElement element && element.BindingContext is FolderViewModel direct)
+      return direct;
+    if (sender is Element child && child.Parent is VisualElement parent && parent.BindingContext is FolderViewModel inherited)
+      return inherited;
+    return null;
+  }
 
   private void OnFolderRowDragOver(object sender, DragEventArgs e)
   {
@@ -179,26 +190,81 @@ public partial class WindowsFolderTreeView : ContentView
       border.BackgroundColor = vm.IsSelected ? Color.FromArgb("#D4D4D4") : Colors.Transparent;
   }
 
+  private void OnFolderDragStarting(object? sender, DragStartingEventArgs e)
+  {
+    var vm = FolderOf(sender);
+    if (vm == null || IsTopLevelRow(vm))
+      return;
+
+    e.Data.Properties["folderId"] = vm.Folder.Id;
+    e.Data.Text = "folder:" + vm.Folder.Id;
+  }
+
   private async void OnNoteDroppedOnFolder(object sender, DropEventArgs e)
   {
     var border = DropRowOf(sender);
     if (border == null) return;
-    if (border.BindingContext is not FolderViewModel vm)
+    var vm = FolderOf(border);
+    if (vm == null)
     {
       border.BackgroundColor = Colors.Transparent;
       return;
     }
     border.BackgroundColor = vm.IsSelected ? Color.FromArgb("#D4D4D4") : Colors.Transparent;
 
-    if (!e.Data.Properties.TryGetValue("noteId", out var noteIdObj) || noteIdObj is not string noteId)
+    string? payload = null;
+    if (e.Data.Properties.TryGetValue("noteId", out var noteIdObj) && noteIdObj is string noteIdValue)
+      payload = "note:" + noteIdValue;
+    else if (e.Data.Properties.TryGetValue("folderId", out var folderIdObj) && folderIdObj is string folderIdValue)
+      payload = "folder:" + folderIdValue;
+
+    if (string.IsNullOrEmpty(payload))
+      payload = await e.Data.GetTextAsync();
+
+
+    if (string.IsNullOrEmpty(payload))
       return;
 
+    if (payload.StartsWith("folder:", StringComparison.Ordinal))
+    {
+      await MoveFolderAsync(payload["folder:".Length..], vm);
+      return;
+    }
+
+    if (!payload.StartsWith("note:", StringComparison.Ordinal))
+      return;
+
+    var noteId = payload["note:".Length..];
     var note = await _noteManager.GetNoteAsync(noteId);
     if (note == null || note.FolderId == vm.Folder.Id) return;
 
     note.FolderId = vm.Folder.Id;
     await _noteManager.UpdateNoteAsync(note);
     NoteMovedToFolder?.Invoke(this, noteId);
+  }
+
+  private async Task MoveFolderAsync(string folderId, FolderViewModel target)
+  {
+    if (string.IsNullOrEmpty(folderId) || folderId == target.Folder.Id)
+      return;
+
+    var folder = await _folderManager.GetFolderAsync(folderId);
+    if (folder == null)
+      return;
+
+    if (target.Folder.Id.Length > 0)
+    {
+      var descendants = await _folderManager.GetDescendantFoldersAsync(folderId);
+      if (descendants.Any(d => d.Id == target.Folder.Id))
+        return;
+    }
+
+    string? newParentId = target.Folder.Id.Length == 0 ? null : target.Folder.Id;
+    if (folder.ParentId == newParentId)
+      return;
+
+    await _folderManager.MoveFolderAsync(folderId, newParentId);
+    await LoadFoldersAsync();
   }
 
   private async void OnNewFolderButtonClicked(object sender, EventArgs e)

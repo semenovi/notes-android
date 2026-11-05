@@ -25,13 +25,13 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="controls:FolderViewModel">
                     <Grid Padding="8,2">
-                        <Grid.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnFolderTapped" />
-                        </Grid.GestureRecognizers>
                         <Border BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=folder}"
                                 StrokeThickness="0"
                                 StrokeShape="RoundRectangle 6">
                             <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnFolderTapped" />
+                                <DragGestureRecognizer CanDrag="True"
+                                                       DragStarting="OnFolderDragStarting" />
                                 <DropGestureRecognizer AllowDrop="True"
                                                         DragOver="OnFolderRowDragOver"
                                                         DragLeave="OnFolderRowDragLeave"
