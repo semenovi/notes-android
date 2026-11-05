@@ -2,8 +2,70 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:helpers="clr-namespace:Notes.Helpers"
+             xmlns:controls="clr-namespace:Notes.Views.Controls"
              x:Class="Notes.Views.Controls.AttachmentSheet"
              IsVisible="False">
+
+    <ContentView.Resources>
+        <Style x:Key="SheetActionButton" TargetType="Button">
+            <Setter Property="WidthRequest" Value="56" />
+            <Setter Property="HeightRequest" Value="56" />
+            <Setter Property="CornerRadius" Value="28" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalOptions" Value="Center" />
+            <Setter Property="VerticalOptions" Value="Center" />
+            <Setter Property="FontFamily" Value="MaterialIcons" />
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="BorderWidth" Value="0" />
+            <Setter Property="BorderColor" Value="Transparent" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}" />
+            <Setter Property="VisualStateManager.VisualStateGroups">
+                <VisualStateGroupList>
+                    <VisualStateGroup Name="CommonStates">
+                        <VisualState Name="Normal">
+                            <VisualState.Setters>
+                                <Setter Property="BorderColor" Value="Transparent" />
+                                <Setter Property="BorderWidth" Value="0" />
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState Name="Focused">
+                            <VisualState.Setters>
+                                <Setter Property="BorderColor" Value="{StaticResource Primary}" />
+                                <Setter Property="BorderWidth" Value="3" />
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateGroupList>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SheetOverlayButton" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="BorderWidth" Value="0" />
+            <Setter Property="BorderColor" Value="Transparent" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="VisualStateManager.VisualStateGroups">
+                <VisualStateGroupList>
+                    <VisualStateGroup Name="CommonStates">
+                        <VisualState Name="Normal">
+                            <VisualState.Setters>
+                                <Setter Property="BorderColor" Value="Transparent" />
+                                <Setter Property="BorderWidth" Value="0" />
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState Name="Focused">
+                            <VisualState.Setters>
+                                <Setter Property="BorderColor" Value="{StaticResource Primary}" />
+                                <Setter Property="BorderWidth" Value="3" />
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateGroupList>
+            </Setter>
+        </Style>
+    </ContentView.Resources>
 
     <Grid x:Name="Root">
         <BoxView x:Name="Scrim"
@@ -23,134 +85,108 @@
                 StrokeShape="RoundRectangle 20,20,0,0"
                 BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
                 Padding="0">
-            <Grid>
-            <CollectionView x:Name="RecentsView"
-                            Margin="10,0,10,16"
-                            ItemsUpdatingScrollMode="KeepItemsInView">
-                <CollectionView.ItemsLayout>
-                    <GridItemsLayout Orientation="Vertical"
-                                      Span="4"
-                                      HorizontalItemSpacing="6"
-                                      VerticalItemSpacing="6" />
-                </CollectionView.ItemsLayout>
+            <Grid RowDefinitions="Auto,*">
+                <VerticalStackLayout Grid.Row="0" Spacing="0" Padding="0,10,0,14">
+                    <BoxView WidthRequest="36"
+                             HeightRequest="4"
+                             CornerRadius="2"
+                             Color="{StaticResource Gray300}"
+                             HorizontalOptions="Center"
+                             Margin="0,0,0,14" />
 
-                <CollectionView.EmptyView>
-                    <Label Text="no recent photos"
-                           FontSize="13"
-                           TextColor="{StaticResource Gray400}"
-                           HorizontalOptions="Center"
-                           Margin="0,24" />
-                </CollectionView.EmptyView>
+                    <Grid x:Name="SourceButtons" ColumnDefinitions="*,*,*" Padding="6,0,6,10">
+                        <VerticalStackLayout Grid.Column="0" Spacing="6">
+                            <Button x:Name="GalleryButton"
+                                    Style="{StaticResource SheetActionButton}"
+                                    Text="{x:Static helpers:MaterialIconCodes.PhotoLibrary}"
+                                    Focused="OnSourceFocused"
+                                    Clicked="OnGalleryTapped" />
+                            <Label Text="Gallery" FontSize="12" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
 
-                <CollectionView.Header>
-                    <VerticalStackLayout Spacing="0" Padding="0,10,0,14">
-                        <BoxView WidthRequest="36"
-                                 HeightRequest="4"
-                                 CornerRadius="2"
-                                 Color="{StaticResource Gray300}"
-                                 HorizontalOptions="Center"
-                                 Margin="0,0,0,14" />
+                        <VerticalStackLayout Grid.Column="1" Spacing="6">
+                            <Button x:Name="FileButton"
+                                    Style="{StaticResource SheetActionButton}"
+                                    Text="{x:Static helpers:MaterialIconCodes.InsertDriveFile}"
+                                    Focused="OnSourceFocused"
+                                    Clicked="OnFilesTapped" />
+                            <Label Text="File" FontSize="12" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
 
-                        <Grid ColumnDefinitions="*,*,*" Padding="6,0,6,10">
-                            <VerticalStackLayout Grid.Column="0" Spacing="6">
-                                <Border HeightRequest="56"
-                                        WidthRequest="56"
-                                        HorizontalOptions="Center"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 28"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}">
-                                    <Label Text="{x:Static helpers:MaterialIconCodes.PhotoLibrary}"
-                                           FontFamily="MaterialIcons"
-                                           FontSize="24"
+                        <VerticalStackLayout Grid.Column="2" Spacing="6">
+                            <Button x:Name="CameraButton"
+                                    Style="{StaticResource SheetActionButton}"
+                                    Text="{x:Static helpers:MaterialIconCodes.PhotoCamera}"
+                                    Focused="OnSourceFocused"
+                                    Clicked="OnCameraTapped" />
+                            <Label Text="Camera" FontSize="12" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+
+                <CollectionView x:Name="RecentsView"
+                                Grid.Row="1"
+                                Margin="10,0,10,16"
+                                ItemsUpdatingScrollMode="KeepItemsInView">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical"
+                                          Span="4"
+                                          HorizontalItemSpacing="6"
+                                          VerticalItemSpacing="6" />
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.EmptyView>
+                        <Label Text="no recent photos"
+                               FontSize="13"
+                               TextColor="{StaticResource Gray400}"
+                               HorizontalOptions="Center"
+                               Margin="0,24" />
+                    </CollectionView.EmptyView>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid HeightRequest="92">
+                                <Border StrokeThickness="0" StrokeShape="RoundRectangle 10">
+                                    <Grid>
+                                        <controls:ThumbImage Source="{Binding Thumb}" Aspect="AspectFill" />
+                                    </Grid>
+                                </Border>
+                                <Border IsVisible="{Binding IsSelected}"
+                                        HeightRequest="22"
+                                        WidthRequest="22"
+                                        Margin="6"
+                                        HorizontalOptions="End"
+                                        VerticalOptions="Start"
+                                        Stroke="White"
+                                        StrokeThickness="2"
+                                        StrokeShape="RoundRectangle 11"
+                                        BackgroundColor="{StaticResource Primary}">
+                                    <Label Text="{Binding OrderLabel}"
+                                           TextColor="White"
+                                           FontSize="11"
+                                           FontAttributes="Bold"
                                            HorizontalOptions="Center"
                                            VerticalOptions="Center" />
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer Tapped="OnGalleryTapped" />
-                                    </Border.GestureRecognizers>
                                 </Border>
-                                <Label Text="Gallery" FontSize="12" HorizontalOptions="Center" />
-                            </VerticalStackLayout>
+                                <Button Style="{StaticResource SheetOverlayButton}"
+                                        CommandParameter="{Binding .}"
+                                        Loaded="OnThumbLoaded"
+                                        Focused="OnThumbFocused"
+                                        Clicked="OnRecentClicked" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
 
-                            <VerticalStackLayout Grid.Column="1" Spacing="6">
-                                <Border HeightRequest="56"
-                                        WidthRequest="56"
-                                        HorizontalOptions="Center"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 28"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}">
-                                    <Label Text="{x:Static helpers:MaterialIconCodes.InsertDriveFile}"
-                                           FontFamily="MaterialIcons"
-                                           FontSize="24"
-                                           HorizontalOptions="Center"
-                                           VerticalOptions="Center" />
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer Tapped="OnFilesTapped" />
-                                    </Border.GestureRecognizers>
-                                </Border>
-                                <Label Text="File" FontSize="12" HorizontalOptions="Center" />
-                            </VerticalStackLayout>
-
-                            <VerticalStackLayout Grid.Column="2" Spacing="6">
-                                <Border HeightRequest="56"
-                                        WidthRequest="56"
-                                        HorizontalOptions="Center"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 28"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}">
-                                    <Label Text="{x:Static helpers:MaterialIconCodes.PhotoCamera}"
-                                           FontFamily="MaterialIcons"
-                                           FontSize="24"
-                                           HorizontalOptions="Center"
-                                           VerticalOptions="Center" />
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer Tapped="OnCameraTapped" />
-                                    </Border.GestureRecognizers>
-                                </Border>
-                                <Label Text="Camera" FontSize="12" HorizontalOptions="Center" />
-                            </VerticalStackLayout>
-                        </Grid>
-                    </VerticalStackLayout>
-                </CollectionView.Header>
-
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid HeightRequest="92">
-                            <Grid.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnRecentTapped" />
-                            </Grid.GestureRecognizers>
-                            <Border StrokeThickness="0" StrokeShape="RoundRectangle 10">
-                                <Grid>
-                                    <Image Source="{Binding Thumb}" Aspect="AspectFill" />
-                                    <BoxView Color="Black" Opacity="{Binding OverlayOpacity}" />
-                                </Grid>
-                            </Border>
-                            <Border IsVisible="{Binding IsSelected}"
-                                    HeightRequest="22"
-                                    WidthRequest="22"
-                                    Margin="6"
-                                    HorizontalOptions="End"
-                                    VerticalOptions="Start"
-                                    Stroke="White"
-                                    StrokeThickness="2"
-                                    StrokeShape="RoundRectangle 11"
-                                    BackgroundColor="{StaticResource Primary}">
-                                <Label Text="{Binding OrderLabel}"
-                                       TextColor="White"
-                                       FontSize="11"
-                                       FontAttributes="Bold"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center" />
-                            </Border>
-                        </Grid>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-
-            <ActivityIndicator x:Name="LoadingIndicator"
-                                IsRunning="False"
-                                IsVisible="False"
-                                HeightRequest="240"
-                                Color="{StaticResource Primary}" />
+                <ActivityIndicator x:Name="LoadingIndicator"
+                                    Grid.Row="1"
+                                    IsRunning="False"
+                                    IsVisible="False"
+                                    WidthRequest="36"
+                                    HeightRequest="36"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"
+                                    Color="{StaticResource Primary}" />
             </Grid>
         </Border>
 
@@ -194,10 +230,11 @@
                            HorizontalOptions="Center"
                            VerticalOptions="Center" />
                 </Border>
+                <Button x:Name="AddButton"
+                        Style="{StaticResource SheetOverlayButton}"
+                        CornerRadius="29"
+                        Clicked="OnAddTapped" />
             </Grid>
-            <Border.GestureRecognizers>
-                <TapGestureRecognizer Tapped="OnAddTapped" />
-            </Border.GestureRecognizers>
         </Border>
     </Grid>
 </ContentView>
