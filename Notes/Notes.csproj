@@ -44,7 +44,7 @@
 	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
 	  <DebugSymbols>False</DebugSymbols>
-	  <TrimMode>link</TrimMode>
+	  <AndroidLinkMode>None</AndroidLinkMode>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Debug'">
