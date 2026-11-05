@@ -208,6 +208,47 @@ public sealed class WindowsAttachmentPage : ContentPage
     return result;
   }
 
+  protected override void OnHandlerChanged()
+  {
+    base.OnHandlerChanged();
+    if (Handler?.PlatformView is not Microsoft.UI.Xaml.FrameworkElement element)
+      return;
+    element.AllowDrop = true;
+    element.DragOver += OnNativeDragOver;
+    element.Drop += OnNativeDrop;
+  }
+
+  private static void OnNativeDragOver(object sender, Microsoft.UI.Xaml.DragEventArgs e)
+  {
+    if (!e.DataView.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+      return;
+    e.AcceptedOperation = global::Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+    e.DragUIOverride.Caption = "add images";
+  }
+
+  private async void OnNativeDrop(object sender, Microsoft.UI.Xaml.DragEventArgs e)
+  {
+    if (!e.DataView.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+      return;
+
+    var items = await e.DataView.GetStorageItemsAsync();
+    foreach (var item in items.OfType<global::Windows.Storage.StorageFile>())
+    {
+      string name = item.Name;
+      string extension = System.IO.Path.GetExtension(name).ToLowerInvariant();
+      if (extension is not (".png" or ".jpg" or ".jpeg" or ".gif" or ".bmp" or ".webp" or ".pdf"))
+        continue;
+
+      using var randomAccess = await item.OpenReadAsync();
+      using var stream = randomAccess.AsStreamForRead();
+      using var buffer = new MemoryStream();
+      await stream.CopyToAsync(buffer);
+      AddBytes(name, buffer.ToArray());
+    }
+
+    UpdateSelection();
+  }
+
   protected override void OnDisappearing()
   {
     base.OnDisappearing();
@@ -281,16 +322,21 @@ public sealed class WindowsAttachmentPage : ContentPage
       data = buffer.ToArray();
     }
 
-    bool isPdf = file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+    AddBytes(file.FileName, data);
+  }
+
+  private void AddBytes(string fileName, byte[] data)
+  {
+    bool isPdf = fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
     if (isPdf)
     {
-      _drafts.Add(new Draft(file.FileName, data, AttachmentKind.Pdf));
+      _drafts.Add(new Draft(fileName, data, AttachmentKind.Pdf));
       if (_selectedIndex < 0)
         _selectedIndex = 0;
       return;
     }
 
-    var draft = CreateImageDraft(file.FileName, data);
+    var draft = CreateImageDraft(fileName, data);
     if (draft == null)
       return;
     _drafts.Add(draft);
