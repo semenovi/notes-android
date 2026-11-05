@@ -107,7 +107,14 @@ public partial class AttachmentSheet : ContentView
         OnAddTapped(null, EventArgs.Empty);
         return true;
       }
-      return false;
+
+      if (key == Android.Views.Keycode.DpadUp)
+      {
+        FocusThumb(_recents.Count - 1);
+        return true;
+      }
+
+      return key == Android.Views.Keycode.DpadDown;
     }
 
     if (!_thumbViews.TryGetValue(view, out var thumb))
@@ -126,6 +133,8 @@ public partial class AttachmentSheet : ContentView
 
     if (key == Android.Views.Keycode.DpadUp && index < 4)
     {
+      if (_recents.Count > 0)
+        RecentsView.ScrollTo(0, -1, ScrollToPosition.MakeVisible, false);
       var sources = SourceButtons.Handler?.PlatformView as Android.Views.ViewGroup;
       if (sources != null)
         FocusSource(sources, 2);
@@ -141,21 +150,60 @@ public partial class AttachmentSheet : ContentView
       _ => -1,
     };
 
-    if (target >= 0 && target < _recents.Count &&
-        _buttonsByThumb.TryGetValue(_recents[target], out var targetView))
+    if (target >= 0 && target < _recents.Count)
     {
-      targetView.RequestFocus();
+      FocusThumb(target);
       return true;
     }
 
     if (key == Android.Views.Keycode.DpadDown &&
         AddButton.Handler?.PlatformView is Android.Views.View add)
     {
-      add.RequestFocus();
+      if (ActionButton.IsVisible)
+      {
+        if (_recents.Count > 0)
+          RecentsView.ScrollTo(_recents.Count - 1, -1, ScrollToPosition.MakeVisible, false);
+        add.RequestFocus();
+      }
+      else
+      {
+        FocusThumb(_recents.Count - 1);
+      }
       return true;
     }
 
     return false;
+  }
+
+  private void FocusThumb(int index)
+  {
+    if (index < 0 || index >= _recents.Count)
+      return;
+
+    var thumb = _recents[index];
+    RecentsView.ScrollTo(index, -1, ScrollToPosition.Center, false);
+    FocusThumbAfterScroll(thumb, 0);
+  }
+
+  private void FocusThumbAfterScroll(RecentThumb thumb, int attempt)
+  {
+    Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(100), () =>
+    {
+      if (_buttonsByThumb.TryGetValue(thumb, out var view) && view.IsAttachedToWindow)
+      {
+        view.RequestFocus();
+        return;
+      }
+
+      if (attempt < 10)
+      {
+        FocusThumbAfterScroll(thumb, attempt + 1);
+        return;
+      }
+
+      if (RecentsView.Handler?.PlatformView is Android.Views.View grid)
+        grid.RequestFocus();
+    });
   }
 
   private bool HandleSourceKey(Android.Views.Keycode key, AttachmentSource source)
@@ -169,6 +217,8 @@ public partial class AttachmentSheet : ContentView
     if (key != Android.Views.Keycode.DpadDown)
       return false;
 
+    if (_recents.Count > 0)
+      RecentsView.ScrollTo(0, -1, ScrollToPosition.MakeVisible, false);
     var recents = RecentsView.Handler?.PlatformView as Android.Views.ViewGroup;
     var first = recents != null ? FirstFocusable(recents) : null;
     first?.RequestFocus();
