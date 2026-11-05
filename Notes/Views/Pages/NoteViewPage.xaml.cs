@@ -118,7 +118,7 @@ public partial class NoteViewPage : ContentPage
     <meta charset='utf-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 15px; line-height: 1.5; margin-top: 15px; overflow-wrap: break-word; word-break: break-word; }}
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 20px; line-height: 1.5; max-width: 640px; margin: 0 auto; box-sizing: border-box; overflow-wrap: break-word; word-break: break-word; }}
         img {{ max-width: 100%; border-radius: 4px; }}
         pre {{ background-color: #f5f5f5; padding: 10px; }}
         code {{ background-color: #f5f5f5; padding: 2px 4px; }}

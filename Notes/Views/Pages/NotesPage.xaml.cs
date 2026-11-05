@@ -137,6 +137,17 @@ public partial class NotesPage : ContentPage
     _progressService = progressService;
     Items.CollectionChanged += (_, _) => IsEmpty = Items.Count == 0;
     BindingContext = this;
+    SizeChanged += OnPageSizeChanged;
+  }
+
+  private void OnPageSizeChanged(object? sender, EventArgs e)
+  {
+    if (double.IsNaN(Width) || Width <= 0)
+      return;
+
+    double side = Math.Max(0, (Width - 640) / 2);
+    ItemsStack.Margin = new Thickness(side, 0, side, 0);
+    AddNoteButton.Margin = new Thickness(0, 0, 20 + side, 20);
   }
 
   protected override async void OnAppearing()

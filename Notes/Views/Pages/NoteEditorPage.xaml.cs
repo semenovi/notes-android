@@ -102,6 +102,14 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     _lastPageHeight = height;
     _lastPageWidth = width;
 
+    double side = Math.Max(0, (width - 640) / 2);
+    EditorScrollView.Margin = new Thickness(10 + side, 10, 10 + side, 10);
+
+    bool compact = width < 360;
+    AttachButton.WidthRequest = compact ? 52 : 60;
+    AttachButton.HeightRequest = compact ? 52 : 60;
+    AttachButton.Margin = new Thickness(0, 0, (compact ? 12 : 20) + side, compact ? 12 : 20);
+
     if (previousHeight <= 0)
       return;
 
@@ -295,26 +303,61 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
     {
       case AttachmentSource.Gallery:
       {
+#if ANDROID
+        var picked = await MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions
+        {
+          Title = "select images",
+        });
+#else
         var picked = await FilePicker.PickMultipleAsync(new PickOptions
         {
           FileTypes = MediaFilePickerTypes.ImagesOnly,
           PickerTitle = "select images",
         });
+#endif
         return picked?.Select(ToPending).ToList();
       }
 
       case AttachmentSource.Files:
       {
+#if ANDROID
+        var picked = await Notes.Platforms.Android.AndroidFilePicker.PickMultipleAsync(
+            new[] { "image/*", "application/pdf" }, "select images or pdf");
+#else
         var picked = await FilePicker.PickMultipleAsync(new PickOptions
         {
           FileTypes = MediaFilePickerTypes.ImagesAndPdf,
           PickerTitle = "select images or pdf",
         });
+#endif
         return picked?.Select(ToPending).ToList();
       }
 
       case AttachmentSource.Camera:
       {
+#if ANDROID
+        string? lens = await DisplayActionSheet("camera", "cancel", null,
+            "rear camera", "front camera");
+        if (lens is null or "cancel")
+          return null;
+
+        var status = await Permissions.RequestAsync<Permissions.Camera>();
+        if (status != PermissionStatus.Granted)
+        {
+          _toastService.Show("camera permission denied");
+          return null;
+        }
+
+        var photo = await Notes.Platforms.Android.AndroidCameraCapture.CaptureAsync(
+            lens == "front camera");
+        if (photo == null)
+        {
+          _toastService.Show("camera not available");
+          return null;
+        }
+
+        return new[] { ToPending(photo) };
+#else
         if (!MediaPicker.Default.IsCaptureSupported)
         {
           _toastService.Show("camera not available");
@@ -333,6 +376,7 @@ public partial class NoteEditorPage : ContentPage, INotifyPropertyChanged
           return null;
 
         return new[] { ToPending(photo) };
+#endif
       }
 
       default:

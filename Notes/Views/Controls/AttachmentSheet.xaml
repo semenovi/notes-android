@@ -16,6 +16,8 @@
 
         <Border x:Name="Sheet"
                 VerticalOptions="End"
+                HorizontalOptions="Center"
+                MaximumWidthRequest="560"
                 MaximumHeightRequest="560"
                 StrokeThickness="0"
                 StrokeShape="RoundRectangle 20,20,0,0"
@@ -31,6 +33,14 @@
                                       HorizontalItemSpacing="6"
                                       VerticalItemSpacing="6" />
                 </CollectionView.ItemsLayout>
+
+                <CollectionView.EmptyView>
+                    <Label Text="no recent photos"
+                           FontSize="13"
+                           TextColor="{StaticResource Gray400}"
+                           HorizontalOptions="Center"
+                           Margin="0,24" />
+                </CollectionView.EmptyView>
 
                 <CollectionView.Header>
                     <VerticalStackLayout Spacing="0" Padding="0,10,0,14">

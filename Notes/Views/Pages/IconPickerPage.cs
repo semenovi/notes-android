@@ -4427,6 +4427,7 @@ public class IconPickerPage : ContentPage
             ItemTemplate = new DataTemplate(BuildCell),
         };
         _collectionView.SelectionChanged += OnSelectionChanged;
+        _collectionView.SizeChanged += OnCollectionSizeChanged;
 
         var grid = new Grid
         {
@@ -4440,6 +4441,22 @@ public class IconPickerPage : ContentPage
         grid.Add(_collectionView, 0, 1);
 
         Content = grid;
+    }
+
+    private void OnCollectionSizeChanged(object? sender, EventArgs e)
+    {
+        if (_collectionView == null || _collectionView.Width <= 0)
+            return;
+
+        int span = Math.Clamp((int)(_collectionView.Width / 56), 4, 10);
+        if (_collectionView.ItemsLayout is GridItemsLayout layout && layout.Span == span)
+            return;
+
+        _collectionView.ItemsLayout = new GridItemsLayout(span, ItemsLayoutOrientation.Vertical)
+        {
+            HorizontalItemSpacing = 4,
+            VerticalItemSpacing = 4,
+        };
     }
 
     private void OnSearchChanged(object? sender, TextChangedEventArgs e)

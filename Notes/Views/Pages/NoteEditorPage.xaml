@@ -6,7 +6,10 @@
              Title="{Binding Title}">
 
     <Grid x:Name="RootGrid" RowDefinitions="Auto,*">
-        <HorizontalStackLayout Grid.Row="0" Padding="10,6" Spacing="6">
+        <ScrollView Grid.Row="0" Orientation="Horizontal"
+                    HorizontalScrollBarVisibility="Never">
+        <HorizontalStackLayout x:Name="EditorToolbar" Padding="10,6" Spacing="6"
+                               HorizontalOptions="Start">
             <Button Text="{x:Static helpers:MaterialIconCodes.Save}" 
                     FontFamily="MaterialIcons"
                     FontSize="22" 
@@ -49,6 +52,7 @@
                     HeightRequest="44"
                     Clicked="OnFormatListClicked" />
         </HorizontalStackLayout>
+        </ScrollView>
 
         <ScrollView x:Name="EditorScrollView" Grid.Row="1" Margin="10">
             <Editor x:Name="ContentEditor"

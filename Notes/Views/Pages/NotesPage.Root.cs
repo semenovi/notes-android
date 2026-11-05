@@ -187,6 +187,10 @@ public partial class NotesPage
 
     try
     {
+#if ANDROID
+      var fileResult = await Notes.Platforms.Android.AndroidFilePicker.PickSingleAsync(
+          new[] { "application/zip" }, "select backup file");
+#else
       var fileResult = await FilePicker.PickAsync(new PickOptions
       {
         FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
@@ -198,6 +202,7 @@ public partial class NotesPage
         }),
         PickerTitle = "select backup file"
       });
+#endif
 
       if (fileResult == null)
         return;

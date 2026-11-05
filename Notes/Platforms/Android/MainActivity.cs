@@ -1,4 +1,5 @@
 using Android.App;
+using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using Android.Views;
@@ -27,6 +28,13 @@ public class MainActivity : MauiAppCompatActivity
     {
         base.OnResume();
         Window?.SetSoftInputMode(SoftInput.AdjustResize);
+    }
+
+    protected override void OnActivityResult(int requestCode, Result resultCode, Intent? data)
+    {
+        base.OnActivityResult(requestCode, resultCode, data);
+        Notes.Platforms.Android.AndroidFilePicker.HandleResult(requestCode, resultCode, data);
+        Notes.Platforms.Android.AndroidCameraCapture.HandleResult(requestCode, resultCode, data);
     }
 
     public override bool DispatchTouchEvent(MotionEvent? e)
