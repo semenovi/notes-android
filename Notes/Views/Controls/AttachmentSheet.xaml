@@ -187,24 +187,19 @@
                                     HorizontalOptions="Center"
                                     VerticalOptions="Center"
                                     Color="{StaticResource Primary}" />
-            </Grid>
-        </Border>
-
         <Border x:Name="ActionButton"
+                Grid.RowSpan="2"
+                ZIndex="10"
                 IsVisible="False"
                 Opacity="0"
-                Scale="0.6"
-                HeightRequest="58"
-                WidthRequest="58"
+                HeightRequest="60"
+                WidthRequest="60"
                 HorizontalOptions="End"
                 VerticalOptions="End"
-                Margin="0,0,22,150"
+                Margin="0,0,20,20"
                 StrokeThickness="0"
-                StrokeShape="RoundRectangle 29"
+                StrokeShape="RoundRectangle 30"
                 BackgroundColor="{StaticResource Primary}">
-            <Border.Shadow>
-                <Shadow Brush="Black" Opacity="0.35" Radius="10" Offset="0,4" />
-            </Border.Shadow>
             <Grid>
                 <Label Text="{x:Static helpers:MaterialIconCodes.Check}"
                        FontFamily="MaterialIcons"
@@ -212,29 +207,14 @@
                        TextColor="White"
                        HorizontalOptions="Center"
                        VerticalOptions="Center" />
-                <Border x:Name="ActionCountBadge"
-                        HeightRequest="20"
-                        WidthRequest="20"
-                        Margin="0,-4,-4,0"
-                        HorizontalOptions="End"
-                        VerticalOptions="Start"
-                        Stroke="White"
-                        StrokeThickness="2"
-                        StrokeShape="RoundRectangle 10"
-                        BackgroundColor="#E53935">
-                    <Label x:Name="ActionCountLabel"
-                           Text="0"
-                           TextColor="White"
-                           FontSize="10"
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center"
-                           VerticalOptions="Center" />
-                </Border>
                 <Button x:Name="AddButton"
                         Style="{StaticResource SheetOverlayButton}"
-                        CornerRadius="29"
+                        CornerRadius="30"
                         Clicked="OnAddTapped" />
             </Grid>
         </Border>
+            </Grid>
+        </Border>
+
     </Grid>
 </ContentView>

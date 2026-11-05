@@ -651,7 +651,6 @@ public partial class AttachmentSheet : ContentView
   private async Task UpdateActionButtonAsync()
   {
     int count = _selectionOrder.Count;
-    ActionCountLabel.Text = count.ToString();
 
     if (count > 0 && !ActionButton.IsVisible)
     {
@@ -666,10 +665,6 @@ public partial class AttachmentSheet : ContentView
           ActionButton.FadeTo(0, 140, Easing.CubicIn),
           ActionButton.ScaleTo(0.6, 140, Easing.CubicIn));
       ActionButton.IsVisible = false;
-    }
-    else if (count > 0)
-    {
-      _ = AnimateTapBounceAsync(ActionCountBadge);
     }
   }
 
